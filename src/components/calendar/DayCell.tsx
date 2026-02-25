@@ -55,7 +55,7 @@ export default function DayCell({ date, isCurrentMonth, events, onClick }: DayCe
       </span>
 
       {/* Dots colorés — ancrage fixe bottom-left (mobile uniquement) */}
-      <div className="absolute bottom-1.5 left-1 flex items-center gap-0.5 lg:hidden">
+      <div className="absolute bottom-1.5 left-1 w-6 flex items-center justify-center gap-0.5 lg:hidden">
         {uniqueColors.map((color) => (
           <span key={color} className={`h-1.5 w-1.5 rounded-full ${DOT_COLORS[color]}`} />
         ))}
