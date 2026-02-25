@@ -59,7 +59,7 @@ export default function Header() {
     <header className="sticky top-0 z-30 flex h-14 items-center border-b border-slate-200 bg-white px-4 gap-2 safe-top lg:pl-(--spacing-sidebar)">
       {/* Mobile logo avec tooltip sous-titre */}
       <div className="flex items-center gap-1.5 shrink-0 lg:hidden" title="Votre tableau de bord de gestion locative">
-        <img src="/logo.png" alt="LocaBoard" className="h-6 w-6" />
+        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="LocaBoard" className="h-6 w-6" />
         <span className="text-base font-bold">LocaBoard</span>
       </div>
 

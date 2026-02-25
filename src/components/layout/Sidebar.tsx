@@ -20,7 +20,7 @@ export default function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-(--spacing-sidebar) flex-col border-r border-slate-200 bg-white lg:flex">
       {/* Logo */}
       <div className="flex min-h-16 items-center gap-2.5 border-b border-slate-100 px-5 py-3">
-        <img src="/logo.png" alt="LocaBoard" className="h-20 w-20 shrink-0" />
+        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="LocaBoard" className="h-20 w-20 shrink-0" />
         <div className="min-w-0">
           <p className="text-base font-bold text-slate-900 leading-tight">LocaBoard</p>
           <p className="text-[10px] text-slate-400 leading-tight">
