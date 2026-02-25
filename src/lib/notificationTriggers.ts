@@ -208,7 +208,7 @@ async function notifyArriveesDemain(userId: string) {
     .select('id, locataire_nom, locataire_prenom, dossiers(id)')
     .eq('date_debut', tomorrowStr)
     .eq('statut', 'CONFIRMEE')
-    .is('archived_at', null);
+    .is('archived_at', null) as unknown as { data: Array<{ id: string; locataire_nom: string; locataire_prenom: string; dossiers: { id: string }[] | null }> | null };
 
   if (!arrivals || arrivals.length === 0) return;
 
@@ -238,7 +238,7 @@ async function notifyDepartsDemain(userId: string) {
     .select('id, locataire_nom, locataire_prenom, dossiers(id)')
     .eq('date_fin', tomorrowStr)
     .eq('statut', 'CONFIRMEE')
-    .is('archived_at', null);
+    .is('archived_at', null) as unknown as { data: Array<{ id: string; locataire_nom: string; locataire_prenom: string; dossiers: { id: string }[] | null }> | null };
 
   if (!departures || departures.length === 0) return;
 

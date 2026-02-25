@@ -41,12 +41,6 @@ const STATUT_LABELS: Record<TacheStatut, string> = {
   ANNULEE: 'Annulée',
 };
 
-const STATUT_ICONS: Record<TacheStatut, typeof Clock> = {
-  A_FAIRE: Clock,
-  EN_COURS: AlertTriangle,
-  FAIT: Check,
-  ANNULEE: X,
-};
 
 type FilterStatut = 'actives' | 'faites' | 'toutes';
 

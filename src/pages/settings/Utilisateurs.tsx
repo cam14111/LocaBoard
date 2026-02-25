@@ -51,7 +51,7 @@ const ROLE_OPTIONS: { value: Extract<UserRole, 'ADMIN' | 'COHOTE' | 'CONCIERGE'>
 // ─── Composant principal ──────────────────────────────────────
 
 export default function UtilisateursPage() {
-  const { user: currentUser, profile: currentProfile } = useAuth();
+  const { user: currentUser } = useAuth();
   const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState('');
@@ -123,7 +123,7 @@ export default function UtilisateursPage() {
         nom: inviteNom,
         prenom: invitePrenom,
         role: inviteRole,
-        permissions,
+        permissions: permissions as Record<string, boolean>,
       });
 
       if (result.tempPassword) {
@@ -169,7 +169,7 @@ export default function UtilisateursPage() {
 
   async function handleSaveEdit() {
     if (!editingUser) return;
-    if (!editNom.trim() || !editPrenom.trim() || !editEmail.trim()) {
+    if (!editNom.trim() || !editPrenom.trim()) {
       setEditError('Tous les champs sont obligatoires.');
       return;
     }
