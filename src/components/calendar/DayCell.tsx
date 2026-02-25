@@ -29,23 +29,33 @@ export default function DayCell({ date, isCurrentMonth, events, onClick }: DayCe
       onClick={(e) => onClick?.(date, e)}
       aria-label={ariaLabel}
       className={`
-        relative w-full flex flex-col items-start p-1 min-h-[40px] lg:min-h-[100px]
+        relative w-full h-full min-h-[56px] lg:min-h-0
         transition-colors hover:bg-slate-50
-        ${!isCurrentMonth ? 'text-slate-300' : ''}
+        ${!isCurrentMonth ? 'text-slate-300' : 'text-slate-900'}
       `}
     >
-      {/* Numéro du jour */}
+      {/* Cercle "aujourd'hui" — derrière le numéro, même ancrage */}
+      {today && (
+        <span
+          aria-hidden="true"
+          className="absolute top-1 left-1 h-6 w-6 rounded-full bg-primary-600"
+        />
+      )}
+
+      {/* Numéro du jour — ancrage fixe top-left */}
       <span
         className={`
-          inline-flex items-center justify-center text-sm leading-none
-          ${today ? 'h-6 w-6 rounded-full bg-primary-600 text-white font-semibold' : 'font-medium'}
+          absolute top-1 left-1
+          inline-flex items-center justify-center h-6 w-6
+          text-sm leading-none z-10
+          ${today ? 'font-semibold text-white' : 'font-medium'}
         `}
       >
         {day}
       </span>
 
-      {/* Dots colorés + compteur (mobile uniquement) — toujours rendu pour hauteur uniforme */}
-      <div className="flex items-center gap-0.5 mt-0.5 h-1.5 lg:hidden">
+      {/* Dots colorés — ancrage fixe bottom-left (mobile uniquement) */}
+      <div className="absolute bottom-1.5 left-1 flex items-center gap-0.5 lg:hidden">
         {uniqueColors.map((color) => (
           <span key={color} className={`h-1.5 w-1.5 rounded-full ${DOT_COLORS[color]}`} />
         ))}
