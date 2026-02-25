@@ -4,13 +4,13 @@
     <meta charset="utf-8" />
     <title>LocaBoard</title>
     <script>
-      // Redirect SPA routes to index.html for GitHub Pages
+      // SPA redirect for GitHub Pages project pages (pathSegmentsToKeep = 1)
       var l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 2).join('/') + '/?p=/' +
-        l.pathname.slice(1).split('/').slice(1).join('/') +
-        (l.search ? '&q=' + l.search.slice(1) : '') +
+        l.pathname.split('/').slice(0, 2).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(1).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
         l.hash
       );
     </script>

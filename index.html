@@ -4,16 +4,18 @@
     <meta charset="UTF-8" />
     <script>
       // Restore SPA route redirected from 404.html on GitHub Pages
-      (function () {
-        var p = window.location.search.match(/[?&]p=\/([^&]*)/);
-        if (p) {
-          var path = '/' + decodeURIComponent(p[1]);
-          var q = window.location.search.match(/[?&]q=([^&]*)/);
+      (function(l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&');
+          });
           window.history.replaceState(null, null,
-            '/LocaBoard' + path + (q ? '?' + decodeURIComponent(q[1]) : '') + window.location.hash
+            l.pathname.slice(0, -1) + decoded[0] +
+            (decoded[1] ? '?' + decoded[1] : '') +
+            l.hash
           );
         }
-      })();
+      }(window.location));
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#2563eb" />
