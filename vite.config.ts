@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
 export default defineConfig({
+  base: '/LocaBoard/',
   plugins: [
     react(),
     tailwindcss(),
@@ -12,13 +13,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: 'Calendrier Location',
-        short_name: 'CalLoc',
-        description: 'Gestion de location saisonnière',
+        name: 'LocaBoard',
+        short_name: 'LocaBoard',
+        description: 'Votre tableau de bord de gestion locative',
         theme_color: '#2563eb',
         background_color: '#f8fafc',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/LocaBoard/',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
