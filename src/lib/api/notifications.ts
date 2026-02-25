@@ -73,13 +73,13 @@ export async function dismissNotificationsForEntity(
   entityType: string,
   entityId: string,
 ): Promise<void> {
-  await supabase
-    .rpc('dismiss_notifications_for_entity', {
+  try {
+    await supabase.rpc('dismiss_notifications_for_entity', {
       p_type: type,
       p_entity_type: entityType,
       p_entity_id: entityId,
-    })
-    .catch(() => {});
+    });
+  } catch {}
 }
 
 export async function createNotification(params: {

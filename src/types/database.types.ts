@@ -278,7 +278,7 @@ export interface Database {
       dossiers: DbTable<Dossier>;
       paiements: DbTable<Paiement>;
       documents: DbTable<Document>;
-      edl: DbTable<Edl>;
+      edls: DbTable<Edl>;
       edl_items: DbTable<EdlItem>;
       incidents: DbTable<Incident>;
       incident_photos: DbTable<IncidentPhoto>;
@@ -331,6 +331,18 @@ export interface Database {
           p_date_debut: string;
           p_date_fin: string;
         };
+        Returns: void;
+      };
+      cancel_tache: {
+        Args: { p_tache_id: string };
+        Returns: void;
+      };
+      reactivate_tache: {
+        Args: { p_tache_id: string };
+        Returns: void;
+      };
+      dismiss_notifications_for_entity: {
+        Args: { p_type: string; p_entity_type: string; p_entity_id: string };
         Returns: void;
       };
     };

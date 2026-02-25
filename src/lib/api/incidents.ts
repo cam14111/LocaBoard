@@ -14,7 +14,7 @@ export async function getIncidentsByDossier(dossierId: string): Promise<Incident
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []) as IncidentWithPhotos[];
+  return (data ?? []) as unknown as IncidentWithPhotos[];
 }
 
 export async function getIncidentsByEdl(edlId: string) {
