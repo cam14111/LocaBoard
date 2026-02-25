@@ -1,0 +1,17 @@
+# Configuration Supabase locale (supabase start / supabase functions serve)
+# Référence : https://supabase.com/docs/reference/cli/config
+
+[api]
+port = 54321
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[functions.update-own-email]
+verify_jwt = true

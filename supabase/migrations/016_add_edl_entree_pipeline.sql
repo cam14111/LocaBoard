@@ -1,0 +1,3 @@
+-- Ajoute les deux statuts EDL d'entrée au pipeline
+ALTER TYPE pipeline_statut ADD VALUE IF NOT EXISTS 'EDL_ENTREE_OK' AFTER 'CHECKIN_FAIT';
+ALTER TYPE pipeline_statut ADD VALUE IF NOT EXISTS 'EDL_ENTREE_INCIDENT' AFTER 'EDL_ENTREE_OK';
