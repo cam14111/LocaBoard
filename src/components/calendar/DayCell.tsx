@@ -44,17 +44,15 @@ export default function DayCell({ date, isCurrentMonth, events, onClick }: DayCe
         {day}
       </span>
 
-      {/* Dots colorés + compteur (mobile uniquement) */}
-      {events.length > 0 && (
-        <div className="flex items-center gap-0.5 mt-0.5 lg:hidden">
-          {uniqueColors.map((color) => (
-            <span key={color} className={`h-1.5 w-1.5 rounded-full ${DOT_COLORS[color]}`} />
-          ))}
-          {events.length > 1 && (
-            <span className="text-[9px] leading-none text-slate-400 ml-0.5">{events.length}</span>
-          )}
-        </div>
-      )}
+      {/* Dots colorés + compteur (mobile uniquement) — toujours rendu pour hauteur uniforme */}
+      <div className="flex items-center gap-0.5 mt-0.5 h-1.5 lg:hidden">
+        {uniqueColors.map((color) => (
+          <span key={color} className={`h-1.5 w-1.5 rounded-full ${DOT_COLORS[color]}`} />
+        ))}
+        {events.length > 1 && (
+          <span className="text-[9px] leading-none text-slate-400 ml-0.5">{events.length}</span>
+        )}
+      </div>
     </button>
   );
 }
