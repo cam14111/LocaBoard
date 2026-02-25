@@ -34,6 +34,16 @@
   }
 }
 
+/* Calendar week row: fixed height on mobile, dynamic on desktop */
+.week-row {
+  min-height: 56px;
+}
+@media (min-width: 1024px) {
+  .week-row {
+    min-height: var(--row-min-height, 100px);
+  }
+}
+
 @utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

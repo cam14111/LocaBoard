@@ -186,8 +186,8 @@ function WeekRow({
 }) {
   return (
     <div
-      className={`relative ${!isLast ? 'border-b border-slate-100' : ''}`}
-      style={{ minHeight: `${Math.max(rowMinHeight, 40)}px` }}
+      className={`week-row relative ${!isLast ? 'border-b border-slate-100' : ''}`}
+      style={{ '--row-min-height': `${Math.max(rowMinHeight, 100)}px` } as React.CSSProperties}
     >
       {/* Grille des jours */}
       <div className="grid grid-cols-7 h-full">
