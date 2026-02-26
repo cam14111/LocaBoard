@@ -34,18 +34,18 @@ export default function DayCell({ date, isCurrentMonth, events, onClick }: DayCe
         ${!isCurrentMonth ? 'text-slate-300' : 'text-slate-900'}
       `}
     >
-      {/* Cercle "aujourd'hui" — derrière le numéro, même ancrage */}
+      {/* Cercle "aujourd'hui" — centré horizontalement, ancré en haut */}
       {today && (
         <span
           aria-hidden="true"
-          className="absolute top-1 left-1 h-6 w-6 rounded-full bg-primary-600"
+          className="absolute top-1 left-1/2 -translate-x-1/2 h-6 w-6 rounded-full bg-primary-600"
         />
       )}
 
-      {/* Numéro du jour — ancrage fixe top-left */}
+      {/* Numéro du jour — centré horizontalement, ancré en haut */}
       <span
         className={`
-          absolute top-1 left-1
+          absolute top-1 left-1/2 -translate-x-1/2
           inline-flex items-center justify-center h-6 w-6
           text-sm leading-none z-10
           ${today ? 'font-semibold text-white' : 'font-medium'}
@@ -54,8 +54,8 @@ export default function DayCell({ date, isCurrentMonth, events, onClick }: DayCe
         {day}
       </span>
 
-      {/* Dots colorés — ancrage fixe bottom-left (mobile uniquement) */}
-      <div className="absolute bottom-1.5 left-1 w-6 flex items-center justify-center gap-0.5 lg:hidden">
+      {/* Dots colorés — centrés horizontalement, ancrés en bas (mobile uniquement) */}
+      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5 lg:hidden">
         {uniqueColors.map((color) => (
           <span key={color} className={`h-1.5 w-1.5 rounded-full ${DOT_COLORS[color]}`} />
         ))}
