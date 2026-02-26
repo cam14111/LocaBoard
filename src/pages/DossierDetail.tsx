@@ -172,13 +172,15 @@ export default function DossierDetail() {
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            {tab.label}
-            {tab.key === 'paiements' && totalRetard > 0 && (
-              <span className="absolute top-1.5 right-1 inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-red-500 text-[9px] text-white">!</span>
-            )}
-            {tab.key === 'edl' && (dossier.pipeline_statut === 'EDL_INCIDENT' || dossier.pipeline_statut === 'EDL_ENTREE_INCIDENT') && (
-              <span className="absolute top-1.5 right-1 inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-red-500 text-[9px] text-white">!</span>
-            )}
+            <span className="inline-flex items-center justify-center gap-1">
+              {tab.label}
+              {tab.key === 'paiements' && totalRetard > 0 && (
+                <span className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-red-500 text-[9px] text-white">!</span>
+              )}
+              {tab.key === 'edl' && (dossier.pipeline_statut === 'EDL_INCIDENT' || dossier.pipeline_statut === 'EDL_ENTREE_INCIDENT') && (
+                <span className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-red-500 text-[9px] text-white">!</span>
+              )}
+            </span>
           </button>
         ))}
       </div>
