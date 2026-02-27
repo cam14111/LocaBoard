@@ -24,6 +24,7 @@ export default function DayActionMenu({
   onClose,
 }: DayActionMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const mobileSheetRef = useRef<HTMLDivElement>(null);
 
   // Fermeture Escape + clic extérieur
   useEffect(() => {
@@ -32,7 +33,9 @@ export default function DayActionMenu({
       if (e.key === 'Escape') onClose();
     }
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const inDesktop = menuRef.current?.contains(e.target as Node);
+      const inMobile = mobileSheetRef.current?.contains(e.target as Node);
+      if (!inDesktop && !inMobile) {
         onClose();
       }
     }
@@ -77,7 +80,7 @@ export default function DayActionMenu({
       {/* Mobile : bottom sheet */}
       <div className="lg:hidden fixed inset-0 z-50">
         <div className="fixed inset-0 bg-black/30" onClick={onClose} />
-        <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 pb-8 space-y-2 animate-in slide-in-from-bottom duration-200">
+        <div ref={mobileSheetRef} className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 pb-8 space-y-2 animate-in slide-in-from-bottom duration-200">
           {ACTIONS.map(({ key, label, icon: Icon, colors }) => (
             <button
               key={key}
