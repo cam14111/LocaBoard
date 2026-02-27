@@ -34,7 +34,7 @@ const COUNTRY_CODES: Record<string, string> = {
   Portugal: 'pt',
 };
 
-function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
+function debounce<T extends (...args: unknown[]) => void | Promise<void>>(fn: T, ms: number): T {
   let timer: ReturnType<typeof setTimeout>;
   return ((...args: unknown[]) => {
     clearTimeout(timer);
