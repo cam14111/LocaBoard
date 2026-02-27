@@ -10,6 +10,7 @@ import {
   Plus,
   X,
   History,
+  Wand2,
 } from 'lucide-react';
 import {
   getDocumentsByDossier,
@@ -19,7 +20,8 @@ import {
   getDocumentVersionHistory,
 } from '@/lib/api/documents';
 import { usePermission } from '@/hooks/usePermission';
-import type { Document as DocType, DocumentType } from '@/types/database.types';
+import ContractGeneratorModal from '@/components/dossier/ContractGeneratorModal';
+import type { Document as DocType, DocumentType, Dossier, Reservation } from '@/types/database.types';
 
 const TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
   { value: 'CONTRAT', label: 'Contrat' },
@@ -60,11 +62,14 @@ function formatDate(ts: string) {
 
 interface DocumentsTabProps {
   dossierId: string;
+  dossier?: Dossier;
+  reservation?: Reservation | null;
 }
 
-export default function DocumentsTab({ dossierId }: DocumentsTabProps) {
+export default function DocumentsTab({ dossierId, dossier, reservation }: DocumentsTabProps) {
   const canUploadAll = usePermission('document:upload_all');
   const canReplace = usePermission('document:replace');
+  const [showContractGenerator, setShowContractGenerator] = useState(false);
   // Co-hôte : peut uniquement upload EDL
   const canUploadEdl = true; // Tous les utilisateurs authentifiés peuvent upload EDL
 
@@ -187,21 +192,33 @@ export default function DocumentsTab({ dossierId }: DocumentsTabProps) {
     }
   }
 
-  function handleView(doc: DocType) {
-    const url = getDocumentUrl(doc.storage_path);
-    if (isImageType(doc.mime_type)) {
-      setPreviewUrl(url);
-    } else {
-      window.open(url, '_blank');
+  async function handleView(doc: DocType) {
+    try {
+      const url = await getDocumentUrl(doc.storage_path);
+      if (isImageType(doc.mime_type)) {
+        setPreviewUrl(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch {
+      setError('Impossible de récupérer le lien du document.');
     }
   }
 
-  function handleDownload(doc: DocType) {
-    const url = getDocumentUrl(doc.storage_path);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = doc.nom_fichier;
-    a.click();
+  async function handleDownload(doc: DocType) {
+    try {
+      const url = await getDocumentUrl(doc.storage_path);
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = doc.nom_fichier;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setError('Impossible de télécharger le document.');
+    }
   }
 
   async function handleShowVersions(doc: DocType) {
@@ -277,6 +294,15 @@ export default function DocumentsTab({ dossierId }: DocumentsTabProps) {
                     {isReplacement && (
                       <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700">
                         v{versionMap.get(doc.id) ?? '?'}
+                      </span>
+                    )}
+                    {doc.type === 'CONTRAT' && (
+                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                        isReplacement
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {isReplacement ? 'Signé' : 'Non signé'}
                       </span>
                     )}
                   </div>
@@ -375,19 +401,43 @@ export default function DocumentsTab({ dossierId }: DocumentsTabProps) {
           </div>
         </div>
       ) : (canUploadAll || canUploadEdl) ? (
-        <button
-          onClick={() => {
-            setShowUpload(true);
-            setError('');
-            // Co-hôte : pré-sélectionner EDL
-            if (!canUploadAll) setUploadType('EDL');
-          }}
-          className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-3 text-sm font-medium text-slate-500 hover:border-primary-400 hover:text-primary-600 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter un document
-        </button>
+        <div className="space-y-2">
+          {/* Bouton de génération de contrat — admin + dossier + réservation disponibles */}
+          {canUploadAll && dossier && reservation && (
+            <button
+              onClick={() => setShowContractGenerator(true)}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-primary-300 px-4 py-3 text-sm font-medium text-primary-600 hover:border-primary-400 hover:bg-primary-50 transition-colors"
+            >
+              <Wand2 className="h-4 w-4" />
+              Générer le contrat
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              setShowUpload(true);
+              setError('');
+              // Co-hôte : pré-sélectionner EDL
+              if (!canUploadAll) setUploadType('EDL');
+            }}
+            className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-3 text-sm font-medium text-slate-500 hover:border-primary-400 hover:text-primary-600 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un document
+          </button>
+        </div>
       ) : null}
+
+      {/* Modal génération contrat */}
+      {dossier && reservation && (
+        <ContractGeneratorModal
+          isOpen={showContractGenerator}
+          onClose={() => setShowContractGenerator(false)}
+          onGenerated={() => { setShowContractGenerator(false); void loadDocs(); }}
+          dossier={dossier}
+          reservation={reservation}
+        />
+      )}
 
       {/* Input caché global pour remplacement (rendu une seule fois, hors de la liste).
           sr-only plutôt que hidden : l'élément reste cliquable via .click() programmatique. */}

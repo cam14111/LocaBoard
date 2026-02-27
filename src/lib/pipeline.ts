@@ -3,7 +3,7 @@ import type { PipelineStatut } from '@/types/database.types';
 
 // Matrice des transitions autorisées : statut → statuts suivants
 const FORWARD_TRANSITIONS: Record<PipelineStatut, PipelineStatut[]> = {
-  DEMANDE_RECUE: ['OPTION_POSEE', 'CONTRAT_ENVOYE'],
+  DEMANDE_RECUE: [], // Statut legacy — plus utilisé à la création
   OPTION_POSEE: ['CONTRAT_ENVOYE'],
   CONTRAT_ENVOYE: ['CONTRAT_SIGNE'],
   CONTRAT_SIGNE: ['ACOMPTE_RECU'],
@@ -21,8 +21,8 @@ const FORWARD_TRANSITIONS: Record<PipelineStatut, PipelineStatut[]> = {
 };
 
 // Ordre linéaire principal (pour le stepper visuel)
+// Note : DEMANDE_RECUE est un statut legacy, il n'est plus utilisé à la création
 export const PIPELINE_STEPS: PipelineStatut[] = [
-  'DEMANDE_RECUE',
   'OPTION_POSEE',
   'CONTRAT_ENVOYE',
   'CONTRAT_SIGNE',
@@ -37,7 +37,7 @@ export const PIPELINE_STEPS: PipelineStatut[] = [
 ];
 
 export const PIPELINE_LABELS: Record<PipelineStatut, string> = {
-  DEMANDE_RECUE: 'Demande reçue',
+  DEMANDE_RECUE: 'Demande reçue (legacy)',
   OPTION_POSEE: 'Option posée',
   CONTRAT_ENVOYE: 'Contrat envoyé',
   CONTRAT_SIGNE: 'Contrat signé',
@@ -55,7 +55,7 @@ export const PIPELINE_LABELS: Record<PipelineStatut, string> = {
 };
 
 export const PIPELINE_COLORS: Record<PipelineStatut, string> = {
-  DEMANDE_RECUE: 'bg-slate-100 text-slate-700',
+  DEMANDE_RECUE: 'bg-slate-50 text-slate-400',  // legacy — style atténué
   OPTION_POSEE: 'bg-amber-100 text-amber-700',
   CONTRAT_ENVOYE: 'bg-blue-100 text-blue-700',
   CONTRAT_SIGNE: 'bg-blue-100 text-blue-700',

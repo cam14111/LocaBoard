@@ -177,6 +177,7 @@ export async function ensureDossierForReservation(
   reservationId: string,
   logementId: string,
   typePremierVersement: 'ARRHES' | 'ACOMPTE' = 'ARRHES',
+  initialPipelineStatut?: PipelineStatut,
 ): Promise<Dossier> {
   try {
     return await getDossierByReservation(reservationId);
@@ -185,6 +186,7 @@ export async function ensureDossierForReservation(
       reservation_id: reservationId,
       logement_id: logementId,
       type_premier_versement: typePremierVersement,
+      ...(initialPipelineStatut ? { pipeline_statut: initialPipelineStatut } : {}),
     });
 
     // Créer l'échéancier paiements par défaut
@@ -197,7 +199,7 @@ export async function ensureDossierForReservation(
 
       const { data: logement } = await supabase
         .from('logements')
-        .select('taux_taxe_sejour')
+        .select('taux_taxe_sejour, forfait_menage_eur')
         .eq('id', logementId)
         .single();
 
@@ -211,6 +213,7 @@ export async function ensureDossierForReservation(
           nb_personnes: reservation.nb_personnes ?? 1,
           taux_taxe_sejour: logement?.taux_taxe_sejour ?? 0,
           nb_nuits: nbNuits,
+          forfait_menage_eur: logement?.forfait_menage_eur ?? 0,
         });
       }
     } catch (err) {
@@ -225,6 +228,7 @@ export async function createDossier(params: {
   reservation_id: string;
   logement_id: string;
   type_premier_versement: 'ARRHES' | 'ACOMPTE';
+  pipeline_statut?: PipelineStatut;
 }) {
   const { data, error } = await supabase.from('dossiers').insert(params).select().single();
 

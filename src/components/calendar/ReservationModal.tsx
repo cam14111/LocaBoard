@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { X, Loader2, CalendarDays, Clock, Info, AlertTriangle } from 'lucide-react';
+import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 import { createReservation } from '@/lib/api/reservations';
 import { ensureDossierForReservation } from '@/lib/api/dossiers';
 import { generateAutoTaches } from '@/lib/api/taches';
@@ -176,20 +177,25 @@ export default function ReservationModal({
         notes: form.notes.trim() || undefined,
       });
 
-      // Auto-création dossier + tâches auto pour les réservations confirmées
-      if (!isOption) {
-        try {
-          const dossier = await ensureDossierForReservation(newId, localLogementId, typePremierVersement);
-          // E08-05 : Génération auto tâches
+      // Auto-création dossier pour réservations et options
+      try {
+        const dossier = await ensureDossierForReservation(
+          newId,
+          localLogementId,
+          typePremierVersement,
+          isOption ? 'OPTION_POSEE' : undefined,
+        );
+        // Génération auto tâches uniquement pour les réservations confirmées
+        if (!isOption) {
           await generateAutoTaches({
             dossier_id: dossier.id,
             logement_id: localLogementId,
             reservation_id: newId,
           }).catch(() => {});
-        } catch {
-          // Non bloquant : le dossier pourra être créé plus tard
-          console.warn('Échec auto-création dossier pour réservation', newId);
         }
+      } catch {
+        // Non bloquant : le dossier pourra être créé plus tard
+        console.warn('Échec auto-création dossier pour', isOption ? 'option' : 'réservation', newId);
       }
 
       onCreated();
@@ -359,12 +365,11 @@ export default function ReservationModal({
             </div>
             <div>
               <label htmlFor="rm-adresse" className={LABEL}>Adresse</label>
-              <input
+              <AddressAutocomplete
                 id="rm-adresse"
-                type="text"
                 value={form.locataire_adresse}
-                onChange={(e) => handleChange('locataire_adresse', e.target.value)}
-                className={INPUT}
+                onChange={(v) => handleChange('locataire_adresse', v)}
+                pays={form.locataire_pays || 'France'}
               />
             </div>
             <div>

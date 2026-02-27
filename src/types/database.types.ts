@@ -60,6 +60,9 @@ export interface Utilisateur {
   prenom: string;
   role: UserRole;
   permissions: Record<string, boolean>;
+  adresse: string | null;
+  siret: string | null;
+  telephone: string | null;
   created_at: string;
   archived_at: string | null;
 }
@@ -79,6 +82,17 @@ export interface Logement {
   duree_expiration_option_jours: number;
   taches_auto_enabled: boolean;
   photo_url: string | null;
+  // Champs enrichis pour contrats
+  description: string | null;
+  equipements: string | null;
+  forfait_menage_eur: number | null;
+  charges_incluses: string | null;
+  animaux_autorises: boolean;
+  animaux_types: string | null;
+  animaux_nb_max: number | null;
+  animaux_taille_max: string | null;
+  loyer_nuit_defaut: number | null;
+  loyer_semaine_defaut: number | null;
   created_at: string;
   archived_at: string | null;
 }

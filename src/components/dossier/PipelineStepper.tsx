@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, Circle, ChevronRight, ChevronLeft, Loader2, AlertTriangle, X } from 'lucide-react';
 import { updatePipelineStatut } from '@/lib/api/dossiers';
+import { getDocumentsByDossier } from '@/lib/api/documents';
 import CancelDossierModal from './CancelDossierModal';
 import CloseDossierModal from './CloseDossierModal';
+import SignedContractUploadModal from './SignedContractUploadModal';
 import {
   PIPELINE_STEPS,
   PIPELINE_LABELS,
@@ -34,9 +36,23 @@ export default function PipelineStepper({
   } | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
+  const [showSignedContractModal, setShowSignedContractModal] = useState(false);
+  const [existingContratId, setExistingContratId] = useState<string | null>(null);
   const [motif, setMotif] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Précharger le contrat existant pour la modal de contrat signé
+  useEffect(() => {
+    if (currentStatut === 'CONTRAT_SIGNE') {
+      getDocumentsByDossier(dossierId)
+        .then((docs) => {
+          const contrat = docs.find((d) => d.type === 'CONTRAT') ?? null;
+          setExistingContratId(contrat?.id ?? null);
+        })
+        .catch(() => {});
+    }
+  }, [currentStatut, dossierId]);
 
   const currentIndex = getStepIndex(currentStatut);
   const isTerminal = currentStatut === 'CLOTURE' || currentStatut === 'ANNULE';
@@ -49,6 +65,11 @@ export default function PipelineStepper({
     // E04-09 : Si la cible est CLOTURE, ouvrir la modale de clôture
     if (target === 'CLOTURE') {
       setShowCloseModal(true);
+      return;
+    }
+    // US5 : Si la cible est ACOMPTE_RECU (depuis CONTRAT_SIGNE), ouvrir la modal d'import du contrat signé
+    if (target === 'ACOMPTE_RECU' && currentStatut === 'CONTRAT_SIGNE') {
+      setShowSignedContractModal(true);
       return;
     }
     setConfirmAction({ target, type: 'advance' });
@@ -77,6 +98,15 @@ export default function PipelineStepper({
 
   return (
     <div className="space-y-6">
+      {/* Modal import contrat signé (US5) */}
+      <SignedContractUploadModal
+        isOpen={showSignedContractModal}
+        onClose={() => setShowSignedContractModal(false)}
+        onDone={() => { setShowSignedContractModal(false); onUpdated(); }}
+        dossierId={dossierId}
+        existingContratId={existingContratId}
+      />
+
       {/* Modale annulation cascade (E04-08) */}
       {showCancelModal && (
         <CancelDossierModal
@@ -105,15 +135,17 @@ export default function PipelineStepper({
       {/* Stepper visuel vertical */}
       <div className="space-y-0">
         {PIPELINE_STEPS.map((step, i) => {
-          const isCompleted = currentIndex > i;
-
           // Quand le statut actuel est une variante _INCIDENT, l'étape _OK correspondante
           // affiche directement le label et la couleur de l'incident (inline, pas de badge séparé)
           const isIncidentVariant =
             (step === 'EDL_OK' && currentStatut === 'EDL_INCIDENT') ||
             (step === 'EDL_ENTREE_OK' && currentStatut === 'EDL_ENTREE_INCIDENT');
 
-          const isCurrent = step === currentStatut || isIncidentVariant;
+          // Le statut courant est vert (terminé), sauf pour les variantes _INCIDENT (rouge)
+          const isCompleted = !isIncidentVariant && currentIndex >= i;
+
+          // L'étape "en attente d'action" (bleue) est la suivante — sauf en état terminal
+          const isCurrent = isIncidentVariant || (!isTerminal && i === currentIndex + 1);
 
           // Statut effectif à afficher (label + couleur)
           const displayStatut: PipelineStatut = isIncidentVariant ? currentStatut : step;

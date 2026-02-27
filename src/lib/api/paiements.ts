@@ -111,6 +111,7 @@ export function computePaymentSchedule(params: {
   nb_personnes: number;
   taux_taxe_sejour: number;
   nb_nuits: number;
+  forfait_menage_eur?: number; // forfait ménage du logement
   today?: Date; // injectable pour les tests
 }): ScheduleEntry[] {
   const {
@@ -120,6 +121,7 @@ export function computePaymentSchedule(params: {
     nb_personnes,
     taux_taxe_sejour,
     nb_nuits,
+    forfait_menage_eur = 0,
   } = params;
 
   const now = params.today ?? new Date();
@@ -127,8 +129,8 @@ export function computePaymentSchedule(params: {
   const entries: ScheduleEntry[] = [];
 
   if (loyer_total > 0) {
-    // Premier versement : 30%
-    const montantPremier = Math.round(loyer_total * 0.3 * 100) / 100;
+    // Premier versement : 25% (conforme au contrat)
+    const montantPremier = Math.round(loyer_total * 0.25 * 100) / 100;
     const echeancePremier = new Date(now);
     echeancePremier.setDate(echeancePremier.getDate() + 7);
     const premierType: Paiement['type'] = type_premier_versement === 'ACOMPTE' ? 'ACOMPTE' : 'ARRHES';
@@ -140,7 +142,7 @@ export function computePaymentSchedule(params: {
       label: null,
     });
 
-    // Solde : 70%
+    // Solde : loyer - arrhes (75%)
     const montantSolde = Math.round((loyer_total - montantPremier) * 100) / 100;
     const solde30j = new Date(arrivee);
     solde30j.setDate(solde30j.getDate() - 30);
@@ -152,6 +154,16 @@ export function computePaymentSchedule(params: {
       montant_eur: montantSolde,
       echeance_date: echeanceSoldeDate.toISOString().substring(0, 10),
       label: null,
+    });
+  }
+
+  // Forfait ménage (échéance = jour d'arrivée)
+  if (forfait_menage_eur > 0) {
+    entries.push({
+      type: 'EXTRA',
+      montant_eur: Math.round(forfait_menage_eur * 100) / 100,
+      echeance_date: date_debut,
+      label: 'Forfait ménage',
     });
   }
 
@@ -178,6 +190,7 @@ export async function createDefaultPaymentSchedule(params: {
   nb_personnes: number;
   taux_taxe_sejour: number;
   nb_nuits: number;
+  forfait_menage_eur?: number;
 }) {
   const entries = computePaymentSchedule(params);
   if (entries.length === 0) return;
@@ -361,6 +374,29 @@ export async function getAllPaiements(filters?: {
       logement_id: dossier?.logement_id ?? '',
       logement_nom: logement?.nom ?? '',
     };
+  });
+}
+
+/** Supprime définitivement un paiement EXTRA non payé */
+export async function deletePaiement(id: string) {
+  const { data: before } = await supabase
+    .from('paiements')
+    .select('statut, type, dossier_id')
+    .eq('id', id)
+    .single();
+
+  if (!before) throw new Error('Paiement introuvable');
+  if (before.type !== 'EXTRA') throw new Error('Seuls les extras peuvent être supprimés.');
+  if (before.statut === 'PAYE') throw new Error('Un paiement déjà encaissé ne peut pas être supprimé.');
+
+  const { error } = await supabase.from('paiements').delete().eq('id', id);
+  if (error) throw error;
+
+  await createAuditLog({
+    entity_type: 'paiement',
+    entity_id: id,
+    action: 'deleted',
+    metadata: { type: before.type, statut: before.statut },
   });
 }
 

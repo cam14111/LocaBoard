@@ -112,10 +112,10 @@ export async function inviteCoHote(params: {
   return inviteUtilisateur({ ...params, role: 'COHOTE' });
 }
 
-/** Met à jour le profil (nom, prénom, email) d'un utilisateur */
+/** Met à jour le profil (nom, prénom, email, adresse, siret, telephone) d'un utilisateur */
 export async function updateUtilisateurProfile(
   userId: string,
-  updates: { nom?: string; prenom?: string; email?: string },
+  updates: { nom?: string; prenom?: string; email?: string; adresse?: string; siret?: string; telephone?: string },
 ) {
   if (Object.keys(updates).length === 0) return;
 

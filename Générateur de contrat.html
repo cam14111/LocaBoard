@@ -1,0 +1,2577 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrat de Location Saisonnière</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== DESIGN SYSTEM - CSS Custom Properties ===== */
+        :root {
+            /* Primary palette - Indigo */
+            --primary-50: #eef2ff;
+            --primary-100: #e0e7ff;
+            --primary-200: #c7d2fe;
+            --primary-300: #a5b4fc;
+            --primary-400: #818cf8;
+            --primary-500: #6366f1;
+            --primary-600: #4f46e5;
+            --primary-700: #4338ca;
+            --primary-800: #3730a3;
+            --primary-900: #312e81;
+            /* Neutrals */
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            /* Semantic */
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --error: #ef4444;
+            --error-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            /* Spacing (8px grid) */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
+            --space-7: 28px;
+            --space-8: 32px;
+            --space-10: 40px;
+            --space-12: 48px;
+            /* Radii */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            /* Typography */
+            --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font-serif: 'Times New Roman', Georgia, serif;
+            --text-xs: 12px;
+            --text-sm: 13px;
+            --text-base: 14px;
+            --text-md: 15px;
+            --text-lg: 18px;
+            --text-xl: 20px;
+            --text-2xl: 24px;
+            /* Mapped tokens (dark only) */
+            --bg-page: #0f172a;
+            --bg-container: #1e293b;
+            --bg-input: #334155;
+            --bg-contract: #1e293b;
+            --bg-contract-preview: #0f172a;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-default: #475569;
+            --border-focus: var(--primary-400);
+            --section-border: #334155;
+            --gray-50: #1e293b;
+            --gray-100: #334155;
+        }
+
+        /* ===== RESET ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ===== BASE ===== */
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-page);
+            min-height: 100vh;
+            padding: var(--space-4);
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
+            line-height: 1.5;
+        }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-container);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+            color: white;
+            padding: var(--space-8) var(--space-6);
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            margin-bottom: var(--space-2);
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            opacity: 0.85;
+            font-size: var(--text-sm);
+            font-weight: 400;
+        }
+
+        /* ===== FORM ===== */
+        .form-container {
+            padding: var(--space-8);
+        }
+
+        .section {
+            margin-bottom: var(--space-8);
+        }
+
+        .section-title {
+            font-size: var(--text-lg);
+            color: var(--primary-500);
+            font-weight: 600;
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-3);
+            border-bottom: 2px solid var(--section-border);
+        }
+
+        .section-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-5);
+            gap: var(--space-4);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-5);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--space-2);
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: var(--text-sm);
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: var(--space-3);
+            min-height: 44px;
+            border: 2px solid var(--border-default);
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-family: var(--font-sans);
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s, color 0.3s;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        input[type="date"] {
+            cursor: pointer;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-5);
+        }
+
+        .required {
+            color: var(--error);
+        }
+
+        .address-helper {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            margin-top: var(--space-1);
+            font-style: italic;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+            color: white;
+            padding: var(--space-3) var(--space-6);
+            min-height: 44px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-md);
+            font-weight: 600;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            width: 100%;
+            margin-top: var(--space-5);
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--gray-500);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: white;
+            padding: var(--space-2) var(--space-4);
+            min-height: 36px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-family: var(--font-sans);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-save:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: var(--space-3);
+            margin-top: var(--space-5);
+        }
+
+        .action-buttons .btn {
+            flex: 1 1 auto;
+            max-width: 250px;
+        }
+
+        /* ===== CONTRACT PREVIEW ===== */
+        #contract-preview {
+            background: var(--bg-contract-preview);
+            padding: var(--space-8);
+            margin-top: var(--space-6);
+            border-radius: var(--radius-lg);
+            display: none;
+            font-family: var(--font-serif);
+            line-height: 1.8;
+            transition: background 0.3s ease;
+        }
+
+        #contract-preview.show {
+            display: block;
+        }
+
+        .contract-content {
+            background: var(--bg-contract);
+            padding: var(--space-10) var(--space-6);
+            box-shadow: var(--shadow-md);
+            border-radius: var(--radius-md);
+            max-width: 210mm;
+            margin: 0 auto;
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .contract-header { text-align: center; margin-bottom: 40px; }
+        .contract-title { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .contract-subtitle { text-align: center; font-size: 14px; margin-bottom: 30px; font-style: italic; }
+        .contract-section { margin-bottom: 25px; }
+        .contract-section h3 { font-size: 14px; font-weight: bold; margin-bottom: 12px; margin-top: 20px; }
+        .contract-section p { text-align: justify; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }
+        .contract-section ul { margin-left: 30px; margin-bottom: 12px; }
+        .contract-section li { text-align: justify; margin-bottom: 8px; font-size: 13px; line-height: 1.6; }
+        .parties-section { margin-bottom: 30px; line-height: 1.8; }
+        .party-info { margin-bottom: 20px; padding-left: 20px; }
+        .signature-section { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 80px; page-break-inside: avoid; }
+        .signature-box { text-align: left; }
+        .signature-box p { margin-bottom: 8px; font-size: 13px; }
+        .signature-line { margin-top: 100px; padding-top: 5px; }
+        .date-location { margin-top: 40px; margin-bottom: 20px; font-size: 13px; }
+
+        /* ===== AUTOCOMPLETE ===== */
+        .autocomplete-container { position: relative; }
+
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-input);
+            border: 2px solid var(--primary-500);
+            border-top: none;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .autocomplete-results.show { display: block; }
+
+        .autocomplete-item {
+            padding: var(--space-3);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-default);
+            transition: background 0.15s;
+        }
+
+        .autocomplete-item:hover, .autocomplete-item.kb-active { background: var(--primary-50); }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item .address-main { font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
+        .autocomplete-item .address-details { font-size: var(--text-xs); color: var(--text-secondary); }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal-content {
+            background: var(--bg-container);
+            padding: var(--space-8);
+            border-radius: var(--radius-lg);
+            max-width: 500px;
+            width: calc(100% - var(--space-8));
+            box-shadow: var(--shadow-xl);
+            text-align: center;
+            transition: background 0.3s ease;
+        }
+
+        .modal-content h2 { color: var(--primary-500); margin-bottom: var(--space-5); font-size: var(--text-xl); }
+        .modal-content p { color: var(--text-primary); }
+        .modal-content ol { text-align: left; margin: var(--space-5) 0; padding-left: var(--space-5); color: var(--text-primary); }
+        .modal-content li { margin: var(--space-3) 0; line-height: 1.6; color: var(--text-primary); }
+        .modal-content .btn { margin-top: var(--space-5); }
+
+        /* Owner modal */
+        #owner-modal .modal-content { max-width: 600px; text-align: left; }
+        #owner-modal .modal-content h2 { text-align: center; }
+        #owner-modal .modal-content .btn { text-align: center; }
+
+        /* Owner header button */
+        .header-owner-btn {
+            position: absolute;
+            top: var(--space-3);
+            right: var(--space-3);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-xs);
+            font-family: var(--font-sans);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .header-owner-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+        .header-owner-btn svg { flex-shrink: 0; }
+        @media (max-width: 639px) {
+            .header-owner-btn span { display: none; }
+            .header-owner-btn { padding: var(--space-2); }
+        }
+
+        /* ===== NOTIFICATION TOAST ===== */
+        .notification {
+            position: fixed;
+            top: var(--space-5);
+            right: var(--space-5);
+            background: var(--success);
+            color: white;
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 3000;
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            animation: toastIn 0.3s ease-out;
+        }
+
+        @keyframes toastIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ===== MOBILE CONTRACT INFO ===== */
+        .mobile-contract-info {
+            display: none;
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+            color: white;
+            padding: var(--space-5);
+            border-radius: var(--radius-md);
+            text-align: center;
+            margin-bottom: var(--space-5);
+        }
+
+        .mobile-contract-info h3 { font-size: var(--text-lg); margin-bottom: var(--space-2); }
+        .mobile-contract-info p { font-size: var(--text-sm); line-height: 1.6; opacity: 0.95; }
+
+        /* ===== RESPONSIVE - Tablet (640px+) ===== */
+        @media (min-width: 640px) {
+            body { padding: var(--space-5); }
+            .row { grid-template-columns: 1fr 1fr; }
+            .contract-content { padding: 60px 80px; }
+            .form-container { padding: var(--space-10); }
+        }
+
+        /* ===== RESPONSIVE - Small screens ===== */
+        @media (max-width: 639px) {
+            .header {
+                padding: var(--space-5) var(--space-12) var(--space-5) var(--space-4);
+            }
+            .header h1 { font-size: var(--text-lg); line-height: 1.3; }
+            .header p { font-size: var(--text-xs); }
+            .form-container { padding: var(--space-4); }
+            .section-title { font-size: var(--text-md); }
+            .section-header-flex {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+            .btn-save { width: 100%; padding: var(--space-3) var(--space-4); }
+            .contract-content { padding: var(--space-6) var(--space-4); }
+            .signature-section { grid-template-columns: 1fr; gap: 40px; margin-top: 40px; }
+            .signature-line { margin-top: 60px; }
+            .notification { top: var(--space-3); right: var(--space-3); left: var(--space-3); }
+            #contract-preview { padding: var(--space-4) var(--space-3); }
+            .mobile-contract-info { display: block; }
+            .party-info { padding-left: 10px; }
+            .contract-section ul { margin-left: 20px; }
+        }
+
+        /* ===== PRINT ===== */
+        @media print {
+            body { background: white; padding: 0; margin: 0; color: #000; }
+            .container { box-shadow: none; margin: 0; max-width: 100%; border-radius: 0; }
+            .header, .form-container > form, .action-buttons, .mobile-contract-info { display: none; }
+            #contract-preview { background: white; padding: 0; margin: 0; }
+            .contract-content {
+                padding: 15mm 20mm; box-shadow: none; max-width: 100%; margin: 0;
+                border-radius: 0; page-break-after: auto; color: #000; background: white;
+            }
+            .contract-header { page-break-inside: avoid; page-break-after: avoid; }
+            .parties-section { page-break-inside: avoid; }
+            .contract-section { page-break-inside: avoid; orphans: 3; widows: 3; }
+            .contract-section h3 { page-break-after: avoid; page-break-inside: avoid; }
+            .contract-section p { page-break-inside: avoid; orphans: 2; widows: 2; }
+            .contract-section ul { page-break-inside: avoid; }
+            .date-location { page-break-inside: avoid; }
+            .signature-section { page-break-before: auto; page-break-inside: avoid; margin-top: 60px; min-height: 150px; }
+            @page { size: A4; margin: 15mm 20mm; }
+            .wizard-progress, .wizard-nav { display: none !important; }
+        }
+
+        /* ===== WIZARD ===== */
+        .wizard-step { display: none; animation: fadeIn 0.3s ease; }
+        .wizard-step.active { display: block; }
+        .wizard-step[data-step="4"] #contract-preview { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .wizard-progress { margin-bottom: var(--space-6); }
+
+        /* Desktop progress */
+        .wizard-progress-desktop {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: var(--space-4) 0;
+        }
+
+        .wizard-step-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-1);
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+            position: relative;
+        }
+
+        .wizard-step-indicator.active, .wizard-step-indicator.completed { opacity: 1; }
+
+        .step-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gray-300);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: var(--text-sm);
+            transition: background 0.2s;
+        }
+
+        .wizard-step-indicator.active .step-num { background: var(--primary-500); }
+        .wizard-step-indicator.completed .step-num { background: var(--success); }
+
+        .step-label {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .wizard-step-indicator.active .step-label { color: var(--primary-500); font-weight: 600; }
+
+        .wizard-line {
+            flex: 1;
+            height: 2px;
+            background: var(--gray-200);
+            min-width: 30px;
+            max-width: 60px;
+            margin: 0 var(--space-2);
+            margin-bottom: 18px;
+        }
+
+        /* Mobile progress */
+        .wizard-progress-mobile {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            padding: var(--space-3) 0;
+        }
+
+        .wizard-progress-mobile span {
+            font-size: var(--text-sm);
+            font-weight: 600;
+            color: var(--primary-500);
+        }
+
+        .wizard-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--gray-200);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+
+        .wizard-progress-fill {
+            height: 100%;
+            background: var(--primary-500);
+            border-radius: var(--radius-full);
+            transition: width 0.3s ease;
+            width: 25%;
+        }
+
+        /* Wizard nav */
+        .wizard-nav {
+            display: flex;
+            gap: var(--space-3);
+            margin-top: var(--space-6);
+        }
+
+        .wizard-nav .btn {
+            margin-top: 0;
+            flex: 1;
+        }
+
+        /* Nights display */
+        .nights-display {
+            background: var(--primary-50);
+            color: var(--primary-700);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: var(--text-sm);
+            margin-bottom: var(--space-5);
+            text-align: center;
+        }
+
+        @media (min-width: 640px) {
+            .wizard-progress-mobile { display: none; }
+            .wizard-progress-desktop { display: flex; }
+        }
+
+        /* ===== VALIDATION ===== */
+        .field-error {
+            display: none;
+            font-size: var(--text-xs);
+            color: var(--error);
+            margin-top: var(--space-1);
+            font-weight: 500;
+        }
+
+        .field-error.show { display: block; }
+
+        .form-group.has-error input,
+        .form-group.has-error textarea,
+        .form-group.has-error select {
+            border-color: var(--error);
+        }
+
+        .form-group.has-error input:focus,
+        .form-group.has-error textarea:focus,
+        .form-group.has-error select:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+
+        .form-group.is-valid input,
+        .form-group.is-valid textarea,
+        .form-group.is-valid select {
+            border-color: var(--success);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .form-group.shake { animation: shake 0.3s ease; }
+
+        /* ===== LIVE PREVIEW ===== */
+        .preview-placeholder {
+            color: var(--gray-400);
+            font-style: italic;
+            border-bottom: 1px dashed var(--gray-300);
+        }
+
+        /* Floating preview button (mobile/tablet) */
+        .preview-fab {
+            display: none;
+            position: fixed;
+            bottom: var(--space-5);
+            right: var(--space-5);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            z-index: 1500;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .preview-fab:hover { transform: scale(1.1); box-shadow: var(--shadow-xl); }
+
+        /* Preview drawer (mobile full screen) */
+        .preview-drawer {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-container);
+            z-index: 2000;
+            overflow-y: auto;
+            padding: var(--space-4);
+            animation: slideUp 0.3s ease;
+        }
+
+        .preview-drawer.show { display: block; }
+
+        .preview-drawer-close {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) 0;
+            margin-bottom: var(--space-4);
+            background: var(--bg-container);
+            z-index: 1;
+        }
+
+        .preview-drawer-close h3 {
+            font-size: var(--text-lg);
+            color: var(--text-primary);
+        }
+
+        .preview-drawer-close button {
+            background: var(--gray-200);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* Desktop split-screen */
+        @media (min-width: 1024px) {
+            .container { max-width: 1400px; }
+            .form-container {
+                display: grid;
+                grid-template-columns: 55fr 45fr;
+                gap: var(--space-6);
+                align-items: start;
+            }
+            .wizard-progress { grid-column: 1 / -1; }
+            #contract-form { min-width: 0; }
+            .live-preview-panel {
+                display: block;
+                position: sticky;
+                top: var(--space-5);
+                max-height: calc(100vh - var(--space-10));
+                overflow-y: auto;
+                background: var(--bg-contract-preview);
+                border-radius: var(--radius-lg);
+                padding: var(--space-4);
+                border: 1px solid var(--border-default);
+            }
+            .live-preview-panel .contract-content {
+                padding: var(--space-8) var(--space-6);
+                font-size: 11px;
+            }
+            .live-preview-panel .contract-title { font-size: 14px; }
+            .live-preview-panel .contract-section p,
+            .live-preview-panel .contract-section li,
+            .live-preview-panel .signature-box p { font-size: 11px; }
+            .live-preview-panel .contract-section h3 { font-size: 12px; }
+            .live-preview-panel .signature-section { margin-top: 40px; gap: 30px; }
+            .live-preview-panel .signature-line { margin-top: 50px; }
+            .form-container.preview-hidden { grid-template-columns: 1fr; }
+            .form-container.preview-hidden .live-preview-panel { display: none; }
+            .preview-fab { display: none !important; }
+        }
+
+        /* Tablet/mobile: show FAB except on step 4 */
+        @media (max-width: 1023px) {
+            .live-preview-panel { display: none !important; }
+            .preview-fab { display: flex; }
+            .wizard-step[data-step="4"].active ~ .preview-fab { display: none; }
+        }
+
+        /* Animals section */
+        #animals-details { display: none; margin-top: var(--space-3); padding-left: var(--space-7); }
+        #animals-details.show { display: block; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-3); }
+        .checkbox-group label { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; font-weight: 400; }
+        .checkbox-group label input[type="checkbox"] { width: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Contrat de Location Saisonnière</h1>
+            <p>Nouveau contrat</p>
+            <button type="button" class="header-owner-btn" id="owner-header-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span id="owner-btn-label">Configurer le bailleur</span>
+            </button>
+        </div>
+
+        <div class="form-container">
+            <!-- Wizard Progress Bar -->
+            <div class="wizard-progress" id="wizard-progress">
+                <div class="wizard-progress-mobile" id="wizard-progress-mobile">
+                    <span id="wizard-step-text">1/4 - Logement</span>
+                    <div class="wizard-progress-bar"><div class="wizard-progress-fill" id="wizard-progress-fill"></div></div>
+                </div>
+                <div class="wizard-progress-desktop">
+                    <div class="wizard-step-indicator active" data-step="1"><span class="step-num">1</span><span class="step-label">Logement</span></div>
+                    <div class="wizard-line"></div>
+                    <div class="wizard-step-indicator" data-step="2"><span class="step-num">2</span><span class="step-label">Locataire</span></div>
+                    <div class="wizard-line"></div>
+                    <div class="wizard-step-indicator" data-step="3"><span class="step-num">3</span><span class="step-label">Location</span></div>
+                    <div class="wizard-line"></div>
+                    <div class="wizard-step-indicator" data-step="4"><span class="step-num">4</span><span class="step-label">Contrat</span></div>
+                </div>
+            </div>
+
+            <form id="contract-form">
+                <!-- Step 1: Logement -->
+                <div class="wizard-step active" data-step="1">
+                    <div class="section">
+                        <div class="section-header-flex">
+                            <h2 class="section-title" style="margin-bottom: 0;">Informations du Logement</h2>
+                            <button type="button" data-action="save-property" class="btn-save">Memoriser</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Type de logement <span class="required">*</span></label>
+                            <select id="property-type" required>
+                                <option value="">Selectionner...</option>
+                                <option value="Appartement">Appartement</option>
+                                <option value="Maison">Maison</option>
+                                <option value="Studio">Studio</option>
+                                <option value="Villa">Villa</option>
+                            </select>
+                        </div>
+                        <div class="form-group autocomplete-container">
+                            <label>Adresse du logement <span class="required">*</span></label>
+                            <textarea id="property-address" required placeholder="Commencez a taper votre adresse..." rows="3"></textarea>
+                            <div id="property-address-results" class="autocomplete-results"></div>
+                            <p class="address-helper">Tapez pour voir les suggestions d'adresses</p>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Surface (m2) <span class="required">*</span></label>
+                                <input type="number" id="property-surface" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre de pieces <span class="required">*</span></label>
+                                <input type="number" id="property-rooms" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre maximum d'occupants</label>
+                            <input type="number" id="property-max-occupants" min="1" value="4">
+                            <p class="address-helper">Capacite maximale autorisee pour ce logement</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Description et equipements</label>
+                            <textarea id="property-description" placeholder="Wifi, TV, cuisine equipee, lave-linge, parking..."></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Montant du forfait menage (EUR)</label>
+                                <input type="number" id="cleaning-fee-amount" step="0.01" value="50.00" min="0">
+                                <p class="address-helper">Ce montant sera propose comme forfait menage optionnel</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Taxe de sejour par personne/nuit (EUR)</label>
+                                <input type="number" id="tourist-tax-rate-default" step="0.01" value="0" min="0">
+                                <p class="address-helper">Tarif de la taxe de sejour pour ce logement</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Charges incluses</label>
+                            <textarea id="charges" placeholder="Eau, electricite, chauffage, wifi, menage..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="animals-allowed" style="width: auto; margin-right: 8px;">
+                                Autoriser les animaux de compagnie
+                            </label>
+                            <div id="animals-details">
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" id="animals-dogs"> Chiens</label>
+                                    <label><input type="checkbox" id="animals-cats"> Chats</label>
+                                    <label><input type="checkbox" id="animals-nac"> NAC (rongeurs, oiseaux...)</label>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group">
+                                        <label>Taille maximum</label>
+                                        <select id="animals-size">
+                                            <option value="petit">Petit (&lt;10 kg)</option>
+                                            <option value="moyen" selected>Moyen (10-25 kg)</option>
+                                            <option value="grand">Grand (&gt;25 kg)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nombre maximum d'animaux</label>
+                                        <input type="number" id="animals-max" min="1" value="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Locataire -->
+                <div class="wizard-step" data-step="2">
+                    <div class="section">
+                        <h2 class="section-title">Informations du Locataire</h2>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Nom <span class="required">*</span></label>
+                                <input type="text" id="tenant-lastname" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Prenom <span class="required">*</span></label>
+                                <input type="text" id="tenant-firstname" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Pays <span class="required">*</span></label>
+                            <select id="tenant-country" required>
+                                <option value="FR" selected>France</option>
+                                <option value="BE">Belgique</option>
+                                <option value="CH">Suisse</option>
+                                <option value="LU">Luxembourg</option>
+                                <option value="DE">Allemagne</option>
+                                <option value="ES">Espagne</option>
+                                <option value="IT">Italie</option>
+                                <option value="GB">Royaume-Uni</option>
+                                <option value="US">Etats-Unis</option>
+                                <option value="CA">Canada</option>
+                                <option value="OTHER">Autre pays</option>
+                            </select>
+                        </div>
+                        <div class="form-group autocomplete-container">
+                            <label>Adresse complete <span class="required">*</span></label>
+                            <textarea id="tenant-address" required placeholder="Commencez a taper votre adresse..." rows="3"></textarea>
+                            <div id="tenant-address-results" class="autocomplete-results"></div>
+                            <p class="address-helper">Tapez pour voir les suggestions d'adresses</p>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Telephone <span class="required">*</span></label>
+                                <input type="tel" id="tenant-phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="tenant-email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre de personnes <span class="required">*</span></label>
+                            <input type="number" id="tenant-persons" min="1" value="1" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Conditions -->
+                <div class="wizard-step" data-step="3">
+                    <div class="section">
+                        <h2 class="section-title">Conditions de Location</h2>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Date de debut <span class="required">*</span></label>
+                                <input type="date" id="start-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Date de fin <span class="required">*</span></label>
+                                <input type="date" id="end-date" required>
+                            </div>
+                        </div>
+                        <div id="nights-display" class="nights-display" style="display:none;"></div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Loyer total (EUR) <span class="required">*</span></label>
+                                <input type="number" id="rent" required step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Arrhes a la signature (EUR)</label>
+                                <input type="number" id="deposit" step="0.01" value="0">
+                                <p class="address-helper">Montant verse a la signature, deduit du total a l'arrivee</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="cleaning-option" style="width: auto; margin-right: 8px;">
+                                Forfait menage de fin de sejour (<span id="cleaning-fee-display">50,00</span> EUR)
+                            </label>
+                            <p class="address-helper" style="margin-left: 28px;">Comprend le nettoyage complet du logement apres le depart</p>
+                        </div>
+                        <input type="hidden" id="cleaning-fee" value="0">
+                        <div class="form-group">
+                            <label>Taxe de sejour totale (EUR)</label>
+                            <input type="number" id="tourist-tax-total" step="0.01" value="0" readonly style="background-color: var(--gray-100); color: var(--text-primary);">
+                            <p class="address-helper">Calculee automatiquement : <span id="tourist-tax-rate-display">0,00</span> EUR x personnes x nuits</p>
+                        </div>
+                        <input type="hidden" id="tourist-tax-rate" value="0">
+                    </div>
+                </div>
+
+                <!-- Step 4: Apercu -->
+                <div class="wizard-step" data-step="4">
+                    <div class="section">
+                        <h2 class="section-title">Apercu du Contrat</h2>
+                        <div id="contract-preview">
+                            <div class="contract-content" id="contract-content"></div>
+                            <div class="action-buttons">
+                                <button type="button" data-action="save-pdf" class="btn">Sauvegarder PDF</button>
+                                <button type="button" data-action="send-email" class="btn">Envoyer par mail</button>
+                                <button type="button" data-action="print" class="btn">Imprimer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wizard Navigation Buttons -->
+                <div class="wizard-nav" id="wizard-nav">
+                    <button type="button" class="btn btn-secondary" id="wizard-prev" style="display:none;">Precedent</button>
+                    <button type="button" class="btn" id="wizard-next">Suivant</button>
+                </div>
+            </form>
+
+            <!-- Live Preview Panel (desktop only) -->
+            <div class="live-preview-panel" id="live-preview-panel">
+                <div class="contract-content" id="live-preview-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview FAB (mobile/tablet) -->
+    <button class="preview-fab" id="preview-fab" title="Apercu du contrat">&#128196;</button>
+
+    <!-- Preview Drawer (mobile/tablet) -->
+    <div class="preview-drawer" id="preview-drawer">
+        <div class="preview-drawer-close">
+            <h3>Apercu du contrat</h3>
+            <button id="preview-drawer-close-btn">&times;</button>
+        </div>
+        <div class="contract-content" id="drawer-preview-content"></div>
+    </div>
+
+    <!-- Modal pour les instructions d'envoi par email -->
+    <div id="email-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>📧 Envoi du contrat par email</h2>
+            <p>Le PDF a été téléchargé et votre client email va s'ouvrir.</p>
+            <ol>
+                <li><strong>Le PDF est téléchargé</strong> dans votre dossier Téléchargements</li>
+                <li><strong>Votre email s'ouvrira</strong> avec le destinataire et le message pré-remplis</li>
+                <li><strong>Attachez le PDF</strong> téléchargé en cliquant sur le bouton "Joindre" ou "Pièce jointe"</li>
+                <li><strong>Vérifiez le contenu</strong> et cliquez sur "Envoyer"</li>
+            </ol>
+            <p style="font-size: 12px; color: #666; margin-top: 15px;">
+                Note : Pour des raisons de sécurité, les navigateurs ne permettent pas d'attacher automatiquement des fichiers aux emails.
+            </p>
+            <button data-action="close-email-modal" class="btn">J'ai compris</button>
+        </div>
+    </div>
+
+    <!-- Modal Bailleur -->
+    <div id="owner-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Informations du Bailleur</h2>
+            <div class="row">
+                <div class="form-group">
+                    <label>Nom <span class="required">*</span></label>
+                    <input type="text" id="owner-lastname">
+                </div>
+                <div class="form-group">
+                    <label>Prenom <span class="required">*</span></label>
+                    <input type="text" id="owner-firstname">
+                </div>
+            </div>
+            <div class="form-group autocomplete-container">
+                <label>Adresse complete <span class="required">*</span></label>
+                <textarea id="owner-address" placeholder="Commencez a taper votre adresse..." rows="3"></textarea>
+                <div id="owner-address-results" class="autocomplete-results"></div>
+                <p class="address-helper">Tapez pour voir les suggestions d'adresses</p>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Telephone</label>
+                    <input type="tel" id="owner-phone">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="owner-email">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Numero SIRET</label>
+                <input type="text" id="owner-siret" placeholder="Optionnel">
+            </div>
+            <button type="button" data-action="save-close-owner" class="btn">Memoriser et fermer</button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        // ===== CONFIG =====
+        var CONFIG = {
+            DEBOUNCE_MS: 300,
+            NOTIFICATION_DURATION_MS: 3000,
+            ADDRESS_MIN_CHARS: 3,
+            COUNTRY_NAMES: {
+                'BE': 'Belgique', 'CH': 'Suisse', 'LU': 'Luxembourg',
+                'DE': 'Allemagne', 'ES': 'Espagne', 'IT': 'Italie',
+                'GB': 'Royaume-Uni', 'US': '\u00C9tats-Unis', 'CA': 'Canada'
+            },
+            STORAGE_KEYS: {
+                OWNER: 'lmnp_owner_info',
+                PROPERTY: 'lmnp_property_info'
+            },
+            API: {
+                FR_ADDRESS: 'https://api-adresse.data.gouv.fr/search/',
+                NOMINATIM: 'https://nominatim.openstreetmap.org/search'
+            },
+            PDF: {
+                PAGE_WIDTH: 210,
+                PAGE_HEIGHT: 297,
+                MARGIN: 20,
+                SCALE: 2,
+                PX_PER_MM: 3.78,
+                HTML2CANVAS_URL: 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+                JSPDF_URL: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+            }
+        };
+
+        // ===== UTILS =====
+        var Utils = {
+            escapeHTML: function(str) {
+                if (!str) return '';
+                var div = document.createElement('div');
+                div.appendChild(document.createTextNode(str));
+                return div.innerHTML;
+            },
+            debounce: function(fn, ms) {
+                var timer;
+                return function() {
+                    var args = arguments, ctx = this;
+                    clearTimeout(timer);
+                    timer = setTimeout(function() { fn.apply(ctx, args); }, ms);
+                };
+            },
+            formatDate: function(date) {
+                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            },
+            formatDateShort: function(dateString) {
+                if (!dateString) return '';
+                var date = new Date(dateString);
+                return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            },
+            formatCurrency: function(value) {
+                return parseFloat(value || 0).toFixed(2);
+            },
+            storageGet: function(key) {
+                try { return localStorage.getItem(key); }
+                catch (e) { console.warn('localStorage read error:', e); return null; }
+            },
+            storageSet: function(key, value) {
+                try { localStorage.setItem(key, value); }
+                catch (e) { console.warn('localStorage write error:', e); }
+            },
+            $(id) { return document.getElementById(id); }
+        };
+
+        // ===== LIBRARIES LOADER =====
+        var _libsLoaded = false;
+        function loadLibraries() {
+            if (_libsLoaded || (typeof html2canvas !== 'undefined' && typeof jspdf !== 'undefined')) {
+                _libsLoaded = true;
+                return Promise.resolve();
+            }
+            var scripts = [CONFIG.PDF.HTML2CANVAS_URL, CONFIG.PDF.JSPDF_URL];
+            return Promise.all(scripts.map(function(src) {
+                return new Promise(function(resolve, reject) {
+                    var s = document.createElement('script');
+                    s.src = src;
+                    s.onload = resolve;
+                    s.onerror = reject;
+                    document.head.appendChild(s);
+                });
+            })).then(function() { _libsLoaded = true; });
+        }
+
+        // ===== SEARCH TIMEOUT =====
+        var searchTimeout = null;
+
+        // ===== PERSISTENCE =====
+        function saveOwnerInfo() {
+            var ownerData = {
+                lastname: Utils.$('owner-lastname').value,
+                firstname: Utils.$('owner-firstname').value,
+                address: Utils.$('owner-address').value,
+                phone: Utils.$('owner-phone').value,
+                email: Utils.$('owner-email').value,
+                siret: Utils.$('owner-siret').value
+            };
+            Utils.storageSet(CONFIG.STORAGE_KEYS.OWNER, JSON.stringify(ownerData));
+            showNotification('Informations du propri\u00E9taire sauvegard\u00E9es');
+        }
+
+        function loadOwnerInfo() {
+            var savedData = Utils.storageGet(CONFIG.STORAGE_KEYS.OWNER);
+            if (savedData) {
+                try {
+                    var d = JSON.parse(savedData);
+                    Utils.$('owner-lastname').value = d.lastname || '';
+                    Utils.$('owner-firstname').value = d.firstname || '';
+                    Utils.$('owner-address').value = d.address || '';
+                    Utils.$('owner-phone').value = d.phone || '';
+                    Utils.$('owner-email').value = d.email || '';
+                    Utils.$('owner-siret').value = d.siret || '';
+                } catch (e) { console.warn('Error parsing owner data:', e); }
+            }
+            updateOwnerButton();
+            // Auto-open modal if required owner fields are missing
+            if (!Utils.$('owner-lastname').value.trim() || !Utils.$('owner-firstname').value.trim() || !Utils.$('owner-address').value.trim()) {
+                setTimeout(showOwnerModal, 300);
+            }
+        }
+
+        function savePropertyInfo() {
+            var propertyData = {
+                type: Utils.$('property-type').value,
+                address: Utils.$('property-address').value,
+                surface: Utils.$('property-surface').value,
+                rooms: Utils.$('property-rooms').value,
+                description: Utils.$('property-description').value,
+                cleaningFeeAmount: Utils.$('cleaning-fee-amount').value,
+                touristTaxRate: Utils.$('tourist-tax-rate-default').value,
+                charges: Utils.$('charges').value,
+                maxOccupants: Utils.$('property-max-occupants').value,
+                animalsAllowed: Utils.$('animals-allowed').checked,
+                animalsDogs: Utils.$('animals-dogs').checked,
+                animalsCats: Utils.$('animals-cats').checked,
+                animalsNac: Utils.$('animals-nac').checked,
+                animalsSize: Utils.$('animals-size').value,
+                animalsMax: Utils.$('animals-max').value
+            };
+            Utils.storageSet(CONFIG.STORAGE_KEYS.PROPERTY, JSON.stringify(propertyData));
+            showNotification('Informations du logement sauvegard\u00E9es');
+        }
+
+        function loadPropertyInfo() {
+            var savedData = Utils.storageGet(CONFIG.STORAGE_KEYS.PROPERTY);
+            if (savedData) {
+                try {
+                    var d = JSON.parse(savedData);
+                    Utils.$('property-type').value = d.type || '';
+                    Utils.$('property-address').value = d.address || '';
+                    Utils.$('property-surface').value = d.surface || '';
+                    Utils.$('property-rooms').value = d.rooms || '';
+                    Utils.$('property-description').value = d.description || '';
+                    if (d.cleaningFeeAmount) {
+                        Utils.$('cleaning-fee-amount').value = parseFloat(d.cleaningFeeAmount).toFixed(2);
+                        updateCleaningFeeDisplay();
+                    }
+                    if (d.touristTaxRate) {
+                        var taxRate = parseFloat(d.touristTaxRate).toFixed(2);
+                        Utils.$('tourist-tax-rate-default').value = taxRate;
+                        Utils.$('tourist-tax-rate').value = taxRate;
+                        updateTouristTaxRateDisplay();
+                    }
+                    if (d.charges) {
+                        Utils.$('charges').value = d.charges;
+                    }
+                    if (d.maxOccupants) {
+                        Utils.$('property-max-occupants').value = d.maxOccupants;
+                        applyMaxOccupants();
+                    }
+                    if (d.animalsAllowed) {
+                        Utils.$('animals-allowed').checked = true;
+                        Utils.$('animals-dogs').checked = !!d.animalsDogs;
+                        Utils.$('animals-cats').checked = !!d.animalsCats;
+                        Utils.$('animals-nac').checked = !!d.animalsNac;
+                        if (d.animalsSize) Utils.$('animals-size').value = d.animalsSize;
+                        if (d.animalsMax) Utils.$('animals-max').value = d.animalsMax;
+                        toggleAnimalsDetails();
+                    }
+                } catch (e) { console.warn('Error parsing property data:', e); }
+            }
+        }
+
+        // ===== NOTIFICATIONS =====
+        function showNotification(message) {
+            var notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(function() { notification.remove(); }, CONFIG.NOTIFICATION_DURATION_MS);
+        }
+
+        // ===== ADDRESS AUTOCOMPLETE =====
+        function updateTenantAddressPlaceholder() {
+            var country = Utils.$('tenant-country').value;
+            var textarea = Utils.$('tenant-address');
+            if (country === 'OTHER') {
+                textarea.placeholder = 'Saisissez manuellement l\'adresse compl\u00E8te avec code postal, ville et pays';
+            } else {
+                textarea.placeholder = 'Commencez \u00E0 taper votre adresse pour voir les suggestions...';
+            }
+        }
+
+        function searchAddress(type) {
+            var textarea = Utils.$(type + '-address');
+            var resultsDiv = Utils.$(type + '-address-results');
+            var lines = textarea.value.split('\n');
+            var query = lines[0].trim();
+
+            if (searchTimeout) clearTimeout(searchTimeout);
+
+            if (query.length < CONFIG.ADDRESS_MIN_CHARS) {
+                resultsDiv.classList.remove('show');
+                return;
+            }
+
+            var country = 'FR';
+            if (type === 'tenant') {
+                country = Utils.$('tenant-country').value;
+                if (country === 'OTHER') {
+                    resultsDiv.classList.remove('show');
+                    return;
+                }
+            }
+
+            searchTimeout = setTimeout(function() {
+                (async function() {
+                    try {
+                        if (country === 'FR') {
+                            var response = await fetch(CONFIG.API.FR_ADDRESS + '?q=' + encodeURIComponent(query) + '&limit=5');
+                            var data = await response.json();
+                            if (data.features && data.features.length > 0) {
+                                displayAddressSuggestions(data.features, type);
+                            } else {
+                                resultsDiv.innerHTML = '<div class="autocomplete-item"><div class="address-main">Aucune adresse trouv\u00E9e</div></div>';
+                                resultsDiv.classList.add('show');
+                            }
+                        } else {
+                            var countryCode = country.toLowerCase();
+                            var response = await fetch(CONFIG.API.NOMINATIM + '?format=json&q=' + encodeURIComponent(query) + '&countrycodes=' + countryCode + '&limit=5&addressdetails=1', {
+                                headers: { 'User-Agent': 'LMNP-Contract-Generator' }
+                            });
+                            var data = await response.json();
+                            if (data && data.length > 0) {
+                                displayAddressSuggestionsNominatim(data, type, country);
+                            } else {
+                                resultsDiv.innerHTML = '<div class="autocomplete-item"><div class="address-main">Aucune adresse trouv\u00E9e</div></div>';
+                                resultsDiv.classList.add('show');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Erreur recherche adresse:', error);
+                        resultsDiv.innerHTML = '<div class="autocomplete-item"><div class="address-main">Erreur de recherche</div></div>';
+                        resultsDiv.classList.add('show');
+                    }
+                })();
+            }, CONFIG.DEBOUNCE_MS);
+        }
+
+        function displayAddressSuggestions(features, type) {
+            var resultsDiv = Utils.$(type + '-address-results');
+            resultsDiv.innerHTML = '';
+            resultsDiv.setAttribute('role', 'listbox');
+            var input = Utils.$(type + '-address');
+            if (input) input.setAttribute('aria-expanded', 'true');
+            features.forEach(function(feature, idx) {
+                var props = feature.properties;
+                var item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.setAttribute('role', 'option');
+                item.setAttribute('id', type + '-option-' + idx);
+                item.setAttribute('tabindex', '-1');
+                var mainAddress = document.createElement('div');
+                mainAddress.className = 'address-main';
+                mainAddress.textContent = props.name;
+                var details = document.createElement('div');
+                details.className = 'address-details';
+                details.textContent = props.postcode + ' ' + props.city;
+                item.appendChild(mainAddress);
+                item.appendChild(details);
+                item.addEventListener('click', function() { selectAddress(props, type); });
+                resultsDiv.appendChild(item);
+            });
+            resultsDiv.classList.add('show');
+        }
+
+        function displayAddressSuggestionsNominatim(results, type, countryCode) {
+            var resultsDiv = Utils.$(type + '-address-results');
+            resultsDiv.innerHTML = '';
+            resultsDiv.setAttribute('role', 'listbox');
+            var input = Utils.$(type + '-address');
+            if (input) input.setAttribute('aria-expanded', 'true');
+            results.forEach(function(result, idx) {
+                var addr = result.address;
+                var item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                var mainAddress = document.createElement('div');
+                mainAddress.className = 'address-main';
+                var addressParts = [];
+                if (addr.house_number) addressParts.push(addr.house_number);
+                if (addr.road) addressParts.push(addr.road);
+                mainAddress.textContent = addressParts.join(' ') || result.display_name.split(',')[0];
+                var details = document.createElement('div');
+                details.className = 'address-details';
+                var detailsParts = [];
+                if (addr.postcode) detailsParts.push(addr.postcode);
+                if (addr.city || addr.town || addr.village) detailsParts.push(addr.city || addr.town || addr.village);
+                if (CONFIG.COUNTRY_NAMES[countryCode]) detailsParts.push(CONFIG.COUNTRY_NAMES[countryCode]);
+                details.textContent = detailsParts.join(' ');
+                item.appendChild(mainAddress);
+                item.appendChild(details);
+                item.setAttribute('role', 'option');
+                item.setAttribute('id', type + '-nom-option-' + idx);
+                item.setAttribute('tabindex', '-1');
+                item.addEventListener('click', function() { selectAddressNominatim(result, type, countryCode); });
+                resultsDiv.appendChild(item);
+            });
+            resultsDiv.classList.add('show');
+        }
+
+        function selectAddress(address, type) {
+            var textarea = Utils.$(type + '-address');
+            var resultsDiv = Utils.$(type + '-address-results');
+            textarea.value = address.name + '\n' + address.postcode + ' ' + address.city;
+            resultsDiv.classList.remove('show');
+            textarea.setAttribute('aria-expanded', 'false');
+        }
+
+        function selectAddressNominatim(result, type, countryCode) {
+            var textarea = Utils.$(type + '-address');
+            var resultsDiv = Utils.$(type + '-address-results');
+            var addr = result.address;
+            var fullAddressParts = [];
+            var streetParts = [];
+            if (addr.house_number) streetParts.push(addr.house_number);
+            if (addr.road) streetParts.push(addr.road);
+            if (streetParts.length > 0) fullAddressParts.push(streetParts.join(' '));
+            var cityLine = [];
+            if (addr.postcode) cityLine.push(addr.postcode);
+            if (addr.city || addr.town || addr.village) cityLine.push(addr.city || addr.town || addr.village);
+            if (cityLine.length > 0) fullAddressParts.push(cityLine.join(' '));
+            if (CONFIG.COUNTRY_NAMES[countryCode]) fullAddressParts.push(CONFIG.COUNTRY_NAMES[countryCode]);
+            textarea.value = fullAddressParts.join('\n');
+            resultsDiv.classList.remove('show');
+            textarea.setAttribute('aria-expanded', 'false');
+        }
+
+        // ===== FINANCIAL CALCULATIONS =====
+        function updateCleaningFeeDisplay() {
+            var amount = Utils.$('cleaning-fee-amount').value;
+            var el = Utils.$('cleaning-fee-display');
+            if (el) el.textContent = parseFloat(amount || 0).toFixed(2).replace('.', ',');
+        }
+
+        function updateTouristTaxRateDisplay() {
+            var rate = Utils.$('tourist-tax-rate-default').value;
+            var el = Utils.$('tourist-tax-rate-display');
+            if (el) el.textContent = parseFloat(rate || 0).toFixed(2).replace('.', ',');
+            Utils.$('tourist-tax-rate').value = rate;
+            calculateTouristTax();
+        }
+
+        function updateCleaningFee() {
+            var checkbox = Utils.$('cleaning-option');
+            var feeInput = Utils.$('cleaning-fee');
+            var amountInput = Utils.$('cleaning-fee-amount');
+            feeInput.value = checkbox.checked ? amountInput.value : '0.00';
+            updateDeposit();
+        }
+
+        function updateDeposit() {
+            var rent = parseFloat(Utils.$('rent').value) || 0;
+            var cleaningFee = Utils.$('cleaning-option').checked ? (parseFloat(Utils.$('cleaning-fee-amount').value) || 0) : 0;
+            var deposit = (rent * 0.10) + cleaningFee;
+            Utils.$('deposit').value = deposit > 0 ? deposit.toFixed(2) : '0';
+        }
+
+        function applyMaxOccupants() {
+            var max = parseInt(Utils.$('property-max-occupants').value) || '';
+            var personsEl = Utils.$('tenant-persons');
+            personsEl.max = max;
+            if (max && parseInt(personsEl.value) > max) {
+                personsEl.value = max;
+            }
+        }
+
+        function toggleAnimalsDetails() {
+            var details = Utils.$('animals-details');
+            if (Utils.$('animals-allowed').checked) {
+                details.classList.add('show');
+            } else {
+                details.classList.remove('show');
+            }
+        }
+
+        function getAnimalsText(esc) {
+            var allowed = Utils.$('animals-allowed').checked;
+            if (!allowed) return null;
+            var types = [];
+            if (Utils.$('animals-dogs').checked) types.push('Chiens');
+            if (Utils.$('animals-cats').checked) types.push('Chats');
+            if (Utils.$('animals-nac').checked) types.push('NAC');
+            var sizeMap = { petit: 'Petit (<10 kg)', moyen: 'Moyen (10-25 kg)', grand: 'Grand (>25 kg)' };
+            var size = sizeMap[Utils.$('animals-size').value] || '';
+            var max = Utils.$('animals-max').value || '1';
+            return {
+                types: types,
+                typesText: types.length > 0 ? types.join(', ') : 'Tous types',
+                size: size,
+                max: max
+            };
+        }
+
+        function calculateTouristTax() {
+            var startDate = Utils.$('start-date').value;
+            var endDate = Utils.$('end-date').value;
+            var persons = parseInt(Utils.$('tenant-persons').value) || 0;
+            var taxRate = parseFloat(Utils.$('tourist-tax-rate').value) || 0;
+            if (startDate && endDate && persons > 0 && taxRate > 0) {
+                var start = new Date(startDate);
+                var end = new Date(endDate);
+                var nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                if (nights > 0) {
+                    Utils.$('tourist-tax-total').value = (nights * persons * taxRate).toFixed(2);
+                    return;
+                }
+            }
+            Utils.$('tourist-tax-total').value = '0.00';
+        }
+
+        // ===== LIVE PREVIEW RENDERER =====
+        var ContractRenderer = {
+            ph: function(text) { return '<span class="preview-placeholder">[' + text + ']</span>'; },
+            getFormData: function() {
+                return {
+                    owner: {
+                        lastname: Utils.$('owner-lastname').value || '',
+                        firstname: Utils.$('owner-firstname').value || '',
+                        address: Utils.$('owner-address').value || '',
+                        siret: Utils.$('owner-siret').value || '',
+                        phone: Utils.$('owner-phone').value || ''
+                    },
+                    tenant: {
+                        lastname: Utils.$('tenant-lastname').value || '',
+                        firstname: Utils.$('tenant-firstname').value || '',
+                        address: Utils.$('tenant-address').value || '',
+                        phone: Utils.$('tenant-phone').value || '',
+                        email: Utils.$('tenant-email').value || '',
+                        persons: Utils.$('tenant-persons').value || '1'
+                    },
+                    property: {
+                        type: Utils.$('property-type').value || '',
+                        address: Utils.$('property-address').value || '',
+                        surface: Utils.$('property-surface').value || '',
+                        rooms: Utils.$('property-rooms').value || '',
+                        description: Utils.$('property-description').value || '',
+                        animals: getAnimalsText()
+                    },
+                    rental: {
+                        startDate: Utils.$('start-date').value || '',
+                        endDate: Utils.$('end-date').value || '',
+                        rent: Utils.$('rent').value || '',
+                        deposit: Utils.$('deposit').value || '0',
+                        cleaningFee: Utils.$('cleaning-fee').value || '0',
+                        touristTaxRate: Utils.$('tourist-tax-rate').value || '0',
+                        touristTaxTotal: Utils.$('tourist-tax-total').value || '0',
+                        charges: Utils.$('charges').value || ''
+                    }
+                };
+            },
+            v: function(val, placeholder) {
+                var esc = Utils.escapeHTML(val);
+                return esc ? esc : this.ph(placeholder);
+            },
+            renderFull: function(data) {
+                var r = this;
+                var esc = Utils.escapeHTML;
+                var ownerName = r.v(data.owner.firstname, 'Pr\u00E9nom') + ' ' + r.v(data.owner.lastname, 'Nom');
+                var ownerAddr = data.owner.address ? esc(data.owner.address).replace(/\n/g, '<br>') : r.ph('Adresse');
+                var tenantName = r.v(data.tenant.firstname, 'Pr\u00E9nom') + ' ' + r.v(data.tenant.lastname, 'Nom');
+                var tenantAddr = data.tenant.address ? esc(data.tenant.address).replace(/\n/g, '<br>') : r.ph('Adresse');
+                var propAddr = data.property.address ? esc(data.property.address).replace(/\n/g, '<br>') : r.ph('Adresse');
+
+                var startDate = data.rental.startDate ? new Date(data.rental.startDate) : null;
+                var endDate = data.rental.endDate ? new Date(data.rental.endDate) : null;
+                var duration = (startDate && endDate) ? Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) : 0;
+                var cleaningFee = parseFloat(data.rental.cleaningFee || 0);
+                var rent = parseFloat(data.rental.rent || 0);
+                var touristTax = parseFloat(data.rental.touristTaxTotal || 0);
+                var totalAmount = rent + touristTax + cleaningFee;
+                var deposit = parseFloat(data.rental.deposit || 0);
+
+                var html = '<div class="contract-header">'
+                    + '<div class="contract-title">Contrat de Location Meubl\u00E9e Saisonni\u00E8re</div>'
+                    + '<div class="contract-subtitle">(Article L.324-1-1 du Code du Tourisme)</div></div>'
+                    + '<div class="parties-section">'
+                    + '<p style="font-weight:bold;margin-bottom:15px;">ENTRE LES SOUSSIGN\u00C9S :</p>'
+                    + '<div class="party-info"><p style="font-weight:bold;">LE BAILLEUR :</p><p>'
+                    + ownerName + '<br>Demeurant : ' + ownerAddr + '<br>'
+                    + (data.owner.siret ? 'SIRET : ' + esc(data.owner.siret) + '<br>' : '')
+                    + (data.owner.phone ? 'T\u00E9l\u00E9phone : ' + esc(data.owner.phone) : '')
+                    + '</p></div>'
+                    + '<p style="text-align:center;font-weight:bold;margin:20px 0;">D\'UNE PART,</p>'
+                    + '<div class="party-info"><p style="font-weight:bold;">LE LOCATAIRE :</p><p>'
+                    + tenantName + '<br>Demeurant : ' + tenantAddr + '<br>'
+                    + 'T\u00E9l\u00E9phone : ' + r.v(data.tenant.phone, 'T\u00E9l\u00E9phone')
+                    + (data.tenant.email ? '<br>Email : ' + esc(data.tenant.email) : '')
+                    + '</p></div>'
+                    + '<p style="text-align:center;font-weight:bold;margin:20px 0;">D\'AUTRE PART,</p></div>'
+                    + '<p style="font-weight:bold;margin:30px 0 20px 0;">IL A \u00C9T\u00C9 CONVENU ET ARR\u00CAT\u00C9 CE QUI SUIT :</p>';
+
+                // Article 1
+                html += '<div class="contract-section"><h3>ARTICLE 1 - OBJET DU CONTRAT</h3>'
+                    + '<p>Le Bailleur loue au Locataire un logement meubl\u00E9 \u00E0 usage d\'habitation pour une occupation de courte dur\u00E9e.</p></div>';
+
+                // Article 2
+                var animalsLine = '';
+                if (data.property.animals) {
+                    animalsLine = '<br>\u2022 Animaux : Autoris\u00E9s (' + esc(data.property.animals.typesText) + ', ' + esc(data.property.animals.size) + ', max ' + esc(data.property.animals.max) + ')';
+                } else {
+                    animalsLine = '<br>\u2022 Animaux : Non autoris\u00E9s';
+                }
+                html += '<div class="contract-section"><h3>ARTICLE 2 - D\u00C9SIGNATION DU LOGEMENT</h3>'
+                    + '<p style="padding-left:20px;">\u2022 Type : ' + r.v(data.property.type, 'Type') + '<br>'
+                    + '\u2022 Adresse : ' + propAddr + '<br>'
+                    + '\u2022 Surface : ' + r.v(data.property.surface, '...') + ' m\u00B2<br>'
+                    + '\u2022 Pi\u00E8ces : ' + r.v(data.property.rooms, '...') + animalsLine + '</p>'
+                    + (data.property.description ? '<p><strong>\u00C9quipements :</strong> ' + esc(data.property.description) + '</p>' : '')
+                    + '</div>';
+
+                // Article 3
+                html += '<div class="contract-section"><h3>ARTICLE 3 - DUR\u00C9E</h3>'
+                    + '<p>Dur\u00E9e : <strong>' + (duration > 0 ? duration + ' jour(s)' : r.ph('...')) + '</strong></p>'
+                    + '<p style="padding-left:20px;">'
+                    + '<strong>Arriv\u00E9e :</strong> ' + (startDate ? Utils.formatDate(startDate) : r.ph('Date')) + ' \u00E0 16h00<br>'
+                    + '<strong>D\u00E9part :</strong> ' + (endDate ? Utils.formatDate(endDate) : r.ph('Date')) + ' avant 11h00</p>'
+                    + '<p>Occupants : <strong>' + esc(data.tenant.persons) + ' personne(s)</strong></p></div>';
+
+                // Article 4
+                html += '<div class="contract-section"><h3>ARTICLE 4 - CONDITIONS FINANCI\u00C8RES</h3>'
+                    + '<p style="padding-left:20px;">Loyer : <strong>' + (rent > 0 ? rent.toFixed(2) : '---') + ' \u20AC</strong><br>'
+                    + (cleaningFee > 0 ? 'Forfait m\u00E9nage : <strong>' + cleaningFee.toFixed(2) + ' \u20AC</strong><br>' : '')
+                    + (touristTax > 0 ? 'Taxe de s\u00E9jour : <strong>' + touristTax.toFixed(2) + ' \u20AC</strong><br>' : '')
+                    + '<strong>Total : ' + (totalAmount > 0 ? totalAmount.toFixed(2) : '---') + ' \u20AC</strong></p>';
+                if (deposit > 0) {
+                    html += '<p>Arrhes : <strong>' + deposit.toFixed(2) + ' \u20AC</strong> - Solde : <strong>' + (totalAmount - deposit).toFixed(2) + ' \u20AC</strong></p>';
+                }
+                html += '</div>';
+
+                // Articles 5-10
+                var animalsArticle6 = data.property.animals
+                    ? 'Animaux autoris\u00E9s (' + esc(data.property.animals.typesText) + ', taille max : ' + esc(data.property.animals.size) + ', max ' + esc(data.property.animals.max) + ' animal(aux)).'
+                    : 'Aucun animal n\'est autoris\u00E9 dans le logement.';
+                html += '<div class="contract-section"><h3>ARTICLE 5 - REMISE DES CL\u00C9S</h3><p>\u00C9tat des lieux contradictoire obligatoire.</p></div>'
+                    + '<div class="contract-section"><h3>ARTICLE 6 - OBLIGATIONS DU LOCATAIRE</h3><p>Occupation paisible, respect du r\u00E8glement, pas de sous-location. ' + animalsArticle6 + '</p></div>'
+                    + '<div class="contract-section"><h3>ARTICLE 7 - OBLIGATIONS DU BAILLEUR</h3><p>Logement d\u00E9cent, jouissance paisible, entretien.</p></div>'
+                    + '<div class="contract-section"><h3>ARTICLE 8 - ASSURANCES</h3><p>Assurance vill\u00E9giature obligatoire pour le locataire.</p></div>'
+                    + '<div class="contract-section"><h3>ARTICLE 9 - R\u00C9SILIATION</h3><p>R\u00E9siliation de plein droit en cas de manquement.</p></div>'
+                    + '<div class="contract-section"><h3>ARTICLE 10 - LITIGES</h3><p>Droit fran\u00E7ais applicable, solution amiable privil\u00E9gi\u00E9e.</p></div>';
+
+                // Signatures
+                html += '<div class="date-location"><p>Fait \u00E0 ................, le ' + Utils.formatDate(new Date()) + '</p></div>'
+                    + '<div class="signature-section">'
+                    + '<div class="signature-box"><p style="font-weight:bold;">Le Bailleur</p><p>' + ownerName + '</p><div class="signature-line"></div></div>'
+                    + '<div class="signature-box"><p style="font-weight:bold;">Le Locataire</p><p>' + tenantName + '</p><div class="signature-line"></div></div></div>';
+
+                return html;
+            },
+            updatePreview: function() {
+                var data = this.getFormData();
+                var html = this.renderFull(data);
+                var livePanel = Utils.$('live-preview-content');
+                if (livePanel) livePanel.innerHTML = html;
+                var drawerContent = Utils.$('drawer-preview-content');
+                if (drawerContent) drawerContent.innerHTML = html;
+            }
+        };
+
+        var _previewDebounceTimer;
+        function schedulePreviewUpdate() {
+            clearTimeout(_previewDebounceTimer);
+            _previewDebounceTimer = setTimeout(function() { ContractRenderer.updatePreview(); }, 250);
+        }
+
+        // ===== CONTRACT GENERATION =====
+        function generateContract() {
+            var startDateVal = Utils.$('start-date').value;
+            var endDateVal = Utils.$('end-date').value;
+
+            // Validation date fin > date debut
+            if (startDateVal && endDateVal && new Date(endDateVal) <= new Date(startDateVal)) {
+                showNotification('La date de fin doit \u00EAtre post\u00E9rieure \u00E0 la date de d\u00E9but');
+                return;
+            }
+
+            var data = {
+                owner: {
+                    lastname: Utils.$('owner-lastname').value,
+                    firstname: Utils.$('owner-firstname').value,
+                    address: Utils.$('owner-address').value,
+                    siret: Utils.$('owner-siret').value,
+                    phone: Utils.$('owner-phone').value
+                },
+                tenant: {
+                    lastname: Utils.$('tenant-lastname').value,
+                    firstname: Utils.$('tenant-firstname').value,
+                    country: Utils.$('tenant-country').value,
+                    address: Utils.$('tenant-address').value,
+                    phone: Utils.$('tenant-phone').value,
+                    email: Utils.$('tenant-email').value,
+                    persons: Utils.$('tenant-persons').value
+                },
+                property: {
+                    type: Utils.$('property-type').value,
+                    address: Utils.$('property-address').value,
+                    surface: Utils.$('property-surface').value,
+                    rooms: Utils.$('property-rooms').value,
+                    description: Utils.$('property-description').value,
+                    animals: getAnimalsText()
+                },
+                rental: {
+                    startDate: startDateVal,
+                    endDate: endDateVal,
+                    rent: Utils.$('rent').value,
+                    deposit: Utils.$('deposit').value,
+                    cleaningOption: Utils.$('cleaning-option').checked,
+                    cleaningFee: Utils.$('cleaning-fee').value,
+                    touristTaxRate: Utils.$('tourist-tax-rate').value,
+                    touristTaxTotal: Utils.$('tourist-tax-total').value,
+                    charges: Utils.$('charges').value
+                }
+            };
+
+            var startDate = new Date(data.rental.startDate);
+            var endDate = new Date(data.rental.endDate);
+            var today = new Date();
+            var duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+            var cleaningFee = parseFloat(data.rental.cleaningFee || 0);
+            var totalAmount = parseFloat(data.rental.rent) + parseFloat(data.rental.touristTaxTotal || 0) + cleaningFee;
+
+            // Escape all user data for XSS protection
+            var esc = Utils.escapeHTML;
+            var ownerName = esc(data.owner.firstname) + ' ' + esc(data.owner.lastname);
+            var ownerAddr = esc(data.owner.address).replace(/\n/g, '<br>');
+            var ownerSiret = data.owner.siret ? 'SIRET : ' + esc(data.owner.siret) + '<br>' : '';
+            var ownerPhone = data.owner.phone ? 'T\u00E9l\u00E9phone : ' + esc(data.owner.phone) : '';
+            var tenantName = esc(data.tenant.firstname) + ' ' + esc(data.tenant.lastname);
+            var tenantAddr = esc(data.tenant.address).replace(/\n/g, '<br>');
+            var tenantPhone = esc(data.tenant.phone);
+            var tenantEmail = data.tenant.email ? 'Email : ' + esc(data.tenant.email) : '';
+            var propType = esc(data.property.type);
+            var propAddr = esc(data.property.address).replace(/\n/g, '<br>');
+            var propSurface = esc(data.property.surface);
+            var propRooms = esc(data.property.rooms);
+            var propDesc = data.property.description ? '<p><strong>\u00C9quipements et prestations :</strong><br>' + esc(data.property.description) + '</p>' : '';
+            var tenantPersons = esc(data.tenant.persons);
+            var chargesText = data.rental.charges ? 'Le loyer comprend : ' + esc(data.rental.charges) : 'Le loyer comprend toutes les charges (eau, \u00E9lectricit\u00E9, chauffage, internet).';
+
+            var contractHTML = '<div class="contract-header">'
+                + '<div class="contract-title">Contrat de Location Meubl\u00E9e Saisonni\u00E8re</div>'
+                + '<div class="contract-subtitle">(Article L.324-1-1 du Code du Tourisme)</div>'
+                + '</div>'
+
+                + '<div class="parties-section">'
+                + '<p style="font-weight: bold; margin-bottom: 15px;">ENTRE LES SOUSSIGN\u00C9S :</p>'
+                + '<div class="party-info">'
+                + '<p style="font-weight: bold;">LE BAILLEUR :</p>'
+                + '<p>' + ownerName + '<br>Demeurant : ' + ownerAddr + '<br>' + ownerSiret + ownerPhone + '</p>'
+                + '<p style="text-align: right; font-style: italic;">Ci-apr\u00E8s d\u00E9nomm\u00E9 \u00AB le Bailleur \u00BB</p>'
+                + '</div>'
+                + '<p style="text-align: center; font-weight: bold; margin: 20px 0;">D\'UNE PART,</p>'
+                + '<div class="party-info">'
+                + '<p style="font-weight: bold;">LE LOCATAIRE :</p>'
+                + '<p>' + tenantName + '<br>Demeurant : ' + tenantAddr + '<br>T\u00E9l\u00E9phone : ' + tenantPhone + '<br>' + tenantEmail + '</p>'
+                + '<p style="text-align: right; font-style: italic;">Ci-apr\u00E8s d\u00E9nomm\u00E9 \u00AB le Locataire \u00BB</p>'
+                + '</div>'
+                + '<p style="text-align: center; font-weight: bold; margin: 20px 0;">D\'AUTRE PART,</p>'
+                + '</div>'
+
+                + '<p style="font-weight: bold; margin: 30px 0 20px 0;">IL A \u00C9T\u00C9 CONVENU ET ARR\u00CAT\u00C9 CE QUI SUIT :</p>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 1 - OBJET DU CONTRAT</h3>'
+                + '<p>Le Bailleur loue au Locataire, qui accepte, un logement meubl\u00E9 \u00E0 usage d\'habitation pour une '
+                + 'occupation de courte dur\u00E9e \u00E0 titre de r\u00E9sidence temporaire, dans le cadre d\'une location saisonni\u00E8re '
+                + 'conform\u00E9ment \u00E0 l\'article L.324-1-1 du Code du Tourisme.</p>'
+                + '<p>Cette location ne peut en aucun cas \u00EAtre consid\u00E9r\u00E9e comme \u00E9tant la r\u00E9sidence principale du Locataire.</p>'
+                + '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 2 - D\u00C9SIGNATION DU LOGEMENT</h3>'
+                + '<p>Le logement lou\u00E9 est d\u00E9sign\u00E9 comme suit :</p>'
+                + '<p style="padding-left: 20px;">'
+                + '\u2022 Type de bien : ' + propType + '<br>'
+                + '\u2022 Adresse : ' + propAddr + '<br>'
+                + '\u2022 Surface habitable : ' + propSurface + ' m\u00B2<br>'
+                + '\u2022 Nombre de pi\u00E8ces : ' + propRooms + '<br>'
+                + '\u2022 Animaux de compagnie : ' + (data.property.animals ? 'Autoris\u00E9s (' + esc(data.property.animals.typesText) + ', taille max : ' + esc(data.property.animals.size) + ', max ' + esc(data.property.animals.max) + ' animal(aux))' : 'Non autoris\u00E9s')
+                + '</p>'
+                + propDesc
+                + '<p>Le logement est lou\u00E9 meubl\u00E9 et \u00E9quip\u00E9 conform\u00E9ment \u00E0 l\'inventaire d\u00E9taill\u00E9 annex\u00E9 au pr\u00E9sent contrat, '
+                + 'permettant au Locataire d\'y habiter normalement avec tous les \u00E9quipements n\u00E9cessaires.</p>'
+                + '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 3 - DUR\u00C9E DE LA LOCATION</h3>'
+                + '<p>Le pr\u00E9sent contrat est conclu pour une dur\u00E9e d\u00E9termin\u00E9e de <strong>' + duration + ' jour(s)</strong>, soit :</p>'
+                + '<p style="padding-left: 20px;">'
+                + '<strong>Date d\'arriv\u00E9e :</strong> ' + Utils.formatDate(startDate) + ' \u00E0 partir de 16h00<br>'
+                + '<strong>Date de d\u00E9part :</strong> ' + Utils.formatDate(endDate) + ' avant 11h00'
+                + '</p>'
+                + '<p>Le logement sera occup\u00E9 par <strong>' + tenantPersons + ' personne(s)</strong> maximum. '
+                + 'Toute occupation d\u00E9passant le nombre de personnes autoris\u00E9es pourra entra\u00EEner la r\u00E9siliation '
+                + 'imm\u00E9diate du pr\u00E9sent contrat.</p>'
+                + '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 4 - CONDITIONS FINANCI\u00C8RES</h3>'
+                + '<p><strong>4.1 - Loyer et charges</strong></p>'
+                + '<p style="padding-left: 20px;">'
+                + 'Le loyer pour la p\u00E9riode de location est fix\u00E9 \u00E0 : <strong>' + Utils.formatCurrency(data.rental.rent) + ' \u20AC</strong><br>'
+                + (cleaningFee > 0 ? 'Forfait m\u00E9nage de fin de s\u00E9jour : <strong>' + cleaningFee.toFixed(2) + ' \u20AC</strong><br>' : '')
+                + (data.rental.touristTaxTotal > 0 ? 'Taxe de s\u00E9jour (' + parseFloat(data.rental.touristTaxRate).toFixed(2) + ' \u20AC \u00D7 ' + data.tenant.persons + ' personne(s) \u00D7 ' + duration + ' nuit(s)) : <strong>' + parseFloat(data.rental.touristTaxTotal).toFixed(2) + ' \u20AC</strong><br>' : '')
+                + '<strong>Montant total : ' + totalAmount.toFixed(2) + ' \u20AC</strong>'
+                + '</p>'
+                + '<p>' + chargesText + '</p>'
+                + (cleaningFee > 0 ? '<p><strong>Forfait m\u00E9nage :</strong> Le Locataire a choisi l\'option forfait m\u00E9nage de fin de s\u00E9jour pour un montant de ' + cleaningFee.toFixed(2) + ' \u20AC. Cette prestation comprend le nettoyage complet du logement apr\u00E8s le d\u00E9part du Locataire.</p>' : '');
+
+            if (data.rental.deposit > 0) {
+                contractHTML += '<p><strong>4.2 - Arrhes</strong></p>'
+                    + '<p>Un montant de <strong>' + Utils.formatCurrency(data.rental.deposit) + ' \u20AC</strong> est vers\u00E9 \u00E0 titre d\'arrhes par le Locataire \u00E0 la signature du pr\u00E9sent contrat.</p>'
+                    + '<p>Ces arrhes seront d\u00E9duites du montant total de la location lors de son r\u00E8glement au plus tard \u00E0 l\'arriv\u00E9e dans le logement.</p>'
+                    + '<p>Le solde restant \u00E0 payer, soit <strong>' + (totalAmount - parseFloat(data.rental.deposit)).toFixed(2) + ' \u20AC</strong>, sera r\u00E9gl\u00E9 au plus tard le jour de l\'arriv\u00E9e dans le logement.</p>'
+                    + '<p>Conform\u00E9ment aux dispositions l\u00E9gales relatives aux arrhes, si le Locataire se d\u00E9dit avant la date d\'entr\u00E9e dans les lieux, il perd les arrhes vers\u00E9es. Si c\'est le Bailleur qui se d\u00E9dit, il doit restituer le double des arrhes au Locataire.</p>';
+            }
+
+            contractHTML += '<p><strong>4.' + (data.rental.deposit > 0 ? '3' : '2') + ' - Modalit\u00E9s de paiement</strong></p>'
+                + '<p>Le montant total de la location s\'\u00E9l\u00E8ve \u00E0 <strong>' + totalAmount.toFixed(2) + ' \u20AC</strong> (incluant le loyer' + (cleaningFee > 0 ? ', le forfait m\u00E9nage' : '') + (data.rental.touristTaxTotal > 0 ? ' et la taxe de s\u00E9jour' : '') + ').</p>';
+
+            if (data.rental.deposit > 0) {
+                contractHTML += '<p>Ce montant total sera pay\u00E9 en deux fois :</p>'
+                    + '<p style="padding-left: 20px;">\u2022 <strong>' + Utils.formatCurrency(data.rental.deposit) + ' \u20AC</strong> vers\u00E9s \u00E0 titre d\'arrhes \u00E0 la signature du pr\u00E9sent contrat<br>'
+                    + '\u2022 <strong>' + (totalAmount - parseFloat(data.rental.deposit)).toFixed(2) + ' \u20AC</strong> (solde) \u00E0 r\u00E9gler au plus tard \u00E0 l\'arriv\u00E9e dans le logement</p>'
+                    + '<p>Le r\u00E8glement peut s\'effectuer par virement bancaire, ch\u00E8que ou esp\u00E8ces.</p>';
+            } else {
+                contractHTML += '<p>Ce montant est payable au plus tard \u00E0 l\'arriv\u00E9e dans le logement par virement bancaire, ch\u00E8que ou esp\u00E8ces.</p>';
+            }
+
+            if (cleaningFee > 0) {
+                contractHTML += '<p>Le Locataire s\'engage \u00E0 laisser le logement dans un \u00E9tat de propret\u00E9 correct. Le forfait m\u00E9nage couvre le nettoyage standard du logement. Si l\'\u00E9tat de propret\u00E9 n\u00E9cessite un temps de m\u00E9nage exceptionnellement sup\u00E9rieur au forfait pr\u00E9vu, des frais suppl\u00E9mentaires pourront \u00EAtre factur\u00E9s au Locataire.</p>';
+            } else {
+                contractHTML += '<p>Le Locataire s\'engage \u00E0 effectuer le m\u00E9nage complet du logement avant son d\u00E9part et \u00E0 restituer les lieux dans le m\u00EAme \u00E9tat de propret\u00E9 qu\'\u00E0 son arriv\u00E9e. En cas de m\u00E9nage insuffisant, des frais de remise en \u00E9tat pourront \u00EAtre factur\u00E9s au Locataire.</p>';
+            }
+
+            contractHTML += '<p><strong>D\u00E9gradations et r\u00E9parations :</strong> En l\'absence de d\u00E9p\u00F4t de garantie, toute d\u00E9gradation '
+                + 'constat\u00E9e lors de l\'\u00E9tat des lieux de sortie fera l\'objet d\'une facturation directe au Locataire, '
+                + 'qui s\'engage \u00E0 r\u00E9gler les sommes dues dans un d\u00E9lai de 15 jours suivant la r\u00E9ception de la facture. '
+                + 'Le Locataire peut souscrire une assurance couvrant les risques locatifs pour se pr\u00E9munir de ces frais.</p>'
+                + '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 5 - REMISE DES CL\u00C9S ET \u00C9TAT DES LIEUX</h3>'
+                + '<p>Un \u00E9tat des lieux contradictoire et d\u00E9taill\u00E9 sera obligatoirement \u00E9tabli lors de la remise des cl\u00E9s au Locataire et lors de leur restitution. Il sera annex\u00E9 au pr\u00E9sent contrat.</p>'
+                + '<p>La remise des cl\u00E9s ne sera effectu\u00E9e qu\'apr\u00E8s paiement int\u00E9gral du solde de la location (d\u00E9duction faite des arrhes vers\u00E9es \u00E0 la signature).</p>'
+                + '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 6 - OBLIGATIONS ET RESPONSABILIT\u00C9S DU LOCATAIRE</h3>'
+                + '<p>Le Locataire s\'engage \u00E0 :</p>'
+                + '<ul>'
+                + '<li>Occuper les lieux paisiblement et en bon p\u00E8re de famille</li>'
+                + '<li>Respecter le r\u00E8glement int\u00E9rieur s\'il existe</li>'
+                + '<li>Respecter les r\u00E8gles de voisinage et la tranquillit\u00E9 des lieux</li>'
+                + '<li>Ne pas sous-louer, m\u00EAme partiellement, le logement</li>'
+                + '<li>Ne pas c\u00E9der le pr\u00E9sent contrat</li>'
+                + '<li>Ne pas modifier l\'am\u00E9nagement du logement sans autorisation \u00E9crite</li>'
+                + '<li>Respecter le nombre maximum de personnes autoris\u00E9es</li>'
+                + '<li>Signaler imm\u00E9diatement au Bailleur toute d\u00E9gradation ou dysfonctionnement</li>'
+                + '<li>Entretenir le logement et les \u00E9quipements en bon \u00E9tat</li>'
+                + '<li>Restituer les lieux en l\'\u00E9tat \u00E0 la fin du s\u00E9jour</li>'
+                + '<li>Souscrire une assurance responsabilit\u00E9 civile "vill\u00E9giature"</li>'
+                + '<li>' + (data.property.animals
+                    ? 'Les animaux de compagnie sont autoris\u00E9s dans le logement dans les conditions suivantes : ' + esc(data.property.animals.typesText) + ', taille maximum : ' + esc(data.property.animals.size) + ', nombre maximum : ' + esc(data.property.animals.max) + ' animal(aux). Le Locataire est responsable des dommages caus\u00E9s par ses animaux.'
+                    : 'Aucun animal de compagnie n\'est autoris\u00E9 dans le logement.') + '</li>'
+                + '</ul>'
+                + '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 7 - OBLIGATIONS DU BAILLEUR</h3>'
+                + '<p>Le Bailleur s\'engage \u00E0 :</p>'
+                + '<ul>'
+                + '<li>D\u00E9livrer un logement d\u00E9cent, en bon \u00E9tat d\'usage et de r\u00E9paration</li>'
+                + '<li>Assurer la jouissance paisible du logement au Locataire</li>'
+                + '<li>Effectuer les r\u00E9parations n\u00E9cessaires au maintien en \u00E9tat du logement</li>'
+                + '<li>Garantir le bon fonctionnement des \u00E9quipements</li>'
+                + '<li>Souscrire une assurance propri\u00E9taire non-occupant</li>'
+                + '</ul>'
+                + '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 8 - ASSURANCES</h3>'
+                + '<p>Le Locataire doit obligatoirement justifier d\'une assurance responsabilit\u00E9 civile "vill\u00E9giature" couvrant les risques locatifs (incendie, d\u00E9g\u00E2ts des eaux, explosion) pour toute la dur\u00E9e du s\u00E9jour.</p>'
+                + '<p>Le Bailleur est assur\u00E9 en qualit\u00E9 de propri\u00E9taire non-occupant.</p>'
+                + '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 9 - R\u00C9SILIATION ANTICIP\u00C9E ET ANNULATION</h3>'
+                + '<p>En cas de non-respect des obligations contractuelles par l\'une ou l\'autre des parties, notamment en cas de trouble de voisinage, de d\u00E9gradation volontaire ou de non-paiement, le pr\u00E9sent contrat pourra \u00EAtre r\u00E9sili\u00E9 de plein droit sans formalit\u00E9 judiciaire ni pr\u00E9avis.</p>';
+
+            if (data.rental.deposit > 0) {
+                contractHTML += '<p><strong>9.1 - Annulation et arrhes :</strong> Conform\u00E9ment aux dispositions de l\'article 4.2 relatif aux arrhes, en cas d\'annulation :</p>'
+                    + '<ul><li>Si le Locataire se d\u00E9dit avant la date d\'entr\u00E9e dans les lieux, il perd les arrhes vers\u00E9es</li>'
+                    + '<li>Si le Bailleur se d\u00E9dit avant la date d\'entr\u00E9e dans les lieux, il doit restituer le double des arrhes au Locataire</li></ul>'
+                    + '<p><strong>9.2 - Force majeure :</strong> En cas de force majeure d\u00FBment constat\u00E9e (maladie grave, d\u00E9c\u00E8s, catastrophe naturelle), les arrhes pourront \u00EAtre rembours\u00E9es int\u00E9gralement sur pr\u00E9sentation de justificatifs.</p>';
+            } else {
+                contractHTML += '<p>En cas d\'annulation par le Locataire, les conditions d\'annulation suivantes s\'appliquent :</p>'
+                    + '<ul><li>Plus de 30 jours avant l\'arriv\u00E9e : aucune p\u00E9nalit\u00E9</li>'
+                    + '<li>Entre 30 et 15 jours : retenue de 50% du loyer pr\u00E9vu</li>'
+                    + '<li>Moins de 15 jours : retenue de 100% du loyer pr\u00E9vu</li></ul>'
+                    + '<p>En cas de force majeure d\u00FBment constat\u00E9e (maladie grave, d\u00E9c\u00E8s, catastrophe naturelle), aucune p\u00E9nalit\u00E9 ne sera appliqu\u00E9e sur pr\u00E9sentation de justificatifs.</p>';
+            }
+
+            contractHTML += '</div>'
+
+                + '<div class="contract-section">'
+                + '<h3>ARTICLE 10 - DROIT APPLICABLE ET LITIGES</h3>'
+                + '<p>Le pr\u00E9sent contrat est r\u00E9gi par les dispositions du Code du Tourisme (articles L.324-1-1 et suivants) et du Code Civil.</p>'
+                + '<p>En cas de litige, les parties s\'engagent \u00E0 rechercher une solution amiable. \u00C0 d\u00E9faut, comp\u00E9tence expresse est attribu\u00E9e aux tribunaux comp\u00E9tents.</p>'
+                + '</div>'
+
+                + '<div class="date-location">'
+                + '<p>Fait en deux exemplaires originaux, dont chaque partie reconna\u00EEt avoir re\u00E7u le sien.</p>'
+                + '<p style="margin-top: 20px;">Fait \u00E0 ................................., le ' + Utils.formatDate(today) + '</p>'
+                + '</div>'
+
+                + '<div class="signature-section">'
+                + '<div class="signature-box">'
+                + '<p style="font-weight: bold;">Le Bailleur</p>'
+                + '<p>' + ownerName + '</p>'
+                + '<p style="margin-top: 20px; font-size: 12px; font-style: italic;">(Pr\u00E9c\u00E9d\u00E9 de la mention manuscrite<br>"Lu et approuv\u00E9, bon pour accord")</p>'
+                + '<div class="signature-line"></div>'
+                + '</div>'
+                + '<div class="signature-box">'
+                + '<p style="font-weight: bold;">Le Locataire</p>'
+                + '<p>' + tenantName + '</p>'
+                + '<p style="margin-top: 20px; font-size: 12px; font-style: italic;">(Pr\u00E9c\u00E9d\u00E9 de la mention manuscrite<br>"Lu et approuv\u00E9, bon pour accord")</p>'
+                + '<div class="signature-line"></div>'
+                + '</div>'
+                + '</div>';
+
+            Utils.$('contract-content').innerHTML = contractHTML;
+            Utils.$('contract-preview').classList.add('show');
+            Utils.$('contract-preview').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ===== PDF GENERATION (unified) =====
+        async function generatePDF(options) {
+            var returnBlob = options && options.returnBlob;
+            await loadLibraries();
+
+            var element = Utils.$('contract-content');
+            var jsPDF = window.jspdf.jsPDF;
+            var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            var pw = CONFIG.PDF.PAGE_WIDTH;
+            var ph = CONFIG.PDF.PAGE_HEIGHT;
+            var m = CONFIG.PDF.MARGIN;
+            var cw = pw - (2 * m);
+
+            var clone = element.cloneNode(true);
+            clone.style.width = (cw * CONFIG.PDF.PX_PER_MM) + 'px';
+            clone.style.padding = '0';
+            clone.style.margin = '0';
+            clone.style.position = 'absolute';
+            clone.style.left = '-9999px';
+            document.body.appendChild(clone);
+
+            var sections = clone.querySelectorAll('.contract-header, .parties-section, .contract-section, .date-location, .signature-section');
+            var currentY = m;
+            var pageNumber = 1;
+
+            for (var i = 0; i < sections.length; i++) {
+                var canvas = await html2canvas(sections[i], {
+                    scale: CONFIG.PDF.SCALE, useCORS: true, logging: false, backgroundColor: '#ffffff'
+                });
+                var imgData = canvas.toDataURL('image/png');
+                var imgWidth = cw;
+                var imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                if (currentY + imgHeight > ph - m) {
+                    if (pageNumber > 1 || currentY > m) { pdf.addPage(); pageNumber++; }
+                    currentY = m;
+                }
+                pdf.addImage(imgData, 'PNG', m, currentY, imgWidth, imgHeight);
+                currentY += imgHeight + 2;
+                if (currentY > ph - m - 20) { pdf.addPage(); pageNumber++; currentY = m; }
+            }
+
+            document.body.removeChild(clone);
+
+            if (returnBlob) return pdf.output('blob');
+            return pdf;
+        }
+
+        function getFilename() {
+            var ownerLastname = Utils.$('owner-lastname').value || 'Proprietaire';
+            var tenantLastname = Utils.$('tenant-lastname').value || 'Locataire';
+            var startDate = Utils.$('start-date').value || new Date().toISOString().split('T')[0];
+            return 'Contrat_LMNP_' + ownerLastname + '_' + tenantLastname + '_' + startDate + '.pdf';
+        }
+
+        async function saveAsPDF() {
+            showNotification('G\u00E9n\u00E9ration du PDF en cours...');
+            try {
+                var pdf = await generatePDF({ returnBlob: false });
+                pdf.save(getFilename());
+                showNotification('PDF sauvegard\u00E9 avec succ\u00E8s !');
+            } catch (error) {
+                console.error('Erreur PDF:', error);
+                showNotification('Erreur PDF. Utilisez Imprimer > Enregistrer au format PDF.');
+                window.print();
+            }
+        }
+
+        function printContract() {
+            window.print();
+        }
+
+        async function sendByEmail() {
+            var tenantEmail = Utils.$('tenant-email').value;
+            if (!tenantEmail || tenantEmail.trim() === '') {
+                showNotification('L\'adresse email du locataire n\'est pas renseign\u00E9e.');
+                return;
+            }
+
+            showNotification('Pr\u00E9paration de l\'email avec le PDF...');
+
+            try {
+                var ownerEmail = Utils.$('owner-email') ? Utils.$('owner-email').value.trim() : '';
+                var ownerLastname = Utils.$('owner-lastname').value || 'Propri\u00E9taire';
+                var ownerFirstname = Utils.$('owner-firstname').value || '';
+                var tenantLastname = Utils.$('tenant-lastname').value || 'Locataire';
+                var tenantFirstname = Utils.$('tenant-firstname').value || '';
+                var startDate = Utils.$('start-date').value || new Date().toISOString().split('T')[0];
+                var endDate = Utils.$('end-date').value || '';
+
+                var filename = getFilename();
+                var emailBody = 'Bonjour ' + tenantFirstname + ' ' + tenantLastname + ',\n\n'
+                    + 'Veuillez trouver ci-joint le contrat de location meubl\u00E9e saisonni\u00E8re pour la p\u00E9riode du '
+                    + Utils.formatDateShort(startDate) + ' au ' + Utils.formatDateShort(endDate) + '.\n\n'
+                    + 'Merci de le lire attentivement, de le signer et de me le retourner.\n\n'
+                    + 'Cordialement,\n' + ownerFirstname + ' ' + ownerLastname;
+                var emailSubject = 'Contrat de location LMNP - ' + Utils.formatDateShort(startDate);
+
+                var pdfBlob = await generatePDF({ returnBlob: true });
+                var url = URL.createObjectURL(pdfBlob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showEmailModal();
+
+                setTimeout(function() {
+                    var mailtoLink = 'mailto:' + tenantEmail + '?subject=' + encodeURIComponent(emailSubject) + '&body=' + encodeURIComponent(emailBody);
+                    if (ownerEmail) mailtoLink += '&bcc=' + encodeURIComponent(ownerEmail);
+                    window.location.href = mailtoLink;
+                }, 1500);
+            } catch (error) {
+                console.error('Erreur email:', error);
+                showNotification('Erreur. Utilisez "Sauvegarder PDF" puis envoyez manuellement.');
+            }
+        }
+
+        // ===== UI HELPERS =====
+        function showEmailModal() {
+            Utils.$('email-modal').classList.add('show');
+        }
+
+        function closeEmailModal() {
+            Utils.$('email-modal').classList.remove('show');
+        }
+
+        // ===== OWNER MODAL =====
+        function showOwnerModal() {
+            Utils.$('owner-modal').classList.add('show');
+        }
+
+        function closeOwnerModal() {
+            Utils.$('owner-modal').classList.remove('show');
+        }
+
+        function saveAndCloseOwner() {
+            saveOwnerInfo();
+            updateOwnerButton();
+            closeOwnerModal();
+            schedulePreviewUpdate();
+        }
+
+        function updateOwnerButton() {
+            var lastname = Utils.$('owner-lastname').value.trim();
+            var firstname = Utils.$('owner-firstname').value.trim();
+            var label = Utils.$('owner-btn-label');
+            if (lastname && firstname) {
+                label.textContent = firstname + ' ' + lastname;
+            } else if (lastname) {
+                label.textContent = lastname;
+            } else {
+                label.textContent = 'Configurer le bailleur';
+            }
+        }
+
+        function validateOwnerFields() {
+            var allValid = true;
+            for (var i = 0; i < OWNER_REQUIRED.length; i++) {
+                var id = OWNER_REQUIRED[i];
+                var el = Utils.$(id);
+                if (!el || !el.value.trim()) {
+                    allValid = false;
+                    break;
+                }
+            }
+            if (!allValid) {
+                showNotification('Veuillez renseigner les informations du bailleur');
+                showOwnerModal();
+                return false;
+            }
+            return true;
+        }
+
+        function hidePreview() {
+            Utils.$('contract-preview').classList.remove('show');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ===== PRINT STYLE =====
+        var printStyle = document.createElement('style');
+        printStyle.innerHTML = '@media print { body * { visibility: hidden; } #contract-preview, #contract-preview * { visibility: visible; } #contract-preview { position: absolute; left: 0; top: 0; width: 100%; background: white; } .action-buttons { display: none; } }';
+        document.head.appendChild(printStyle);
+
+        // ===== VALIDATION =====
+        var VALIDATION_RULES = {
+            'owner-lastname':   { required: true, minLength: 1 },
+            'owner-firstname':  { required: true, minLength: 1 },
+            'owner-address':    { required: true, minLength: 5 },
+            'property-type':    { required: true },
+            'property-address': { required: true, minLength: 5 },
+            'property-surface': { required: true, type: 'number', min: 1 },
+            'property-rooms':   { required: true, type: 'number', min: 1 },
+            'tenant-lastname':  { required: true, minLength: 1 },
+            'tenant-firstname': { required: true, minLength: 1 },
+            'tenant-country':   { required: true },
+            'tenant-address':   { required: true, minLength: 5 },
+            'tenant-phone':     { required: true, minLength: 5 },
+            'tenant-persons':   { required: true, type: 'number', min: 1 },
+            'start-date':       { required: true },
+            'end-date':         { required: true, afterField: 'start-date' },
+            'rent':             { required: true, type: 'number', min: 0.01 }
+        };
+
+        var touchedFields = {};
+
+        var Validator = {
+            validateField: function(id) {
+                var rule = VALIDATION_RULES[id];
+                if (!rule) return { valid: true };
+                var el = Utils.$(id);
+                if (!el) return { valid: true };
+                var val = el.value ? el.value.trim() : '';
+
+                if (rule.required && !val) return { valid: false, message: 'Ce champ est requis' };
+                if (val && rule.minLength && val.length < rule.minLength) return { valid: false, message: 'Minimum ' + rule.minLength + ' caract\u00E8re(s)' };
+                if (val && rule.type === 'number') {
+                    var num = parseFloat(val);
+                    if (isNaN(num)) return { valid: false, message: 'Nombre invalide' };
+                    if (rule.min !== undefined && num < rule.min) return { valid: false, message: 'Minimum : ' + rule.min };
+                    if (rule.max !== undefined && num > rule.max) return { valid: false, message: 'Maximum : ' + rule.max };
+                }
+                if (val && rule.afterField) {
+                    var beforeEl = Utils.$(rule.afterField);
+                    if (beforeEl && beforeEl.value && new Date(val) <= new Date(beforeEl.value)) {
+                        return { valid: false, message: 'Doit \u00EAtre post\u00E9rieur \u00E0 la date de d\u00E9but' };
+                    }
+                }
+                return { valid: true };
+            },
+            showFieldState: function(id) {
+                var result = this.validateField(id);
+                var el = Utils.$(id);
+                if (!el) return result.valid;
+                var group = el.closest('.form-group');
+                if (!group) return result.valid;
+
+                // Find or create error span
+                var errSpan = group.querySelector('.field-error');
+                if (!errSpan) {
+                    errSpan = document.createElement('span');
+                    errSpan.className = 'field-error';
+                    errSpan.setAttribute('role', 'alert');
+                    errSpan.setAttribute('aria-live', 'polite');
+                    // Insert after the input/select/textarea
+                    var input = group.querySelector('input, select, textarea');
+                    if (input) input.parentNode.insertBefore(errSpan, input.nextSibling);
+                    else group.appendChild(errSpan);
+                }
+
+                group.classList.remove('has-error', 'is-valid', 'shake');
+                errSpan.classList.remove('show');
+
+                if (!touchedFields[id]) return result.valid;
+
+                if (!result.valid) {
+                    group.classList.add('has-error');
+                    errSpan.textContent = result.message;
+                    errSpan.classList.add('show');
+                    group.classList.add('shake');
+                    setTimeout(function() { group.classList.remove('shake'); }, 300);
+                } else if (el.value.trim()) {
+                    group.classList.add('is-valid');
+                }
+                return result.valid;
+            },
+            validateStep: function(step) {
+                var fields = STEP_REQUIRED[step] || [];
+                var allValid = true;
+                for (var i = 0; i < fields.length; i++) {
+                    touchedFields[fields[i]] = true;
+                    if (!this.showFieldState(fields[i])) allValid = false;
+                }
+                return allValid;
+            }
+        };
+
+        // ===== NIGHTS DISPLAY =====
+        function updateNightsDisplay() {
+            var startVal = Utils.$('start-date').value;
+            var endVal = Utils.$('end-date').value;
+            var el = Utils.$('nights-display');
+            if (startVal && endVal) {
+                var nights = Math.ceil((new Date(endVal) - new Date(startVal)) / (1000 * 60 * 60 * 24));
+                if (nights > 0) {
+                    el.textContent = nights + ' nuit' + (nights > 1 ? 's' : '');
+                    el.style.display = '';
+                    return;
+                }
+            }
+            el.style.display = 'none';
+        }
+
+        // ===== WIZARD =====
+        var STEP_NAMES = ['Logement', 'Locataire', 'Location', 'Contrat'];
+        var STEP_REQUIRED = {
+            1: ['property-type', 'property-address', 'property-surface', 'property-rooms'],
+            2: ['tenant-lastname', 'tenant-firstname', 'tenant-country', 'tenant-address', 'tenant-phone', 'tenant-persons'],
+            3: ['start-date', 'end-date', 'rent'],
+            4: []
+        };
+        var OWNER_REQUIRED = ['owner-lastname', 'owner-firstname', 'owner-address'];
+
+        var Wizard = {
+            currentStep: 1,
+            totalSteps: 4,
+            goTo: function(step) {
+                if (step < 1 || step > this.totalSteps) return;
+                // Validate current step before moving forward
+                if (step > this.currentStep && !this.validateStep(this.currentStep)) return;
+                // At contract step, validate owner info
+                if (step === 4 && !validateOwnerFields()) return;
+                // Hide current
+                var current = document.querySelector('.wizard-step.active');
+                if (current) current.classList.remove('active');
+                // Show target
+                var target = document.querySelector('.wizard-step[data-step="' + step + '"]');
+                if (target) target.classList.add('active');
+                this.currentStep = step;
+                this.updateUI();
+                // Generate contract at step 4
+                var formContainer = document.querySelector('.form-container');
+                if (step === 4) {
+                    generateContract();
+                    Utils.$('contract-preview').classList.add('show');
+                    formContainer.classList.add('preview-hidden');
+                } else {
+                    formContainer.classList.remove('preview-hidden');
+                }
+                // Scroll to top and focus first input of new step
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(function() {
+                    var firstInput = target.querySelector('input:not([type="hidden"]), select, textarea');
+                    if (firstInput) firstInput.focus();
+                }, 350);
+            },
+            next: function() { this.goTo(this.currentStep + 1); },
+            prev: function() { this.goTo(this.currentStep - 1); },
+            validateStep: function(step) {
+                var valid = Validator.validateStep(step);
+                if (!valid) showNotification('Veuillez remplir les champs obligatoires');
+                return valid;
+            },
+            updateUI: function() {
+                var step = this.currentStep;
+                // Nav buttons
+                Utils.$('wizard-prev').style.display = step > 1 ? '' : 'none';
+                Utils.$('wizard-next').style.display = step < this.totalSteps ? '' : 'none';
+                // Mobile progress
+                Utils.$('wizard-step-text').textContent = step + '/' + this.totalSteps + ' - ' + STEP_NAMES[step - 1];
+                Utils.$('wizard-progress-fill').style.width = (step / this.totalSteps * 100) + '%';
+                // Desktop indicators
+                var indicators = document.querySelectorAll('.wizard-step-indicator');
+                indicators.forEach(function(ind) {
+                    var s = parseInt(ind.getAttribute('data-step'));
+                    ind.classList.remove('active', 'completed');
+                    if (s === step) ind.classList.add('active');
+                    else if (s < step) ind.classList.add('completed');
+                });
+            }
+        };
+
+        // ===== INIT =====
+        function init() {
+            loadOwnerInfo();
+            loadPropertyInfo();
+
+            // Wizard nav
+            Utils.$('wizard-next').addEventListener('click', function() { Wizard.next(); });
+            Utils.$('wizard-prev').addEventListener('click', function() { Wizard.prev(); });
+
+            // Clickable progress indicators
+            document.querySelectorAll('.wizard-step-indicator').forEach(function(ind) {
+                ind.addEventListener('click', function() {
+                    var target = parseInt(ind.getAttribute('data-step'));
+                    if (target < Wizard.currentStep) Wizard.goTo(target);
+                });
+            });
+
+            // Prevent form submit (wizard handles navigation)
+            Utils.$('contract-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+            });
+
+            // Save buttons
+            var btnSaveProperty = document.querySelector('[data-action="save-property"]');
+            if (btnSaveProperty) btnSaveProperty.addEventListener('click', savePropertyInfo);
+
+            // Owner modal
+            var ownerHeaderBtn = Utils.$('owner-header-btn');
+            if (ownerHeaderBtn) ownerHeaderBtn.addEventListener('click', showOwnerModal);
+            var btnSaveCloseOwner = document.querySelector('[data-action="save-close-owner"]');
+            if (btnSaveCloseOwner) btnSaveCloseOwner.addEventListener('click', saveAndCloseOwner);
+            // Close owner modal on overlay click
+            Utils.$('owner-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeOwnerModal();
+            });
+            // Live preview updates from owner modal inputs
+            var ownerModal = Utils.$('owner-modal');
+            ownerModal.addEventListener('input', schedulePreviewUpdate);
+            ownerModal.addEventListener('change', schedulePreviewUpdate);
+
+            // Address autocomplete with ARIA and keyboard nav
+            var addressFields = ['owner-address', 'tenant-address', 'property-address'];
+            addressFields.forEach(function(id) {
+                var el = Utils.$(id);
+                if (!el) return;
+                var type = id.split('-')[0];
+                var resultsId = type + '-address-results';
+                // ARIA attributes
+                el.setAttribute('role', 'combobox');
+                el.setAttribute('aria-autocomplete', 'list');
+                el.setAttribute('aria-expanded', 'false');
+                el.setAttribute('aria-controls', resultsId);
+
+                el.addEventListener('input', function() { searchAddress(type); });
+
+                // Keyboard navigation
+                el.addEventListener('keydown', function(e) {
+                    var resultsDiv = Utils.$(resultsId);
+                    if (!resultsDiv || !resultsDiv.classList.contains('show')) return;
+                    var items = resultsDiv.querySelectorAll('.autocomplete-item[role="option"]');
+                    if (!items.length) return;
+                    var active = resultsDiv.querySelector('.autocomplete-item.kb-active');
+                    var idx = -1;
+                    if (active) {
+                        for (var i = 0; i < items.length; i++) {
+                            if (items[i] === active) { idx = i; break; }
+                        }
+                    }
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (active) active.classList.remove('kb-active');
+                        idx = (idx + 1) % items.length;
+                        items[idx].classList.add('kb-active');
+                        items[idx].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (active) active.classList.remove('kb-active');
+                        idx = idx <= 0 ? items.length - 1 : idx - 1;
+                        items[idx].classList.add('kb-active');
+                        items[idx].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'Enter' && active) {
+                        e.preventDefault();
+                        active.click();
+                    } else if (e.key === 'Escape') {
+                        resultsDiv.classList.remove('show');
+                        el.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
+
+            // Tenant country
+            var tenantCountry = Utils.$('tenant-country');
+            if (tenantCountry) tenantCountry.addEventListener('change', updateTenantAddressPlaceholder);
+
+            // Max occupants
+            var maxOccupantsEl = Utils.$('property-max-occupants');
+            if (maxOccupantsEl) {
+                maxOccupantsEl.addEventListener('input', applyMaxOccupants);
+                applyMaxOccupants();
+            }
+
+            // Cleaning fee & tourist tax
+            var cleaningFeeAmount = Utils.$('cleaning-fee-amount');
+            if (cleaningFeeAmount) cleaningFeeAmount.addEventListener('input', updateCleaningFeeDisplay);
+
+            var touristTaxRateDefault = Utils.$('tourist-tax-rate-default');
+            if (touristTaxRateDefault) touristTaxRateDefault.addEventListener('input', updateTouristTaxRateDisplay);
+
+            var cleaningOption = Utils.$('cleaning-option');
+            if (cleaningOption) cleaningOption.addEventListener('change', updateCleaningFee);
+
+            var animalsAllowed = Utils.$('animals-allowed');
+            if (animalsAllowed) animalsAllowed.addEventListener('change', toggleAnimalsDetails);
+
+            var rentInput = Utils.$('rent');
+            if (rentInput) rentInput.addEventListener('input', updateDeposit);
+
+            // Date helpers
+            function addDays(dateStr, days) {
+                var d = new Date(dateStr);
+                d.setDate(d.getDate() + days);
+                return d.toISOString().split('T')[0];
+            }
+
+            // Date & person changes -> recalc tourist tax + nights display
+            var startDateEl = Utils.$('start-date');
+            var endDateEl = Utils.$('end-date');
+
+            function setupDateInput(el) {
+                el.addEventListener('keydown', function(e) { e.preventDefault(); });
+                el.addEventListener('click', function() { try { this.showPicker(); } catch(err) {} });
+            }
+
+            if (startDateEl) {
+                setupDateInput(startDateEl);
+                startDateEl.addEventListener('change', function() {
+                    if (endDateEl) endDateEl.min = startDateEl.value ? addDays(startDateEl.value, 1) : '';
+                    calculateTouristTax(); updateNightsDisplay();
+                });
+            }
+            if (endDateEl) {
+                setupDateInput(endDateEl);
+                endDateEl.addEventListener('change', function() {
+                    if (startDateEl) startDateEl.max = endDateEl.value ? addDays(endDateEl.value, -1) : '';
+                    calculateTouristTax(); updateNightsDisplay();
+                });
+            }
+            var tenantPersons = Utils.$('tenant-persons');
+            if (tenantPersons) {
+                tenantPersons.addEventListener('change', calculateTouristTax);
+                tenantPersons.addEventListener('input', function() {
+                    var max = parseInt(this.max);
+                    if (max && parseInt(this.value) > max) this.value = max;
+                    if (parseInt(this.value) < 1) this.value = 1;
+                });
+            }
+
+            // Action buttons
+            var btnPdf = document.querySelector('[data-action="save-pdf"]');
+            if (btnPdf) btnPdf.addEventListener('click', saveAsPDF);
+            var btnEmail = document.querySelector('[data-action="send-email"]');
+            if (btnEmail) btnEmail.addEventListener('click', sendByEmail);
+            var btnPrint = document.querySelector('[data-action="print"]');
+            if (btnPrint) btnPrint.addEventListener('click', printContract);
+            var btnModify = document.querySelector('[data-action="hide-preview"]');
+            if (btnModify) btnModify.addEventListener('click', hidePreview);
+            var btnCloseModal = document.querySelector('[data-action="close-email-modal"]');
+            if (btnCloseModal) btnCloseModal.addEventListener('click', closeEmailModal);
+
+            // Live preview: event delegation on form
+            Utils.$('contract-form').addEventListener('input', schedulePreviewUpdate);
+            Utils.$('contract-form').addEventListener('change', schedulePreviewUpdate);
+
+            // Initial preview render
+            ContractRenderer.updatePreview();
+
+            // Preview FAB (mobile/tablet)
+            var fab = Utils.$('preview-fab');
+            if (fab) fab.addEventListener('click', function() {
+                ContractRenderer.updatePreview();
+                Utils.$('preview-drawer').classList.add('show');
+            });
+
+            var drawerClose = Utils.$('preview-drawer-close-btn');
+            if (drawerClose) drawerClose.addEventListener('click', function() {
+                Utils.$('preview-drawer').classList.remove('show');
+            });
+
+            // Real-time validation on blur + input
+            Object.keys(VALIDATION_RULES).forEach(function(id) {
+                var el = Utils.$(id);
+                if (!el) return;
+                el.addEventListener('blur', function() {
+                    touchedFields[id] = true;
+                    Validator.showFieldState(id);
+                });
+                el.addEventListener('input', function() {
+                    if (touchedFields[id]) Validator.showFieldState(id);
+                });
+                // Set aria-required
+                if (VALIDATION_RULES[id].required) el.setAttribute('aria-required', 'true');
+            });
+
+            // Close autocomplete on outside click
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.autocomplete-container')) {
+                    document.querySelectorAll('.autocomplete-results').forEach(function(el) {
+                        el.classList.remove('show');
+                    });
+                    document.querySelectorAll('[role="combobox"]').forEach(function(el) {
+                        el.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+
+    })();
+    </script>
+</body>
+</html>

@@ -10,8 +10,9 @@ import {
   ChevronUp,
   Pencil,
   Plus,
+  Trash2,
 } from 'lucide-react';
-import { markPaiementPaid, updatePaiement, createPaiement } from '@/lib/api/paiements';
+import { markPaiementPaid, updatePaiement, createPaiement, deletePaiement } from '@/lib/api/paiements';
 import { formatDateFR } from '@/lib/dateUtils';
 import type { Paiement, PaiementMethod } from '@/types/database.types';
 
@@ -56,6 +57,7 @@ export default function PaiementsTab({ paiements, dossierId, onUpdated }: Paieme
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   async function handleMarkPaid(id: string) {
     setLoading(true);
@@ -97,6 +99,21 @@ export default function PaiementsTab({ paiements, dossierId, onUpdated }: Paieme
       onUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setLoading(true);
+    setError('');
+    try {
+      await deletePaiement(id);
+      setConfirmDeleteId(null);
+      setExpandedId(null);
+      onUpdated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression.');
     } finally {
       setLoading(false);
     }
@@ -157,6 +174,8 @@ export default function PaiementsTab({ paiements, dossierId, onUpdated }: Paieme
           const isEditing = editingId === p.id;
           const canPay = p.statut === 'DU' || p.statut === 'EN_RETARD';
           const canEdit = p.statut === 'DU' || p.statut === 'EN_RETARD';
+          const canDelete = p.type === 'EXTRA' && (p.statut === 'DU' || p.statut === 'EN_RETARD');
+          const isConfirmingDelete = confirmDeleteId === p.id;
 
           return (
             <div
@@ -264,8 +283,8 @@ export default function PaiementsTab({ paiements, dossierId, onUpdated }: Paieme
                       </div>
 
                       {/* Actions */}
-                      <div className="flex gap-2">
-                        {canEdit && !isPaying && (
+                      <div className="flex gap-2 flex-wrap">
+                        {canEdit && !isPaying && !isConfirmingDelete && (
                           <button
                             onClick={() => startEdit(p)}
                             className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
@@ -274,7 +293,7 @@ export default function PaiementsTab({ paiements, dossierId, onUpdated }: Paieme
                             Modifier
                           </button>
                         )}
-                        {canPay && !isPaying && (
+                        {canPay && !isPaying && !isConfirmingDelete && (
                           <button
                             onClick={() => {
                               setPayingId(p.id);
@@ -286,7 +305,40 @@ export default function PaiementsTab({ paiements, dossierId, onUpdated }: Paieme
                             Marquer payé
                           </button>
                         )}
+                        {canDelete && !isPaying && !isConfirmingDelete && (
+                          <button
+                            onClick={() => { setConfirmDeleteId(p.id); setError(''); }}
+                            className="inline-flex items-center justify-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Supprimer
+                          </button>
+                        )}
                       </div>
+
+                      {/* Confirmation suppression */}
+                      {isConfirmingDelete && (
+                        <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3">
+                          <p className="text-sm text-red-700 font-medium">Supprimer ce paiement définitivement ?</p>
+                          {error && confirmDeleteId === p.id && <p className="text-xs text-red-600">{error}</p>}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleDelete(p.id)}
+                              disabled={loading}
+                              className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                              {loading && <Loader2 className="h-3 w-3 animate-spin" />}
+                              Confirmer la suppression
+                            </button>
+                            <button
+                              onClick={() => { setConfirmDeleteId(null); setError(''); }}
+                              className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Formulaire de paiement inline */}
                       {isPaying && (

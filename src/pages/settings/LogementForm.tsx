@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { createLogement, getLogementById, updateLogement } from '@/lib/api/logements';
+import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 
 const LOGEMENT_TYPES = [
   { value: 'appartement', label: 'Appartement' },
@@ -9,6 +10,13 @@ const LOGEMENT_TYPES = [
   { value: 'studio', label: 'Studio' },
   { value: 'chambre', label: 'Chambre' },
   { value: 'autre', label: 'Autre' },
+];
+
+const ANIMAUX_TAILLE_OPTIONS = [
+  { value: '', label: '— Non précisé —' },
+  { value: 'petit', label: 'Petit (< 10 kg)' },
+  { value: 'moyen', label: 'Moyen (10-25 kg)' },
+  { value: 'grand', label: 'Grand (> 25 kg)' },
 ];
 
 interface FormData {
@@ -24,6 +32,17 @@ interface FormData {
   taux_taxe_sejour: string;
   duree_expiration_option_jours: string;
   taches_auto_enabled: boolean;
+  // Champs enrichis
+  description: string;
+  equipements: string;
+  forfait_menage_eur: string;
+  charges_incluses: string;
+  animaux_autorises: boolean;
+  animaux_types: string;
+  animaux_nb_max: string;
+  animaux_taille_max: string;
+  loyer_nuit_defaut: string;
+  loyer_semaine_defaut: string;
 }
 
 const INITIAL: FormData = {
@@ -39,6 +58,16 @@ const INITIAL: FormData = {
   taux_taxe_sejour: '0',
   duree_expiration_option_jours: '3',
   taches_auto_enabled: true,
+  description: '',
+  equipements: '',
+  forfait_menage_eur: '',
+  charges_incluses: '',
+  animaux_autorises: false,
+  animaux_types: '',
+  animaux_nb_max: '',
+  animaux_taille_max: '',
+  loyer_nuit_defaut: '',
+  loyer_semaine_defaut: '',
 };
 
 export default function LogementForm() {
@@ -68,6 +97,16 @@ export default function LogementForm() {
           taux_taxe_sejour: logement.taux_taxe_sejour.toString(),
           duree_expiration_option_jours: logement.duree_expiration_option_jours.toString(),
           taches_auto_enabled: logement.taches_auto_enabled,
+          description: logement.description ?? '',
+          equipements: logement.equipements ?? '',
+          forfait_menage_eur: logement.forfait_menage_eur?.toString() ?? '',
+          charges_incluses: logement.charges_incluses ?? '',
+          animaux_autorises: logement.animaux_autorises ?? false,
+          animaux_types: logement.animaux_types ?? '',
+          animaux_nb_max: logement.animaux_nb_max?.toString() ?? '',
+          animaux_taille_max: logement.animaux_taille_max ?? '',
+          loyer_nuit_defaut: logement.loyer_nuit_defaut?.toString() ?? '',
+          loyer_semaine_defaut: logement.loyer_semaine_defaut?.toString() ?? '',
         });
       })
       .catch(() => setError('Impossible de charger le logement.'))
@@ -111,6 +150,16 @@ export default function LogementForm() {
       taux_taxe_sejour: Number(form.taux_taxe_sejour),
       duree_expiration_option_jours: Number(form.duree_expiration_option_jours),
       taches_auto_enabled: form.taches_auto_enabled,
+      description: form.description.trim() || null,
+      equipements: form.equipements.trim() || null,
+      forfait_menage_eur: form.forfait_menage_eur ? Number(form.forfait_menage_eur) : null,
+      charges_incluses: form.charges_incluses.trim() || null,
+      animaux_autorises: form.animaux_autorises,
+      animaux_types: form.animaux_autorises ? (form.animaux_types.trim() || null) : null,
+      animaux_nb_max: form.animaux_autorises && form.animaux_nb_max ? Number(form.animaux_nb_max) : null,
+      animaux_taille_max: form.animaux_autorises ? (form.animaux_taille_max || null) : null,
+      loyer_nuit_defaut: form.loyer_nuit_defaut ? Number(form.loyer_nuit_defaut) : null,
+      loyer_semaine_defaut: form.loyer_semaine_defaut ? Number(form.loyer_semaine_defaut) : null,
     };
 
     try {
@@ -172,14 +221,13 @@ export default function LogementForm() {
               <label htmlFor="adresse" className="block text-sm font-medium text-slate-700">
                 Adresse <span className="text-red-500">*</span>
               </label>
-              <input
+              <AddressAutocomplete
                 id="adresse"
-                type="text"
-                required
                 value={form.adresse}
-                onChange={(e) => handleChange('adresse', e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+                onChange={(v) => handleChange('adresse', v)}
+                pays="France"
                 placeholder="123 rue de la Paix, 75001 Paris"
+                required
               />
             </div>
 
@@ -339,6 +387,181 @@ export default function LogementForm() {
               </label>
             </div>
           </div>
+        </div>
+
+        {/* Section 3 : Description & équipements */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <h3 className="font-medium text-slate-900">Description & équipements</h3>
+
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-slate-700">
+              Description
+            </label>
+            <textarea
+              id="description"
+              rows={3}
+              value={form.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="Appartement lumineux au cœur de Paris…"
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none resize-none"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="equipements" className="block text-sm font-medium text-slate-700">
+              Équipements
+            </label>
+            <textarea
+              id="equipements"
+              rows={2}
+              value={form.equipements}
+              onChange={(e) => handleChange('equipements', e.target.value)}
+              placeholder="Wifi, TV, cuisine équipée, machine à laver…"
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none resize-none"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="charges_incluses" className="block text-sm font-medium text-slate-700">
+              Charges incluses
+            </label>
+            <textarea
+              id="charges_incluses"
+              rows={2}
+              value={form.charges_incluses}
+              onChange={(e) => handleChange('charges_incluses', e.target.value)}
+              placeholder="Eau, électricité, chauffage, wifi…"
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Section 4 : Finances */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <h3 className="font-medium text-slate-900">Finances</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="forfait_menage_eur" className="block text-sm font-medium text-slate-700">
+                Forfait ménage (€)
+              </label>
+              <input
+                id="forfait_menage_eur"
+                type="number"
+                min={0}
+                step={0.01}
+                value={form.forfait_menage_eur}
+                onChange={(e) => handleChange('forfait_menage_eur', e.target.value)}
+                placeholder="0.00"
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="loyer_nuit_defaut" className="block text-sm font-medium text-slate-700">
+                Loyer / nuit par défaut (€)
+              </label>
+              <input
+                id="loyer_nuit_defaut"
+                type="number"
+                min={0}
+                step={0.01}
+                value={form.loyer_nuit_defaut}
+                onChange={(e) => handleChange('loyer_nuit_defaut', e.target.value)}
+                placeholder="0.00"
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="loyer_semaine_defaut" className="block text-sm font-medium text-slate-700">
+                Loyer / semaine par défaut (€)
+              </label>
+              <input
+                id="loyer_semaine_defaut"
+                type="number"
+                min={0}
+                step={0.01}
+                value={form.loyer_semaine_defaut}
+                onChange={(e) => handleChange('loyer_semaine_defaut', e.target.value)}
+                placeholder="0.00"
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 5 : Politique animaux */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <h3 className="font-medium text-slate-900">Animaux</h3>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.animaux_autorises}
+              onClick={() => handleChange('animaux_autorises', !form.animaux_autorises)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                form.animaux_autorises ? 'bg-primary-600' : 'bg-slate-200'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform ${
+                  form.animaux_autorises ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+            <span className="text-sm font-medium text-slate-700">Animaux autorisés</span>
+          </div>
+
+          {form.animaux_autorises && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pl-2 border-l-2 border-primary-100">
+              <div>
+                <label htmlFor="animaux_types" className="block text-sm font-medium text-slate-700">
+                  Types acceptés
+                </label>
+                <input
+                  id="animaux_types"
+                  type="text"
+                  value={form.animaux_types}
+                  onChange={(e) => handleChange('animaux_types', e.target.value)}
+                  placeholder="Chiens, chats, NAC…"
+                  className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="animaux_nb_max" className="block text-sm font-medium text-slate-700">
+                  Nombre max
+                </label>
+                <input
+                  id="animaux_nb_max"
+                  type="number"
+                  min={1}
+                  value={form.animaux_nb_max}
+                  onChange={(e) => handleChange('animaux_nb_max', e.target.value)}
+                  placeholder="1"
+                  className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="animaux_taille_max" className="block text-sm font-medium text-slate-700">
+                  Gabarit max
+                </label>
+                <select
+                  id="animaux_taille_max"
+                  value={form.animaux_taille_max}
+                  onChange={(e) => handleChange('animaux_taille_max', e.target.value)}
+                  className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+                >
+                  {ANIMAUX_TAILLE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
 
         {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}

@@ -5,6 +5,7 @@ import { updateUtilisateurProfile } from '@/lib/api/utilisateurs';
 import { createAuditLog } from '@/lib/api/audit';
 import { ArrowLeft, Check, Loader2, Pencil, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Administrateur',
@@ -20,6 +21,9 @@ export default function Profile() {
   const [editPrenom, setEditPrenom] = useState('');
   const [editNom, setEditNom] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const [editAdresse, setEditAdresse] = useState('');
+  const [editSiret, setEditSiret] = useState('');
+  const [editTelephone, setEditTelephone] = useState('');
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState('');
   const [infoSuccess, setInfoSuccess] = useState('');
@@ -28,6 +32,9 @@ export default function Profile() {
     setEditPrenom(profile?.prenom ?? '');
     setEditNom(profile?.nom ?? '');
     setEditEmail(user?.email ?? '');
+    setEditAdresse((profile as { adresse?: string | null })?.adresse ?? '');
+    setEditSiret((profile as { siret?: string | null })?.siret ?? '');
+    setEditTelephone((profile as { telephone?: string | null })?.telephone ?? '');
     setInfoError('');
     setInfoSuccess('');
     setEditingInfo(true);
@@ -43,14 +50,23 @@ export default function Profile() {
       return;
     }
 
+    if (editSiret.trim() && !/^\d{14}$/.test(editSiret.trim())) {
+      setInfoError('Le numéro SIRET doit comporter exactement 14 chiffres.');
+      return;
+    }
+
     setSavingInfo(true);
     try {
       const emailChanged = editEmail.trim() !== user?.email;
+      const profileData = profile as { adresse?: string | null; siret?: string | null } | null;
 
-      // 1. Mettre à jour nom/prénom dans la table users
-      const profileUpdates: { nom?: string; prenom?: string } = {};
+      // 1. Mettre à jour nom/prénom/adresse/siret dans la table users
+      const profileUpdates: { nom?: string; prenom?: string; adresse?: string; siret?: string; telephone?: string } = {};
       if (editNom.trim() !== profile?.nom) profileUpdates.nom = editNom.trim();
       if (editPrenom.trim() !== profile?.prenom) profileUpdates.prenom = editPrenom.trim();
+      if (editAdresse.trim() !== (profileData?.adresse ?? '')) profileUpdates.adresse = editAdresse.trim();
+      if (editSiret.trim() !== (profileData?.siret ?? '')) profileUpdates.siret = editSiret.trim() || '';
+      if (editTelephone.trim() !== ((profile as { telephone?: string | null })?.telephone ?? '')) profileUpdates.telephone = editTelephone.trim() || '';
       if (Object.keys(profileUpdates).length > 0) {
         await updateUtilisateurProfile(user!.id, profileUpdates);
       }
@@ -219,6 +235,50 @@ export default function Profile() {
               </p>
             </div>
 
+            <div>
+              <label htmlFor="profile-adresse" className="block text-sm font-medium text-slate-700 mb-1">
+                Adresse postale (bailleur)
+              </label>
+              <AddressAutocomplete
+                id="profile-adresse"
+                value={editAdresse}
+                onChange={setEditAdresse}
+                pays="France"
+                placeholder="Rechercher une adresse…"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="profile-telephone" className="block text-sm font-medium text-slate-700 mb-1">
+                Téléphone <span className="text-slate-400 font-normal">(optionnel)</span>
+              </label>
+              <input
+                id="profile-telephone"
+                type="tel"
+                value={editTelephone}
+                onChange={(e) => setEditTelephone(e.target.value)}
+                placeholder="ex : 06 12 34 56 78"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="profile-siret" className="block text-sm font-medium text-slate-700 mb-1">
+                SIRET <span className="text-slate-400 font-normal">(optionnel)</span>
+              </label>
+              <input
+                id="profile-siret"
+                type="text"
+                inputMode="numeric"
+                pattern="\d{14}"
+                maxLength={14}
+                value={editSiret}
+                onChange={(e) => setEditSiret(e.target.value.replace(/\D/g, ''))}
+                placeholder="14 chiffres"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              />
+            </div>
+
             {infoError && (
               <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600" role="alert">{infoError}</p>
             )}
@@ -259,6 +319,18 @@ export default function Profile() {
             <div>
               <p className="text-sm text-slate-500">Rôle</p>
               <p className="font-medium">{ROLE_LABELS[profile?.role ?? ''] ?? profile?.role ?? '—'}</p>
+            </div>
+            <div className="sm:col-span-2">
+              <p className="text-sm text-slate-500">Adresse postale</p>
+              <p className="font-medium">{(profile as { adresse?: string | null })?.adresse || '—'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Téléphone</p>
+              <p className="font-medium">{(profile as { telephone?: string | null })?.telephone || '—'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">SIRET</p>
+              <p className="font-medium">{(profile as { siret?: string | null })?.siret || '—'}</p>
             </div>
           </div>
         )}

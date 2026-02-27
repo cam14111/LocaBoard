@@ -211,7 +211,7 @@ export default function DossierDetail() {
         <PaiementsTab paiements={paiements} dossierId={dossier.id} onUpdated={loadAll} />
       )}
       {activeTab === 'docs' && (
-        <DocumentsTab dossierId={dossier.id} />
+        <DocumentsTab dossierId={dossier.id} dossier={dossier} reservation={reservation} />
       )}
       {activeTab === 'edl' && (
         <EdlTab dossierId={dossier.id} logementId={dossier.logement_id} />

@@ -2,6 +2,14 @@ import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
 import type { Document, DocumentType } from '@/types/database.types';
 
+/** Normalise un nom de fichier pour Supabase Storage (ASCII uniquement, sans espaces). */
+function sanitizeStorageKey(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // retire les diacritiques (é→e, î→i, etc.)
+    .replace(/[^a-zA-Z0-9._-]/g, '_'); // remplace tout caractère non-ASCII par _
+}
+
 export async function getDocumentsByDossier(dossierId: string) {
   const { data, error } = await supabase
     .from('documents')
@@ -29,7 +37,7 @@ export async function uploadDocument(params: {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const storagePath = `${params.dossier_id}/${Date.now()}_${params.file.name}`;
+  const storagePath = `${params.dossier_id}/${Date.now()}_${sanitizeStorageKey(params.file.name)}`;
 
   const { error: uploadError } = await supabase.storage
     .from('documents')
@@ -78,7 +86,7 @@ export async function replaceDocument(oldDocumentId: string, params: {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const storagePath = `${params.dossier_id}/${Date.now()}_${params.file.name}`;
+  const storagePath = `${params.dossier_id}/${Date.now()}_${sanitizeStorageKey(params.file.name)}`;
 
   const { error: uploadError } = await supabase.storage
     .from('documents')
@@ -126,7 +134,11 @@ export async function getDocumentVersionHistory(dossierId: string, docType: Docu
   return data as Document[];
 }
 
-export function getDocumentUrl(storagePath: string) {
-  const { data } = supabase.storage.from('documents').getPublicUrl(storagePath);
-  return data.publicUrl;
+/** Génère une URL signée (1 heure) pour un document dans le bucket privé. */
+export async function getDocumentUrl(storagePath: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from('documents')
+    .createSignedUrl(storagePath, 3600);
+  if (error) throw error;
+  return data.signedUrl;
 }
