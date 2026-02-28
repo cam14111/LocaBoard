@@ -305,12 +305,16 @@ function buildPdfMakeDoc(data: ContractData): object {
   }
   tableRows.push([{ text: 'TOTAL', fontSize: 10, bold: true }, { text: formatCurrency(totalGeneral), fontSize: 10, alignment: 'right', bold: true }]);
 
-  const art = (title: string) => ({ text: title, style: 'articleHeader', keepWithNext: true });
+  const art = (title: string) => ({ text: title, style: 'articleHeader', keepWithNext: true, headlineLevel: 1 });
   const p = (txt: object | string, margin?: number[]) => ({ text: txt, style: 'body', ...(margin ? { margin } : {}) });
 
   return {
     pageSize: 'A4',
     pageMargins: [57, 57, 57, 57], // ~20mm
+    // Force un saut de page avant un titre d'article orphelin (seul en bas de page)
+    pageBreakBefore: (currentNode: { headlineLevel?: number }, followingNodesOnPage: unknown[]) => {
+      return currentNode.headlineLevel === 1 && followingNodesOnPage.length === 0;
+    },
     defaultStyle: { font: 'Roboto', fontSize: 10.5, lineHeight: 1.55, color: '#1a1a1a' },
     styles: {
       titleMain: { fontSize: 15, bold: true, alignment: 'center', characterSpacing: 0.5, margin: [0, 0, 0, 6] },
