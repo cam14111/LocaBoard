@@ -128,7 +128,7 @@ export function generateContract(data: ContractData): string {
   return `
 <div class="contract-document" style="font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 780px; margin: 0 auto; padding: 40px 50px;">
 
-  <div style="text-align: center; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #333;">
+  <div class="contract-header" style="text-align: center; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #333;">
     <h1 style="font-size: 16pt; font-weight: bold; margin: 0 0 6px 0; letter-spacing: 1px; text-transform: uppercase;">
       CONTRAT DE LOCATION MEUBLÉE SAISONNIÈRE
     </h1>
@@ -137,7 +137,7 @@ export function generateContract(data: ContractData): string {
     </p>
   </div>
 
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px;">
+  <div class="parties-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px;">
     <div style="border: 1px solid #ccc; border-radius: 4px; padding: 16px; background: #f9f9f9;">
       <p style="font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #555; margin: 0 0 8px 0; letter-spacing: 0.5px;">Bailleur</p>
       <p style="margin: 0 0 4px 0;"><strong>${e.ownerPrenom} ${e.ownerNom}</strong></p>
@@ -156,6 +156,7 @@ export function generateContract(data: ContractData): string {
     </div>
   </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 1 – OBJET DU CONTRAT
   </h2>
@@ -166,7 +167,9 @@ export function generateContract(data: ContractData): string {
   </p>
   ${e.propertyDescription ? `<p>${e.propertyDescription}</p>` : ''}
   ${e.propertyEquipements ? `<p><strong>Équipements inclus :</strong> ${e.propertyEquipements}</p>` : ''}
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 2 – DURÉE DE LA LOCATION
   </h2>
@@ -175,7 +178,9 @@ export function generateContract(data: ContractData): string {
     soit une durée de <strong>${nbNuits} nuit(s)</strong> pour <strong>${nbPersonnes} personne(s)</strong>.
     Ce contrat est conclu pour une durée déterminée et ne pourra en aucun cas être prorogé tacitement.
   </p>
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 3 – PRIX ET CONDITIONS DE PAIEMENT
   </h2>
@@ -202,7 +207,9 @@ export function generateContract(data: ContractData): string {
   </table>
   <p>${arrhesClause}</p>
   <p>Le solde sera versé au plus tard <strong>30 jours avant l'entrée dans les lieux</strong> par virement bancaire ou chèque à l'ordre du bailleur.</p>
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 4 – DÉSIGNATION DES PARTIES
   </h2>
@@ -211,7 +218,9 @@ export function generateContract(data: ContractData): string {
     loue au locataire, <strong>${e.tenantPrenom} ${e.tenantNom}</strong>${e.tenantAdresse ? `, domicilié(e) au ${e.tenantAdresse}` : ''},
     le bien immobilier décrit à l'article 1 du présent contrat.
   </p>
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 5 – REMISE DES CLÉS
   </h2>
@@ -219,7 +228,9 @@ export function generateContract(data: ContractData): string {
     Les clés seront remises au locataire à son arrivée contre signature d'un état des lieux d'entrée contradictoire.
     Le locataire s'engage à restituer les clés au bailleur au terme du contrat, à la date et heure de départ convenues.
   </p>
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 6 – OBLIGATIONS DU LOCATAIRE
   </h2>
@@ -233,7 +244,9 @@ export function generateContract(data: ContractData): string {
     <li>Signaler immédiatement tout dommage survenu dans le logement.</li>
   </ul>
   <p>${animauxClause}</p>
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 7 – CHARGES ET PRESTATIONS INCLUSES
   </h2>
@@ -242,7 +255,9 @@ export function generateContract(data: ContractData): string {
     <strong>${e.propertyCharges}</strong>.
     Toute consommation excessive sera facturée en sus sur présentation de justificatifs.
   </p>
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 8 – ASSURANCES
   </h2>
@@ -251,7 +266,9 @@ export function generateContract(data: ContractData): string {
     pendant toute la durée de la location. Il devra fournir une attestation d'assurance à la demande du bailleur.
     Le bailleur déclare que le logement est couvert par son assurance habitation.
   </p>
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 9 – RÉSILIATION ET ANNULATION
   </h2>
@@ -260,7 +277,9 @@ export function generateContract(data: ContractData): string {
     sans mise en demeure préalable. Le bailleur pourra exiger le départ immédiat du locataire sans remboursement des
     sommes versées. Les conditions d'annulation sont définies à l'article 3 (${typeVersement}).
   </p>
+  </div>
 
+  <div class="contract-section">
   <h2 style="font-size: 11pt; font-weight: bold; border-left: 3px solid #333; padding-left: 10px; margin: 24px 0 10px 0;">
     ARTICLE 10 – LITIGES
   </h2>
@@ -269,8 +288,9 @@ export function generateContract(data: ContractData): string {
     À défaut d'accord amiable, tout litige relatif à l'exécution du présent contrat sera de la compétence exclusive
     des tribunaux du lieu de situation de l'immeuble loué.
   </p>
+  </div>
 
-  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc;">
+  <div class="signature-section" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc;">
     <p style="margin-bottom: 20px;">
       Fait en deux exemplaires originaux, à ________________, le ________________
     </p>
@@ -341,73 +361,86 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
       iframe.srcdoc = srcdoc;
     });
 
-    const iframeBody = iframe.contentDocument!.body;
-    // Ajuster la hauteur de l'iframe pour capturer tout le contenu
+    const iframeDoc = iframe.contentDocument!;
+    const iframeBody = iframeDoc.body;
     iframe.style.height = iframeBody.scrollHeight + 'px';
 
     const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = 210;
     const pageHeight = 297;
+    const margin = 15; // mm — marges PDF gauche/droite/haut
+    const contentW = pageWidth - 2 * margin; // 180 mm
 
-    // Collecter les positions des éléments AVANT html2canvas (évite toute interférence)
-    // Les sélecteurs ciblent les balises réelles du HTML généré (pas de classes CSS)
-    const canvasScale = 2; // doit correspondre au scale passé à html2canvas
-    const bodyRect = iframeBody.getBoundingClientRect();
-    const breakSet = new Set<number>([0]);
-    iframeBody
-      .querySelectorAll('h1, h2, p, ul, li, table, tr')
-      .forEach((el) => {
-        const rect = (el as HTMLElement).getBoundingClientRect();
-        const topPx = Math.round((rect.top - bodyRect.top) * canvasScale);
-        const bottomPx = Math.round((rect.bottom - bodyRect.top) * canvasScale);
-        if (topPx > 0) breakSet.add(topPx);
-        if (bottomPx > 0) breakSet.add(bottomPx);
+    // Cloner .contract-document, supprimer son padding et le dimensionner
+    // au contenu utile (même logique que le générateur standalone)
+    const contractEl =
+      (iframeBody.querySelector('.contract-document') as HTMLElement | null) ??
+      (iframeBody.firstElementChild as HTMLElement | null) ??
+      iframeBody;
+    const clone = contractEl.cloneNode(true) as HTMLElement;
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    clone.style.padding = '0';
+    clone.style.margin = '0';
+    clone.style.width = Math.round(contentW * 3.78) + 'px'; // px ≈ mm × 3.78
+    clone.style.maxWidth = 'none';
+    iframeDoc.body.appendChild(clone);
+
+    // Sections identifiées par les classes CSS ajoutées dans generateContract()
+    const sections = Array.from(
+      clone.querySelectorAll('.contract-header, .parties-section, .contract-section, .signature-section')
+    ) as HTMLElement[];
+
+    let currentY = margin;
+
+    for (const section of sections) {
+      const wrapper = iframeDoc.createElement('div'); // wrapper invisible pour html2canvas
+      wrapper.style.cssText = 'position:absolute;left:-99999px;top:0;';
+      wrapper.appendChild(section);
+
+      iframeDoc.body.appendChild(wrapper);
+      const sectionCanvas = await html2canvas(section, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
       });
+      iframeDoc.body.removeChild(wrapper);
 
-    const canvas = await html2canvas(iframeBody, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      width: 800,
-      windowWidth: 800,
-    });
+      const imgW = contentW;
+      const imgH = (sectionCanvas.height / sectionCanvas.width) * imgW;
+      const maxH = pageHeight - 2 * margin;
 
-    breakSet.add(canvas.height);
-    const pageHeightPx = Math.round((pageHeight * canvas.width) / pageWidth);
-    const mmPerPx = pageWidth / canvas.width;
-    const breakPoints = Array.from(breakSet).sort((a, b) => a - b);
-
-    let srcY = 0;
-    let firstPage = true;
-
-    while (srcY < canvas.height) {
-      const targetEndY = srcY + pageHeightPx;
-      let endY = targetEndY >= canvas.height ? canvas.height : targetEndY;
-
-      if (targetEndY < canvas.height) {
-        // Cherche le dernier point de rupture ≤ targetEndY et > srcY pour éviter les coupures dans le contenu
-        for (const bp of breakPoints) {
-          if (bp > srcY && bp <= targetEndY) endY = bp;
-        }
+      // Si la section tient sur une page mais pas sur l'espace restant → nouvelle page
+      if (imgH <= maxH && currentY > margin && currentY + imgH > pageHeight - margin) {
+        pdf.addPage();
+        currentY = margin;
       }
 
-      const sliceHeightPx = endY - srcY;
-      if (sliceHeightPx <= 0) break;
-
-      const sliceCanvas = document.createElement('canvas');
-      sliceCanvas.width = canvas.width;
-      sliceCanvas.height = sliceHeightPx;
-      sliceCanvas.getContext('2d')!.drawImage(canvas, 0, srcY, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
-
-      const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
-      if (!firstPage) pdf.addPage();
-      pdf.addImage(sliceData, 'JPEG', 0, 0, pageWidth, sliceHeightPx * mmPerPx);
-
-      srcY = endY;
-      firstPage = false;
+      // Placement section par section avec découpage si plus haute qu'une page (cas rare)
+      const pxPerMm = sectionCanvas.width / imgW;
+      let imgOffset = 0;
+      while (imgOffset < imgH) {
+        const availH = pageHeight - margin - currentY;
+        if (availH <= 0) { pdf.addPage(); currentY = margin; continue; }
+        const sliceH = Math.min(imgH - imgOffset, availH);
+        const srcY = Math.round(imgOffset * pxPerMm);
+        const srcH = Math.round(sliceH * pxPerMm);
+        if (srcH <= 0) break;
+        const sc = document.createElement('canvas');
+        sc.width = sectionCanvas.width;
+        sc.height = srcH;
+        sc.getContext('2d')!.drawImage(sectionCanvas, 0, srcY, sectionCanvas.width, srcH, 0, 0, sectionCanvas.width, srcH);
+        pdf.addImage(sc.toDataURL('image/jpeg', 0.95), 'JPEG', margin, currentY, imgW, sliceH);
+        imgOffset += sliceH;
+        currentY += sliceH;
+        if (imgOffset < imgH) { pdf.addPage(); currentY = margin; }
+      }
+      currentY += 3; // espacement entre sections
     }
 
+    iframeDoc.body.removeChild(clone);
     return pdf.output('blob') as Blob;
   } finally {
     document.body.removeChild(iframe);
