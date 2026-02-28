@@ -2,7 +2,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 /**
  * Edge Function : envoie une notification push Web à un utilisateur
- * via le protocole Web Push + VAPID.
+ * via le protocole Web Push + VAPID + chiffrement RFC 8291 (aes128gcm).
  *
  * Body JSON attendu :
  *   { user_id: string, titre: string, message: string, url?: string }
@@ -21,7 +21,7 @@ interface PushSubscriptionRow {
   auth_key: string;
 }
 
-// ─── Utilitaires VAPID / Web Push ──────────────────────────
+// ─── Utilitaires base64 ─────────────────────────────────────
 
 function base64urlToUint8Array(base64url: string): Uint8Array {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
@@ -34,11 +34,12 @@ function uint8ArrayToBase64url(arr: Uint8Array): string {
   return btoa(String.fromCharCode(...arr)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
+// ─── Utilitaires VAPID ──────────────────────────────────────
+
 async function importVapidPrivateKey(privateKeyB64url: string): Promise<CryptoKey> {
   const raw = base64urlToUint8Array(privateKeyB64url);
   return crypto.subtle.importKey(
     'pkcs8',
-    // PKCS8 wrap for P-256 private key
     buildPkcs8(raw),
     { name: 'ECDSA', namedCurve: 'P-256' },
     false,
@@ -47,18 +48,16 @@ async function importVapidPrivateKey(privateKeyB64url: string): Promise<CryptoKe
 }
 
 function buildPkcs8(rawKey: Uint8Array): ArrayBuffer {
-  // PKCS#8 wrapper for P-256 private key (32 bytes)
-  // OID for EC + P-256: 1.2.840.10045.2.1 + 1.2.840.10045.3.1.7
   const header = new Uint8Array([
-    0x30, 0x41, // SEQUENCE
-    0x02, 0x01, 0x00, // INTEGER (version = 0)
-    0x30, 0x13, // SEQUENCE (algorithm)
-    0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, // OID ecPublicKey
-    0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, // OID P-256
-    0x04, 0x27, // OCTET STRING
-    0x30, 0x25, // SEQUENCE
-    0x02, 0x01, 0x01, // INTEGER (version = 1)
-    0x04, 0x20, // OCTET STRING (32 bytes key)
+    0x30, 0x41,
+    0x02, 0x01, 0x00,
+    0x30, 0x13,
+    0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
+    0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
+    0x04, 0x27,
+    0x30, 0x25,
+    0x02, 0x01, 0x01,
+    0x04, 0x20,
   ]);
   const buf = new Uint8Array(header.length + rawKey.length);
   buf.set(header);
@@ -92,6 +91,90 @@ async function buildVapidJwt(
   return `${signingInput}.${uint8ArrayToBase64url(new Uint8Array(signature))}`;
 }
 
+// ─── Chiffrement payload (RFC 8291 / aes128gcm) ─────────────
+
+/** HMAC-SHA-256 */
+async function hmacSha256(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  return new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, data));
+}
+
+/** HKDF-Expand, premier bloc uniquement (suffisant pour ≤ 32 octets) */
+async function hkdfExpand(prk: Uint8Array, info: Uint8Array, length: number): Promise<Uint8Array> {
+  return (await hmacSha256(prk, new Uint8Array([...info, 0x01]))).subarray(0, length);
+}
+
+/**
+ * Chiffre le payload JSON en aes128gcm selon RFC 8291.
+ * Retourne le corps binaire à envoyer avec Content-Encoding: aes128gcm.
+ */
+async function buildEncryptedBody(
+  plaintext: string,
+  p256dhB64: string,
+  authB64: string,
+): Promise<Uint8Array> {
+  const enc = new TextEncoder();
+  const receiverPub = base64urlToUint8Array(p256dhB64);
+  const authSecret = base64urlToUint8Array(authB64);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  // Paire de clés éphémère expéditeur
+  const senderPair = await crypto.subtle.generateKey(
+    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits'],
+  );
+  const senderPub = new Uint8Array(
+    await crypto.subtle.exportKey('raw', senderPair.publicKey),
+  );
+
+  // Import de la clé publique du destinataire
+  const receiverKey = await crypto.subtle.importKey(
+    'raw', receiverPub, { name: 'ECDH', namedCurve: 'P-256' }, false, [],
+  );
+
+  // Secret partagé ECDH (32 octets)
+  const ecdhSecret = new Uint8Array(
+    await crypto.subtle.deriveBits(
+      { name: 'ECDH', public: receiverKey }, senderPair.privateKey, 256,
+    ),
+  );
+
+  // IKM = HKDF(salt=auth, ikm=ecdh, info="WebPush: info\0"+receiverPub+senderPub, L=32)
+  const prkAuth = await hmacSha256(authSecret, ecdhSecret);
+  const ikmInfo = new Uint8Array([
+    ...enc.encode('WebPush: info\x00'), ...receiverPub, ...senderPub,
+  ]);
+  const ikm = await hkdfExpand(prkAuth, ikmInfo, 32);
+
+  // PRK = HKDF-Extract(salt_aléatoire, IKM)
+  const prk = await hmacSha256(salt, ikm);
+
+  // CEK (16 octets) et nonce (12 octets)
+  const cek = await hkdfExpand(prk, enc.encode('Content-Encoding: aes128gcm\x00'), 16);
+  const nonce = await hkdfExpand(prk, enc.encode('Content-Encoding: nonce\x00'), 12);
+
+  // Chiffrement AES-128-GCM : plaintext + délimiteur 0x02 (enregistrement final)
+  const cekKey = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const padded = new Uint8Array([...enc.encode(plaintext), 0x02]);
+  const ciphertext = new Uint8Array(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, cekKey, padded),
+  );
+
+  // Corps final : salt(16) + rs(4 BE=4096) + idlen(1=65) + senderPub(65) + ciphertext
+  const body = new Uint8Array(16 + 4 + 1 + 65 + ciphertext.length);
+  let o = 0;
+  body.set(salt, o); o += 16;
+  body[o++] = 0x00; body[o++] = 0x00; body[o++] = 0x10; body[o++] = 0x00; // 4096 big-endian
+  body[o++] = 65; // longueur senderPub (clé P-256 non compressée)
+  body.set(senderPub, o); o += 65;
+  body.set(ciphertext, o);
+
+  return body;
+}
+
+// ─── Envoi Web Push ──────────────────────────────────────────
+
 async function sendWebPush(
   subscription: PushSubscriptionRow,
   bodyJson: string,
@@ -106,33 +189,29 @@ async function sendWebPush(
   try {
     privateKey = await importVapidPrivateKey(vapidPrivateKey);
   } catch {
-    // Clé VAPID privée au format raw (non PKCS8) - utiliser un workaround
-    // En Deno, on peut importer directement raw
     const raw = base64urlToUint8Array(vapidPrivateKey);
     privateKey = await crypto.subtle.importKey(
-      'raw',
-      raw,
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      false,
-      ['sign'],
+      'raw', raw, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'],
     );
   }
 
   const jwt = await buildVapidJwt(audience, vapidSubject, privateKey);
   const vapidAuth = `vapid t=${jwt},k=${vapidPublicKey}`;
 
-  // Encoder le body (UTF-8 simple, non chiffré ECDH pour simplifier)
-  const body = new TextEncoder().encode(bodyJson);
+  // Chiffrement RFC 8291
+  const encryptedBody = await buildEncryptedBody(
+    bodyJson, subscription.p256dh_key, subscription.auth_key,
+  );
 
   const response = await fetch(subscription.endpoint, {
     method: 'POST',
     headers: {
       Authorization: vapidAuth,
       'Content-Type': 'application/octet-stream',
-      'Content-Length': String(body.length),
+      'Content-Encoding': 'aes128gcm',
       TTL: '86400',
     },
-    body,
+    body: encryptedBody,
   });
 
   return response.status;

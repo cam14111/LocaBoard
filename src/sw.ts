@@ -29,13 +29,13 @@ registerRoute(
 // ─── Push Notifications ───────────────────────────────────────
 
 self.addEventListener('push', (event: PushEvent) => {
-  if (!event.data) return;
-
   let payload: { titre?: string; message?: string; url?: string } = {};
-  try {
-    payload = event.data.json();
-  } catch {
-    payload = { message: event.data.text() };
+  if (event.data) {
+    try {
+      payload = event.data.json();
+    } catch {
+      payload = { message: event.data.text() };
+    }
   }
 
   const titre = payload.titre ?? 'LocaBoard';
