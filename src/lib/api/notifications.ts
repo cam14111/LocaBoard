@@ -125,16 +125,17 @@ export async function createNotification(params: {
 
   // Envoi push immédiat pour les tâches assignées
   if (params.type === 'TACHE_ASSIGNEE') {
+    const pushPayload = {
+      user_id: params.user_id,
+      titre: params.titre,
+      message: params.message,
+      url: params.entity_id ? `/LocaBoard/taches` : '/LocaBoard/',
+    };
+    console.log('[push] Envoi push pour TACHE_ASSIGNEE:', pushPayload);
     supabase.functions
-      .invoke('send-push-notification', {
-        body: {
-          user_id: params.user_id,
-          titre: params.titre,
-          message: params.message,
-          url: params.entity_id ? `/LocaBoard/taches` : '/LocaBoard/',
-        },
-      })
-      .catch(() => {}); // fire-and-forget, pas bloquant
+      .invoke('send-push-notification', { body: pushPayload })
+      .then((res) => console.log('[push] Réponse Edge Function:', res))
+      .catch((err) => console.error('[push] Erreur Edge Function:', err));
   }
 
   return data as Notification;

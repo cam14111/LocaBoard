@@ -85,6 +85,7 @@ export async function createTache(params: {
       day: 'numeric',
       month: 'short',
     });
+    console.log('[tache] Création notification pour assigné:', params.assignee_user_id);
     createNotification({
       user_id: params.assignee_user_id,
       type: 'TACHE_ASSIGNEE',
@@ -92,7 +93,8 @@ export async function createTache(params: {
       message: `${params.titre} — échéance ${echeanceFr}`,
       entity_type: 'tache',
       entity_id: data.id,
-    }).catch(() => {});
+    }).then((n) => console.log('[tache] Notification créée:', n))
+      .catch((err) => console.error('[tache] Erreur notification:', err));
   }
 
   return data as Tache;
