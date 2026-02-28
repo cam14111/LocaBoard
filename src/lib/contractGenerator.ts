@@ -349,6 +349,21 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
     const pageWidth = 210;
     const pageHeight = 297;
 
+    // Collecter les positions des éléments AVANT html2canvas (évite toute interférence)
+    // Les sélecteurs ciblent les balises réelles du HTML généré (pas de classes CSS)
+    const canvasScale = 2; // doit correspondre au scale passé à html2canvas
+    const bodyRect = iframeBody.getBoundingClientRect();
+    const breakSet = new Set<number>([0]);
+    iframeBody
+      .querySelectorAll('h1, h2, p, ul, li, table, tr')
+      .forEach((el) => {
+        const rect = (el as HTMLElement).getBoundingClientRect();
+        const topPx = Math.round((rect.top - bodyRect.top) * canvasScale);
+        const bottomPx = Math.round((rect.bottom - bodyRect.top) * canvasScale);
+        if (topPx > 0) breakSet.add(topPx);
+        if (bottomPx > 0) breakSet.add(bottomPx);
+      });
+
     const canvas = await html2canvas(iframeBody, {
       scale: 2,
       useCORS: true,
@@ -358,23 +373,9 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
       windowWidth: 800,
     });
 
-    // Collecte des positions des éléments bloc pour des sauts de page cohérents
-    const iframeDoc = iframe.contentDocument!;
-    const bodyRect = iframeBody.getBoundingClientRect();
-    const canvasScale = 2; // doit correspondre au scale passé à html2canvas
+    breakSet.add(canvas.height);
     const pageHeightPx = Math.round((pageHeight * canvas.width) / pageWidth);
     const mmPerPx = pageWidth / canvas.width;
-
-    const breakSet = new Set<number>([0, canvas.height]);
-    iframeDoc
-      .querySelectorAll('h1, h2, h3, p, li, .contract-section, .parties-section, .date-location, .signature-section')
-      .forEach((el) => {
-        const rect = (el as HTMLElement).getBoundingClientRect();
-        const topPx = Math.round((rect.top - bodyRect.top) * canvasScale);
-        const bottomPx = Math.round((rect.bottom - bodyRect.top) * canvasScale);
-        if (topPx > 0) breakSet.add(topPx);
-        if (bottomPx > 0 && bottomPx < canvas.height) breakSet.add(bottomPx);
-      });
     const breakPoints = Array.from(breakSet).sort((a, b) => a - b);
 
     let srcY = 0;
