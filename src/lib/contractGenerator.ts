@@ -305,7 +305,7 @@ function buildPdfMakeDoc(data: ContractData): object {
   }
   tableRows.push([{ text: 'TOTAL', fontSize: 10, bold: true }, { text: formatCurrency(totalGeneral), fontSize: 10, alignment: 'right', bold: true }]);
 
-  const art = (title: string) => ({ text: title, style: 'articleHeader' });
+  const art = (title: string) => ({ text: title, style: 'articleHeader', keepWithNext: true });
   const p = (txt: object | string, margin?: number[]) => ({ text: txt, style: 'body', ...(margin ? { margin } : {}) });
 
   return {
