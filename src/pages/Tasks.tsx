@@ -12,11 +12,14 @@ import {
   Home,
   Pencil,
   RotateCcw,
+  User,
 } from 'lucide-react';
 import { useSelectedLogement } from '@/hooks/useSelectedLogement';
+import { useAuth } from '@/hooks/useAuth';
 import { getTaches, createTache, updateTache, completeTache, cancelTache, reactivateTache } from '@/lib/api/taches';
+import { getActiveUtilisateurs } from '@/lib/api/utilisateurs';
 import { formatDateFR, toDateString } from '@/lib/dateUtils';
-import type { Tache, TacheType, TacheStatut } from '@/types/database.types';
+import type { Tache, TacheType, TacheStatut, Utilisateur } from '@/types/database.types';
 
 const TYPE_LABELS: Record<TacheType, string> = {
   MENAGE: 'Ménage',
@@ -46,11 +49,13 @@ type FilterStatut = 'actives' | 'faites' | 'toutes';
 
 export default function Tasks() {
   const { selectedLogementId, logements } = useSelectedLogement();
+  const { user } = useAuth();
   const [taches, setTaches] = useState<Tache[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatut, setFilterStatut] = useState<FilterStatut>('actives');
   const [filterType, setFilterType] = useState<TacheType | ''>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeUsers, setActiveUsers] = useState<Utilisateur[]>([]);
 
   async function loadTaches() {
     setLoading(true);
@@ -85,6 +90,10 @@ export default function Tasks() {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLogementId]);
+
+  useEffect(() => {
+    getActiveUtilisateurs().then(setActiveUsers).catch(() => setActiveUsers([]));
+  }, []);
 
   const filtered = useMemo(() => {
     let list = taches;
@@ -217,6 +226,8 @@ export default function Tasks() {
               tache={tache}
               onStatusChange={handleStatusChange}
               onEdited={loadTaches}
+              activeUsers={activeUsers}
+              currentUserId={user?.id}
               logementNom={
                 !selectedLogementId
                   ? logements.find((l) => l.id === tache.logement_id)?.nom
@@ -231,6 +242,8 @@ export default function Tasks() {
       {showCreateModal && (
         <CreateTacheModal
           logementId={selectedLogementId}
+          activeUsers={activeUsers}
+          currentUserId={user?.id}
           onClose={() => setShowCreateModal(false)}
           onCreated={() => {
             setShowCreateModal(false);
@@ -246,11 +259,15 @@ function TacheRow({
   tache,
   onStatusChange,
   onEdited,
+  activeUsers,
+  currentUserId,
   logementNom,
 }: {
   tache: Tache;
   onStatusChange: (tache: Tache, statut: TacheStatut) => void;
   onEdited: () => void;
+  activeUsers: Utilisateur[];
+  currentUserId?: string;
   logementNom?: string;
 }) {
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -261,11 +278,22 @@ function TacheRow({
     (tache.statut === 'A_FAIRE' || tache.statut === 'EN_COURS') && tache.echeance_at < today;
   const isDone = tache.statut === 'FAIT' || tache.statut === 'ANNULEE';
 
+  const assignee = tache.assignee_user_id
+    ? activeUsers.find((u) => u.id === tache.assignee_user_id)
+    : null;
+  const assigneeLabel = assignee
+    ? (tache.assignee_user_id === currentUserId
+        ? 'Moi'
+        : `${assignee.prenom} ${assignee.nom}`)
+    : null;
+
   // Mode édition
   if (editing) {
     return (
       <EditTacheRowForm
         tache={tache}
+        activeUsers={activeUsers}
+        currentUserId={currentUserId}
         onSaved={() => { setEditing(false); onEdited(); }}
         onCancel={() => setEditing(false)}
       />
@@ -316,6 +344,15 @@ function TacheRow({
             </span>
             <span className="text-slate-300">|</span>
             <span>{STATUT_LABELS[tache.statut]}</span>
+            {assigneeLabel && (
+              <>
+                <span className="text-slate-300">|</span>
+                <span className="flex items-center gap-1 text-slate-500">
+                  <User className="h-3 w-3" />
+                  {assigneeLabel}
+                </span>
+              </>
+            )}
             {logementNom && (
               <>
                 <span className="text-slate-300">|</span>
@@ -395,10 +432,14 @@ function TacheRow({
 
 function EditTacheRowForm({
   tache,
+  activeUsers,
+  currentUserId,
   onSaved,
   onCancel,
 }: {
   tache: Tache;
+  activeUsers: Utilisateur[];
+  currentUserId?: string;
   onSaved: () => void;
   onCancel: () => void;
 }) {
@@ -406,6 +447,7 @@ function EditTacheRowForm({
   const [type, setType] = useState<TacheType>(tache.type);
   const [echeance, setEcheance] = useState(tache.echeance_at.substring(0, 10));
   const [description, setDescription] = useState(tache.description ?? '');
+  const [assigneeId, setAssigneeId] = useState(tache.assignee_user_id ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -420,6 +462,7 @@ function EditTacheRowForm({
         type,
         echeance_at: new Date(echeance + 'T00:00:00').toISOString(),
         description: description.trim() || undefined,
+        assignee_user_id: assigneeId || null,
       });
       onSaved();
     } catch {
@@ -430,6 +473,8 @@ function EditTacheRowForm({
   }
 
   const INPUT = 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none';
+  const cohotes = activeUsers.filter((u) => (u.role === 'COHOTE' || u.role === 'ADMIN') && u.id !== currentUserId);
+  const concierges = activeUsers.filter((u) => u.role === 'CONCIERGE');
 
   return (
     <form onSubmit={handleSubmit} className="rounded-xl border border-primary-200 bg-primary-50/30 p-4 shadow-sm space-y-3">
@@ -465,6 +510,24 @@ function EditTacheRowForm({
         </select>
         <input type="date" value={echeance} onChange={(e) => setEcheance(e.target.value)} className={INPUT} />
       </div>
+      <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className={INPUT}>
+        <option value="">— Non assigné —</option>
+        {currentUserId && <option value={currentUserId}>Moi</option>}
+        {cohotes.length > 0 && (
+          <optgroup label="Co-hôtes">
+            {cohotes.map((u) => (
+              <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+            ))}
+          </optgroup>
+        )}
+        {concierges.length > 0 && (
+          <optgroup label="Concierges">
+            {concierges.map((u) => (
+              <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+            ))}
+          </optgroup>
+        )}
+      </select>
       {error && <p className="text-xs text-red-600">{error}</p>}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
@@ -481,10 +544,14 @@ function EditTacheRowForm({
 
 function CreateTacheModal({
   logementId,
+  activeUsers,
+  currentUserId,
   onClose,
   onCreated,
 }: {
   logementId: string | null;
+  activeUsers: Utilisateur[];
+  currentUserId?: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -494,8 +561,12 @@ function CreateTacheModal({
   const [description, setDescription] = useState('');
   const [type, setType] = useState<TacheType>('MENAGE');
   const [echeance, setEcheance] = useState(toDateString(new Date()));
+  const [assigneeId, setAssigneeId] = useState(currentUserId ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const cohotes = activeUsers.filter((u) => (u.role === 'COHOTE' || u.role === 'ADMIN') && u.id !== currentUserId);
+  const concierges = activeUsers.filter((u) => u.role === 'CONCIERGE');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -517,6 +588,7 @@ function CreateTacheModal({
         description: description.trim() || undefined,
         type,
         echeance_at: new Date(echeance).toISOString(),
+        assignee_user_id: assigneeId || undefined,
       });
       onCreated();
     } catch (err) {
@@ -627,6 +699,35 @@ function CreateTacheModal({
                 className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="tache-assignee" className="block text-sm font-medium text-slate-700">
+              Assigné à
+            </label>
+            <select
+              id="tache-assignee"
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+            >
+              <option value="">— Non assigné —</option>
+              {currentUserId && <option value={currentUserId}>Moi</option>}
+              {cohotes.length > 0 && (
+                <optgroup label="Co-hôtes">
+                  {cohotes.map((u) => (
+                    <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+                  ))}
+                </optgroup>
+              )}
+              {concierges.length > 0 && (
+                <optgroup label="Concierges">
+                  {concierges.map((u) => (
+                    <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
           </div>
 
           {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}

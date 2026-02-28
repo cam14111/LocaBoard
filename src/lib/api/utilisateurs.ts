@@ -13,6 +13,18 @@ export async function getUtilisateurs() {
   return data as Utilisateur[];
 }
 
+/** Liste uniquement les utilisateurs actifs (non archivés) */
+export async function getActiveUtilisateurs() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .is('archived_at', null)
+    .order('nom', { ascending: true });
+
+  if (error) throw error;
+  return data as Utilisateur[];
+}
+
 /** Invite un utilisateur (co-hôte ou concierge) via Supabase Auth */
 export async function inviteUtilisateur(params: {
   email: string;

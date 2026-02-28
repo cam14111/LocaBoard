@@ -11,6 +11,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
         name: 'LocaBoard',
@@ -26,18 +29,8 @@ export default defineConfig({
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api',
-              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
-            },
-          },
-        ],
       },
     }),
   ],

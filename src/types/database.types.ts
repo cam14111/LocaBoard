@@ -271,6 +271,16 @@ export interface ChecklistModele {
   updated_at: string;
 }
 
+export interface PushSubscriptionDb {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh_key: string;
+  auth_key: string;
+  user_agent: string | null;
+  created_at: string;
+}
+
 // ─── Helpers Supabase ────────────────────────────────────────
 // Supabase v2.95+ GenericTable exige Row/Insert/Update étendant Record<string, unknown>
 // et un champ Relationships. Les interfaces TS n'ont pas d'index signature implicite,
@@ -301,6 +311,7 @@ export interface Database {
       notifications: DbTable<Notification>;
       audit_log: DbTable<AuditLog>;
       checklist_modeles: DbTable<ChecklistModele>;
+      push_subscriptions: DbTable<PushSubscriptionDb>;
     };
     Views: { [_ in never]: never };
     Functions: {

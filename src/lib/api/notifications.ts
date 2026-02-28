@@ -122,5 +122,20 @@ export async function createNotification(params: {
     .single();
 
   if (error) throw error;
+
+  // Envoi push immédiat pour les tâches assignées
+  if (params.type === 'TACHE_ASSIGNEE') {
+    supabase.functions
+      .invoke('send-push-notification', {
+        body: {
+          user_id: params.user_id,
+          titre: params.titre,
+          message: params.message,
+          url: params.entity_id ? `/LocaBoard/taches` : '/LocaBoard/',
+        },
+      })
+      .catch(() => {}); // fire-and-forget, pas bloquant
+  }
+
   return data as Notification;
 }

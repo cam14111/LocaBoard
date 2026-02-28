@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
-import { dismissNotificationsForEntity } from './notifications';
+import { dismissNotificationsForEntity, createNotification } from './notifications';
 import type { Tache, TacheType, TacheStatut, Logement } from '@/types/database.types';
 
 export async function getTaches(filters?: {
@@ -115,6 +115,24 @@ export async function updateTache(id: string, updates: Partial<Pick<Tache,
     });
     // Modification d'une tâche → effacer la notification de retard
     dismissNotificationsForEntity('TACHE_EN_RETARD', 'tache', id);
+
+    // Réassignation → notifier immédiatement le nouvel assigné
+    const newAssignee = data.assignee_user_id as string | null;
+    const prevAssignee = before?.assignee_user_id as string | null;
+    if (newAssignee && newAssignee !== prevAssignee) {
+      const echeanceFr = new Date(data.echeance_at).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+      });
+      createNotification({
+        user_id: newAssignee,
+        type: 'TACHE_ASSIGNEE',
+        titre: 'Nouvelle tâche assignée',
+        message: `${data.titre} — échéance ${echeanceFr}`,
+        entity_type: 'tache',
+        entity_id: id,
+      }).catch(() => {});
+    }
   }
 
   return data as Tache;

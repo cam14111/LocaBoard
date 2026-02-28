@@ -3,7 +3,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { updateUtilisateurProfile } from '@/lib/api/utilisateurs';
 import { createAuditLog } from '@/lib/api/audit';
-import { ArrowLeft, Check, Loader2, Pencil, X } from 'lucide-react';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { ArrowLeft, Bell, BellOff, Check, Loader2, Pencil, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 
@@ -152,6 +153,22 @@ export default function Profile() {
       setError('Une erreur est survenue.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  // ── Push Notifications ───────────────────────────────────────
+  const { permission, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
+  const [pushError, setPushError] = useState('');
+
+  async function handleTogglePush() {
+    setPushError('');
+    if (isSubscribed) {
+      await unsubscribe();
+    } else {
+      const ok = await subscribe();
+      if (!ok && permission === 'denied') {
+        setPushError('Permission refusée. Autorisez les notifications dans les paramètres de votre navigateur.');
+      }
     }
   }
 
@@ -333,6 +350,56 @@ export default function Profile() {
               <p className="font-medium">{(profile as { siret?: string | null })?.siret || '—'}</p>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Notifications push */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold mb-1">Notifications push</h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Recevez une notification sur cet appareil lorsqu'une tâche vous est assignée, même si l'application est fermée.
+        </p>
+
+        {permission === 'unsupported' ? (
+          <p className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm text-slate-500">
+            Votre navigateur ne supporte pas les notifications push.
+          </p>
+        ) : (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleTogglePush}
+              disabled={pushLoading || permission === 'denied'}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                isSubscribed
+                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  : 'bg-primary-600 text-white hover:bg-primary-700'
+              }`}
+            >
+              {pushLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isSubscribed ? (
+                <BellOff className="h-4 w-4" />
+              ) : (
+                <Bell className="h-4 w-4" />
+              )}
+              {isSubscribed ? 'Désactiver' : 'Activer'}
+            </button>
+            <span className={`text-sm ${isSubscribed ? 'text-emerald-600' : 'text-slate-400'}`}>
+              {isSubscribed ? 'Actives sur cet appareil' : 'Inactives'}
+            </span>
+          </div>
+        )}
+
+        {permission === 'denied' && !isSubscribed && (
+          <p className="mt-3 text-xs text-amber-600">
+            Les notifications sont bloquées par le navigateur. Autorisez-les dans les paramètres de votre navigateur puis rechargez la page.
+          </p>
+        )}
+
+        {pushError && (
+          <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600" role="alert">
+            {pushError}
+          </p>
         )}
       </div>
 

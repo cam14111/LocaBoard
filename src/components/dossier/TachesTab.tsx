@@ -10,6 +10,7 @@ import {
   Calendar,
   Pencil,
   RotateCcw,
+  User,
 } from 'lucide-react';
 import {
   getTachesByDossier,
@@ -19,8 +20,10 @@ import {
   cancelTache,
   reactivateTache,
 } from '@/lib/api/taches';
+import { getActiveUtilisateurs } from '@/lib/api/utilisateurs';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDateFR, toDateString } from '@/lib/dateUtils';
-import type { Tache, TacheType, TacheStatut } from '@/types/database.types';
+import type { Tache, TacheType, TacheStatut, Utilisateur } from '@/types/database.types';
 
 const TYPE_LABELS: Record<TacheType, string> = {
   MENAGE: 'Ménage',
@@ -51,12 +54,18 @@ interface TachesTabProps {
 }
 
 export default function TachesTab({ dossierId, logementId }: TachesTabProps) {
+  const { user } = useAuth();
   const [taches, setTaches] = useState<Tache[]>([]);
+  const [activeUsers, setActiveUsers] = useState<Utilisateur[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
+
+  useEffect(() => {
+    getActiveUtilisateurs().then(setActiveUsers).catch(() => setActiveUsers([]));
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -150,6 +159,8 @@ export default function TachesTab({ dossierId, logementId }: TachesTabProps) {
                 <EditTacheInline
                   key={tache.id}
                   tache={tache}
+                  activeUsers={activeUsers}
+                  currentUserId={user?.id}
                   onSaved={() => { setEditingId(null); load(); }}
                   onCancel={() => setEditingId(null)}
                 />
@@ -161,6 +172,12 @@ export default function TachesTab({ dossierId, logementId }: TachesTabProps) {
               tache.echeance_at < today;
             const isDone = tache.statut === 'FAIT' || tache.statut === 'ANNULEE';
             const isConfirmingCancel = confirmCancelId === tache.id;
+            const assignee = tache.assignee_user_id
+              ? activeUsers.find((u) => u.id === tache.assignee_user_id)
+              : null;
+            const assigneeLabel = assignee
+              ? (tache.assignee_user_id === user?.id ? 'Moi' : `${assignee.prenom} ${assignee.nom}`)
+              : null;
 
             return (
               <div
@@ -223,6 +240,15 @@ export default function TachesTab({ dossierId, logementId }: TachesTabProps) {
                       </span>
                       <span className="text-slate-300">|</span>
                       <span>{STATUT_LABELS[tache.statut]}</span>
+                      {assigneeLabel && (
+                        <>
+                          <span className="text-slate-300">|</span>
+                          <span className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {assigneeLabel}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -304,6 +330,8 @@ export default function TachesTab({ dossierId, logementId }: TachesTabProps) {
         <CreateTacheInline
           logementId={logementId}
           dossierId={dossierId}
+          activeUsers={activeUsers}
+          currentUserId={user?.id}
           onClose={() => setShowCreate(false)}
           onCreated={() => {
             setShowCreate(false);
@@ -327,10 +355,14 @@ export default function TachesTab({ dossierId, logementId }: TachesTabProps) {
 
 function EditTacheInline({
   tache,
+  activeUsers,
+  currentUserId,
   onSaved,
   onCancel,
 }: {
   tache: Tache;
+  activeUsers: Utilisateur[];
+  currentUserId?: string;
   onSaved: () => void;
   onCancel: () => void;
 }) {
@@ -338,8 +370,11 @@ function EditTacheInline({
   const [type, setType] = useState<TacheType>(tache.type);
   const [echeance, setEcheance] = useState(tache.echeance_at.substring(0, 10));
   const [description, setDescription] = useState(tache.description ?? '');
+  const [assigneeId, setAssigneeId] = useState(tache.assignee_user_id ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const cohotes = activeUsers.filter((u) => (u.role === 'COHOTE' || u.role === 'ADMIN') && u.id !== currentUserId);
+  const concierges = activeUsers.filter((u) => u.role === 'CONCIERGE');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -352,6 +387,7 @@ function EditTacheInline({
         type,
         echeance_at: new Date(echeance + 'T00:00:00').toISOString(),
         description: description.trim() || undefined,
+        assignee_user_id: assigneeId || null,
       });
       onSaved();
     } catch {
@@ -413,6 +449,25 @@ function EditTacheInline({
         />
       </div>
 
+      <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className={INPUT}>
+        <option value="">— Non assigné —</option>
+        {currentUserId && <option value={currentUserId}>Moi</option>}
+        {cohotes.length > 0 && (
+          <optgroup label="Co-hôtes">
+            {cohotes.map((u) => (
+              <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+            ))}
+          </optgroup>
+        )}
+        {concierges.length > 0 && (
+          <optgroup label="Concierges">
+            {concierges.map((u) => (
+              <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+            ))}
+          </optgroup>
+        )}
+      </select>
+
       {error && <p className="text-xs text-red-600">{error}</p>}
 
       <div className="flex gap-2">
@@ -441,19 +496,27 @@ function EditTacheInline({
 function CreateTacheInline({
   logementId,
   dossierId,
+  activeUsers,
+  currentUserId,
   onClose,
   onCreated,
 }: {
   logementId: string;
   dossierId: string;
+  activeUsers: Utilisateur[];
+  currentUserId?: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const [titre, setTitre] = useState('');
   const [type, setType] = useState<TacheType>('MENAGE');
   const [echeance, setEcheance] = useState(toDateString(new Date()));
+  const [assigneeId, setAssigneeId] = useState(currentUserId ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const cohotes = activeUsers.filter((u) => (u.role === 'COHOTE' || u.role === 'ADMIN') && u.id !== currentUserId);
+  const concierges = activeUsers.filter((u) => u.role === 'CONCIERGE');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -470,6 +533,7 @@ function CreateTacheInline({
         titre: titre.trim(),
         type,
         echeance_at: new Date(echeance).toISOString(),
+        assignee_user_id: assigneeId || undefined,
       });
       onCreated();
     } catch {
@@ -478,6 +542,8 @@ function CreateTacheInline({
       setSaving(false);
     }
   }
+
+  const INPUT = 'block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none';
 
   return (
     <form
@@ -491,13 +557,13 @@ function CreateTacheInline({
         onChange={(e) => setTitre(e.target.value)}
         placeholder="Titre de la tâche..."
         maxLength={200}
-        className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+        className={INPUT}
       />
       <div className="grid grid-cols-2 gap-3">
         <select
           value={type}
           onChange={(e) => setType(e.target.value as TacheType)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+          className={INPUT}
         >
           {(Object.keys(TYPE_LABELS) as TacheType[]).map((t) => (
             <option key={t} value={t}>
@@ -509,9 +575,27 @@ function CreateTacheInline({
           type="date"
           value={echeance}
           onChange={(e) => setEcheance(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+          className={INPUT}
         />
       </div>
+      <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className={INPUT}>
+        <option value="">— Non assigné —</option>
+        {currentUserId && <option value={currentUserId}>Moi</option>}
+        {cohotes.length > 0 && (
+          <optgroup label="Co-hôtes">
+            {cohotes.map((u) => (
+              <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+            ))}
+          </optgroup>
+        )}
+        {concierges.length > 0 && (
+          <optgroup label="Concierges">
+            {concierges.map((u) => (
+              <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+            ))}
+          </optgroup>
+        )}
+      </select>
       {error && <p className="text-xs text-red-600">{error}</p>}
       <div className="flex gap-2">
         <button
