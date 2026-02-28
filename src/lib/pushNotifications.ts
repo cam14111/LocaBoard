@@ -48,7 +48,8 @@ export async function subscribeToPush(): Promise<boolean> {
   if (permission !== 'granted') return false;
 
   const sw = await navigator.serviceWorker.ready;
-  const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
+  const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  if (!vapidPublicKey) return false;
 
   const subscription = await sw.pushManager.subscribe({
     userVisibleOnly: true,
