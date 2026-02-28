@@ -45,8 +45,8 @@ self.addEventListener('push', (event: PushEvent) => {
   event.waitUntil(
     self.registration.showNotification(titre, {
       body: message,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      icon: '/LocaBoard/icons/icon-192.png',
+      badge: '/LocaBoard/icons/icon-192.png',
       data: { url },
       tag: 'locaboard-task',
       renotify: true,
