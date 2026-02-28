@@ -155,7 +155,11 @@ export default function ContractGeneratorModal({
       setPreviewHtml('');
       onGenerated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la génération du contrat.');
+      // Supabase PostgrestError a message + details + hint — on les affiche tous
+      const e = err as Record<string, unknown>;
+      const msg = [e?.message, e?.details, e?.hint].filter(Boolean).join(' — ') || 'Erreur inconnue';
+      console.error('[ContractGenerator] erreur:', err);
+      setError(msg);
     } finally {
       setGenerating(false);
     }
