@@ -358,28 +358,52 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
       windowWidth: 800,
     });
 
-    const canvasHeightMm = (canvas.height / canvas.width) * pageWidth;
-    let remainingHeight = canvasHeightMm;
+    // Collecte des positions des éléments bloc pour des sauts de page cohérents
+    const iframeDoc = iframe.contentDocument!;
+    const bodyRect = iframeBody.getBoundingClientRect();
+    const canvasScale = 2; // doit correspondre au scale passé à html2canvas
+    const pageHeightPx = Math.round((pageHeight * canvas.width) / pageWidth);
+    const mmPerPx = pageWidth / canvas.width;
+
+    const breakSet = new Set<number>([0, canvas.height]);
+    iframeDoc
+      .querySelectorAll('h1, h2, h3, p, li, .contract-section, .parties-section, .date-location, .signature-section')
+      .forEach((el) => {
+        const rect = (el as HTMLElement).getBoundingClientRect();
+        const topPx = Math.round((rect.top - bodyRect.top) * canvasScale);
+        const bottomPx = Math.round((rect.bottom - bodyRect.top) * canvasScale);
+        if (topPx > 0) breakSet.add(topPx);
+        if (bottomPx > 0 && bottomPx < canvas.height) breakSet.add(bottomPx);
+      });
+    const breakPoints = Array.from(breakSet).sort((a, b) => a - b);
+
     let srcY = 0;
     let firstPage = true;
 
-    while (remainingHeight > 0) {
-      const sliceHeight = Math.min(pageHeight, remainingHeight);
-      const sliceRatio = sliceHeight / canvasHeightMm;
-      const srcHeight = Math.round(canvas.height * sliceRatio);
+    while (srcY < canvas.height) {
+      const targetEndY = srcY + pageHeightPx;
+      let endY = targetEndY >= canvas.height ? canvas.height : targetEndY;
+
+      if (targetEndY < canvas.height) {
+        // Cherche le dernier point de rupture ≤ targetEndY et > srcY pour éviter les coupures dans le contenu
+        for (const bp of breakPoints) {
+          if (bp > srcY && bp <= targetEndY) endY = bp;
+        }
+      }
+
+      const sliceHeightPx = endY - srcY;
+      if (sliceHeightPx <= 0) break;
 
       const sliceCanvas = document.createElement('canvas');
       sliceCanvas.width = canvas.width;
-      sliceCanvas.height = srcHeight;
-      const ctx = sliceCanvas.getContext('2d')!;
-      ctx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, canvas.width, srcHeight);
+      sliceCanvas.height = sliceHeightPx;
+      sliceCanvas.getContext('2d')!.drawImage(canvas, 0, srcY, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
 
       const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
       if (!firstPage) pdf.addPage();
-      pdf.addImage(sliceData, 'JPEG', 0, 0, pageWidth, sliceHeight);
+      pdf.addImage(sliceData, 'JPEG', 0, 0, pageWidth, sliceHeightPx * mmPerPx);
 
-      srcY += srcHeight;
-      remainingHeight -= sliceHeight;
+      srcY = endY;
       firstPage = false;
     }
 
