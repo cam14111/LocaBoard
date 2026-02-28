@@ -252,20 +252,6 @@ Deno.serve(async (req: Request) => {
     return new Response('Missing fields', { status: 400, headers: corsHeaders });
   }
 
-  // Debug: vérifier les variables d'environnement
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    return new Response(JSON.stringify({
-      sent: 0,
-      error: 'VAPID keys missing',
-      has_public: !!vapidPublicKey,
-      has_private: !!vapidPrivateKey,
-      private_len: vapidPrivateKey.length,
-      public_len: vapidPublicKey.length,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
   // Récupérer toutes les subscriptions de l'utilisateur
   const { data: subscriptions, error } = await supabase
     .from('push_subscriptions')
@@ -273,16 +259,7 @@ Deno.serve(async (req: Request) => {
     .eq('user_id', body.user_id);
 
   if (error || !subscriptions || subscriptions.length === 0) {
-    return new Response(JSON.stringify({
-      sent: 0,
-      debug: {
-        user_id: body.user_id,
-        error: error?.message ?? null,
-        subscriptions_count: subscriptions?.length ?? 0,
-        has_service_role: !!serviceRoleKey,
-        has_supabase_url: !!supabaseUrl,
-      },
-    }), {
+    return new Response(JSON.stringify({ sent: 0 }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
@@ -295,7 +272,6 @@ Deno.serve(async (req: Request) => {
 
   let sent = 0;
   const expiredEndpoints: string[] = [];
-  const errors: string[] = [];
 
   await Promise.allSettled(
     (subscriptions as PushSubscriptionRow[]).map(async (sub) => {
@@ -305,12 +281,9 @@ Deno.serve(async (req: Request) => {
           expiredEndpoints.push(sub.endpoint);
         } else if (status < 300) {
           sent++;
-        } else {
-          errors.push(`status=${status} endpoint=${sub.endpoint.substring(0, 60)}`);
         }
-      } catch (e) {
-        const err = e as Error;
-        errors.push(`throw: ${err.message ?? String(e)} | stack: ${(err.stack ?? '').substring(0, 200)}`);
+      } catch {
+        // Ignore les erreurs individuelles
       }
     }),
   );
@@ -323,7 +296,7 @@ Deno.serve(async (req: Request) => {
       .in('endpoint', expiredEndpoints);
   }
 
-  return new Response(JSON.stringify({ sent, expired: expiredEndpoints.length, errors, subs: subscriptions.length }), {
+  return new Response(JSON.stringify({ sent, expired: expiredEndpoints.length }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
