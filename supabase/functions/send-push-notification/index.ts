@@ -217,11 +217,24 @@ async function sendWebPush(
   return response.status;
 }
 
+// ─── CORS ────────────────────────────────────────────────────
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 // ─── Handler principal ───────────────────────────────────────
 
 Deno.serve(async (req: Request) => {
+  // Preflight CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
+    return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
   }
 
   const vapidPublicKey = Deno.env.get('VITE_VAPID_PUBLIC_KEY') ?? '';
@@ -236,11 +249,11 @@ Deno.serve(async (req: Request) => {
   try {
     body = await req.json() as PushPayload;
   } catch {
-    return new Response('Invalid JSON', { status: 400 });
+    return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
   }
 
   if (!body.user_id || !body.titre || !body.message) {
-    return new Response('Missing fields', { status: 400 });
+    return new Response('Missing fields', { status: 400, headers: corsHeaders });
   }
 
   // Récupérer toutes les subscriptions de l'utilisateur
@@ -251,7 +264,7 @@ Deno.serve(async (req: Request) => {
 
   if (error || !subscriptions || subscriptions.length === 0) {
     return new Response(JSON.stringify({ sent: 0 }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -288,6 +301,6 @@ Deno.serve(async (req: Request) => {
   }
 
   return new Response(JSON.stringify({ sent, expired: expiredEndpoints.length }), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
