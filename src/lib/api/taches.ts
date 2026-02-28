@@ -79,6 +79,22 @@ export async function createTache(params: {
     metadata: { type: params.type, titre: params.titre },
   });
 
+  // Notification immédiate pour l'assigné (si différent du créateur)
+  if (params.assignee_user_id) {
+    const echeanceFr = new Date(params.echeance_at).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+    });
+    createNotification({
+      user_id: params.assignee_user_id,
+      type: 'TACHE_ASSIGNEE',
+      titre: 'Nouvelle tâche assignée',
+      message: `${params.titre} — échéance ${echeanceFr}`,
+      entity_type: 'tache',
+      entity_id: data.id,
+    }).catch(() => {});
+  }
+
   return data as Tache;
 }
 
