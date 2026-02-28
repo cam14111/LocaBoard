@@ -385,7 +385,7 @@ function EditTacheInline({
       await updateTache(tache.id, {
         titre: titre.trim(),
         type,
-        echeance_at: new Date(echeance + 'T00:00:00').toISOString(),
+        echeance_at: new Date(echeance + 'T12:00:00Z').toISOString(),
         description: description.trim() || undefined,
         assignee_user_id: assigneeId || null,
       });
