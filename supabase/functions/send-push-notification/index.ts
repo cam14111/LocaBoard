@@ -36,33 +36,37 @@ function uint8ArrayToBase64url(arr: Uint8Array): string {
 
 // ─── Utilitaires VAPID ──────────────────────────────────────
 
-async function importVapidPrivateKey(privateKeyB64url: string): Promise<CryptoKey> {
-  const raw = base64urlToUint8Array(privateKeyB64url);
+/**
+ * Importe la clé privée VAPID (base64url, 32 octets bruts) en format JWK.
+ * Le format JWK est le plus fiable cross-runtime (Deno, Node, browsers).
+ * On a besoin de la clé publique pour construire le JWK complet (x, y).
+ */
+async function importVapidKeys(
+  privateKeyB64url: string,
+  publicKeyB64url: string,
+): Promise<CryptoKey> {
+  // La clé publique est un point P-256 non compressé (65 octets : 0x04 + x[32] + y[32])
+  const pubRaw = base64urlToUint8Array(publicKeyB64url);
+  const x = uint8ArrayToBase64url(pubRaw.subarray(1, 33));
+  const y = uint8ArrayToBase64url(pubRaw.subarray(33, 65));
+  const d = privateKeyB64url; // déjà en base64url
+
+  const jwk: JsonWebKey = {
+    kty: 'EC',
+    crv: 'P-256',
+    x,
+    y,
+    d,
+    ext: true,
+  };
+
   return crypto.subtle.importKey(
-    'pkcs8',
-    buildPkcs8(raw),
+    'jwk',
+    jwk,
     { name: 'ECDSA', namedCurve: 'P-256' },
     false,
     ['sign'],
   );
-}
-
-function buildPkcs8(rawKey: Uint8Array): ArrayBuffer {
-  const header = new Uint8Array([
-    0x30, 0x41,
-    0x02, 0x01, 0x00,
-    0x30, 0x13,
-    0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
-    0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
-    0x04, 0x27,
-    0x30, 0x25,
-    0x02, 0x01, 0x01,
-    0x04, 0x20,
-  ]);
-  const buf = new Uint8Array(header.length + rawKey.length);
-  buf.set(header);
-  buf.set(rawKey, header.length);
-  return buf.buffer;
 }
 
 async function buildVapidJwt(
@@ -185,15 +189,7 @@ async function sendWebPush(
   const url = new URL(subscription.endpoint);
   const audience = `${url.protocol}//${url.hostname}`;
 
-  let privateKey: CryptoKey;
-  try {
-    privateKey = await importVapidPrivateKey(vapidPrivateKey);
-  } catch {
-    const raw = base64urlToUint8Array(vapidPrivateKey);
-    privateKey = await crypto.subtle.importKey(
-      'raw', raw, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'],
-    );
-  }
+  const privateKey = await importVapidKeys(vapidPrivateKey, vapidPublicKey);
 
   const jwt = await buildVapidJwt(audience, vapidSubject, privateKey);
   const vapidAuth = `vapid t=${jwt},k=${vapidPublicKey}`;
@@ -256,6 +252,20 @@ Deno.serve(async (req: Request) => {
     return new Response('Missing fields', { status: 400, headers: corsHeaders });
   }
 
+  // Debug: vérifier les variables d'environnement
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    return new Response(JSON.stringify({
+      sent: 0,
+      error: 'VAPID keys missing',
+      has_public: !!vapidPublicKey,
+      has_private: !!vapidPrivateKey,
+      private_len: vapidPrivateKey.length,
+      public_len: vapidPublicKey.length,
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   // Récupérer toutes les subscriptions de l'utilisateur
   const { data: subscriptions, error } = await supabase
     .from('push_subscriptions')
@@ -263,7 +273,16 @@ Deno.serve(async (req: Request) => {
     .eq('user_id', body.user_id);
 
   if (error || !subscriptions || subscriptions.length === 0) {
-    return new Response(JSON.stringify({ sent: 0 }), {
+    return new Response(JSON.stringify({
+      sent: 0,
+      debug: {
+        user_id: body.user_id,
+        error: error?.message ?? null,
+        subscriptions_count: subscriptions?.length ?? 0,
+        has_service_role: !!serviceRoleKey,
+        has_supabase_url: !!supabaseUrl,
+      },
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
@@ -276,6 +295,7 @@ Deno.serve(async (req: Request) => {
 
   let sent = 0;
   const expiredEndpoints: string[] = [];
+  const errors: string[] = [];
 
   await Promise.allSettled(
     (subscriptions as PushSubscriptionRow[]).map(async (sub) => {
@@ -285,9 +305,12 @@ Deno.serve(async (req: Request) => {
           expiredEndpoints.push(sub.endpoint);
         } else if (status < 300) {
           sent++;
+        } else {
+          errors.push(`status=${status} endpoint=${sub.endpoint.substring(0, 60)}`);
         }
-      } catch {
-        // Ignore les erreurs individuelles
+      } catch (e) {
+        const err = e as Error;
+        errors.push(`throw: ${err.message ?? String(e)} | stack: ${(err.stack ?? '').substring(0, 200)}`);
       }
     }),
   );
@@ -300,7 +323,7 @@ Deno.serve(async (req: Request) => {
       .in('endpoint', expiredEndpoints);
   }
 
-  return new Response(JSON.stringify({ sent, expired: expiredEndpoints.length }), {
+  return new Response(JSON.stringify({ sent, expired: expiredEndpoints.length, errors, subs: subscriptions.length }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
