@@ -2011,23 +2011,48 @@
 
             var sections = clone.querySelectorAll('.contract-header, .parties-section, .contract-section, .date-location, .signature-section');
             var currentY = m;
-            var pageNumber = 1;
+            var maxH = ph - (2 * m); // hauteur utile maximale par page
 
             for (var i = 0; i < sections.length; i++) {
                 var canvas = await html2canvas(sections[i], {
                     scale: CONFIG.PDF.SCALE, useCORS: true, logging: false, backgroundColor: '#ffffff'
                 });
-                var imgData = canvas.toDataURL('image/png');
                 var imgWidth = cw;
                 var imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-                if (currentY + imgHeight > ph - m) {
-                    if (pageNumber > 1 || currentY > m) { pdf.addPage(); pageNumber++; }
+                // Si la section tient sur une page entière mais pas dans l'espace restant → nouvelle page
+                if (imgHeight <= maxH && currentY > m && currentY + imgHeight > ph - m) {
+                    pdf.addPage();
                     currentY = m;
                 }
-                pdf.addImage(imgData, 'PNG', m, currentY, imgWidth, imgHeight);
-                currentY += imgHeight + 2;
-                if (currentY > ph - m - 20) { pdf.addPage(); pageNumber++; currentY = m; }
+
+                // Placement avec découpage si la section dépasse la hauteur d'une page
+                var ratio = canvas.width / imgWidth;
+                var imgOffset = 0;
+                while (imgOffset < imgHeight) {
+                    var availableH = ph - m - currentY;
+                    if (availableH <= 0) {
+                        pdf.addPage();
+                        currentY = m;
+                        continue;
+                    }
+                    var sliceH = Math.min(imgHeight - imgOffset, availableH);
+                    var srcY = Math.round(imgOffset * ratio);
+                    var srcH = Math.round(sliceH * ratio);
+                    if (srcH <= 0) break;
+                    var sliceCanvas = document.createElement('canvas');
+                    sliceCanvas.width = canvas.width;
+                    sliceCanvas.height = srcH;
+                    sliceCanvas.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+                    pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', m, currentY, imgWidth, sliceH);
+                    imgOffset += sliceH;
+                    currentY += sliceH;
+                    if (imgOffset < imgHeight) {
+                        pdf.addPage();
+                        currentY = m;
+                    }
+                }
+                currentY += 3; // espacement entre sections
             }
 
             document.body.removeChild(clone);
