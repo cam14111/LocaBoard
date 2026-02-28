@@ -334,6 +334,8 @@ function loadScript(src: string): Promise<void> {
 
 // Génère un Blob PDF à partir du HTML du contrat.
 // Charge html2canvas + jsPDF via CDN au moment de l'appel (lazy, pas d'import statique).
+// Reproduit exactement le comportement du générateur standalone (Générateur de contrat.html) :
+// clone appendé au body de l'iframe, sections rendues en place (pas de wrapper), PNG, marge 20mm.
 export async function generateContractPDF(htmlContent: string, _fileName: string): Promise<Blob> {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
@@ -348,13 +350,12 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
 
   if (!html2canvas || !JsPDF) throw new Error('Impossible de charger les librairies PDF (html2canvas / jsPDF).');
 
-  // Rendre le contrat dans un iframe isolé pour éviter l'héritage des styles oklch de Tailwind
+  // Iframe isolé pour éviter l'héritage des styles oklch de Tailwind
   const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;height:1px;border:0;visibility:hidden';
+  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:850px;height:1px;border:0;visibility:hidden';
   document.body.appendChild(iframe);
 
   try {
-    // Construire un document HTML complet et isolé (aucun CSS de l'app)
     const srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box}body{background:#fff;margin:0;padding:0}</style></head><body>${htmlContent}</body></html>`;
     await new Promise<void>((resolve) => {
       iframe.onload = () => resolve();
@@ -363,76 +364,67 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
 
     const iframeDoc = iframe.contentDocument!;
     const iframeBody = iframeDoc.body;
-    iframe.style.height = iframeBody.scrollHeight + 'px';
 
     const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = 210;
     const pageHeight = 297;
-    const margin = 15; // mm — marges PDF gauche/droite/haut
-    const contentW = pageWidth - 2 * margin; // 180 mm
+    const margin = 20; // mm — même valeur que le générateur standalone
+    const contentW = pageWidth - 2 * margin; // 170 mm
 
-    // Cloner .contract-document, supprimer son padding et le dimensionner
-    // au contenu utile (même logique que le générateur standalone)
+    // Cloner l'élément racine du contrat et le dimensionner à la largeur utile
     const contractEl =
       (iframeBody.querySelector('.contract-document') as HTMLElement | null) ??
       (iframeBody.firstElementChild as HTMLElement | null) ??
       iframeBody;
     const clone = contractEl.cloneNode(true) as HTMLElement;
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    clone.style.top = '0';
-    clone.style.padding = '0';
-    clone.style.margin = '0';
-    clone.style.width = Math.round(contentW * 3.78) + 'px'; // px ≈ mm × 3.78
-    clone.style.maxWidth = 'none';
+    clone.style.cssText = [
+      clone.style.cssText,
+      `position:absolute;left:-9999px;top:0;`,
+      `width:${Math.round(contentW * 3.78)}px;max-width:none;`,
+      `padding:0;margin:0;background:#fff;box-sizing:border-box;`,
+    ].join('');
     iframeDoc.body.appendChild(clone);
 
-    // Sections identifiées par les classes CSS ajoutées dans generateContract()
+    // Sections rendues en place dans le clone (pas de déplacement vers un wrapper)
     const sections = Array.from(
       clone.querySelectorAll('.contract-header, .parties-section, .contract-section, .signature-section')
     ) as HTMLElement[];
 
     let currentY = margin;
+    const maxH = pageHeight - 2 * margin;
 
     for (const section of sections) {
-      const wrapper = iframeDoc.createElement('div'); // wrapper invisible pour html2canvas
-      wrapper.style.cssText = 'position:absolute;left:-99999px;top:0;';
-      wrapper.appendChild(section);
-
-      iframeDoc.body.appendChild(wrapper);
       const sectionCanvas = await html2canvas(section, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
       });
-      iframeDoc.body.removeChild(wrapper);
 
       const imgW = contentW;
       const imgH = (sectionCanvas.height / sectionCanvas.width) * imgW;
-      const maxH = pageHeight - 2 * margin;
+      const ratio = sectionCanvas.width / imgW; // px par mm
 
-      // Si la section tient sur une page mais pas sur l'espace restant → nouvelle page
+      // Si la section tient sur une page mais pas dans l'espace restant → nouvelle page
       if (imgH <= maxH && currentY > margin && currentY + imgH > pageHeight - margin) {
         pdf.addPage();
         currentY = margin;
       }
 
-      // Placement section par section avec découpage si plus haute qu'une page (cas rare)
-      const pxPerMm = sectionCanvas.width / imgW;
+      // Découpage si la section dépasse la hauteur d'une page (cas rare)
       let imgOffset = 0;
       while (imgOffset < imgH) {
         const availH = pageHeight - margin - currentY;
         if (availH <= 0) { pdf.addPage(); currentY = margin; continue; }
         const sliceH = Math.min(imgH - imgOffset, availH);
-        const srcY = Math.round(imgOffset * pxPerMm);
-        const srcH = Math.round(sliceH * pxPerMm);
+        const srcY = Math.round(imgOffset * ratio);
+        const srcH = Math.round(sliceH * ratio);
         if (srcH <= 0) break;
         const sc = document.createElement('canvas');
         sc.width = sectionCanvas.width;
         sc.height = srcH;
         sc.getContext('2d')!.drawImage(sectionCanvas, 0, srcY, sectionCanvas.width, srcH, 0, 0, sectionCanvas.width, srcH);
-        pdf.addImage(sc.toDataURL('image/jpeg', 0.95), 'JPEG', margin, currentY, imgW, sliceH);
+        pdf.addImage(sc.toDataURL('image/png'), 'PNG', margin, currentY, imgW, sliceH);
         imgOffset += sliceH;
         currentY += sliceH;
         if (imgOffset < imgH) { pdf.addPage(); currentY = margin; }
