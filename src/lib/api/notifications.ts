@@ -90,38 +90,21 @@ export async function createNotification(params: {
   entity_type?: string;
   entity_id?: string;
 }): Promise<Notification | null> {
-  // Dédoublonnage : même type + entity_type + entity_id non-lue → skip
-  if (params.entity_id) {
-    let dedupQuery = supabase
-      .from('notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', params.user_id)
-      .eq('type', params.type)
-      .eq('entity_id', params.entity_id)
-      .is('read_at', null);
-
-    if (params.entity_type) {
-      dedupQuery = dedupQuery.eq('entity_type', params.entity_type);
-    }
-
-    const { count } = await dedupQuery;
-    if (count && count > 0) return null;
-  }
-
-  const { data, error } = await supabase
-    .from('notifications')
-    .insert({
-      user_id: params.user_id,
-      type: params.type,
-      titre: params.titre,
-      message: params.message,
-      entity_type: params.entity_type ?? null,
-      entity_id: params.entity_id ?? null,
-    })
-    .select()
-    .single();
+  // Utilise une fonction SECURITY DEFINER pour contourner le RLS
+  // (permet à un admin de créer une notification pour un co-hôte)
+  const { data, error } = await supabase.rpc('create_notification', {
+    p_user_id: params.user_id,
+    p_type: params.type,
+    p_titre: params.titre,
+    p_message: params.message,
+    p_entity_type: params.entity_type ?? null,
+    p_entity_id: params.entity_id ?? null,
+  });
 
   if (error) throw error;
+
+  // data = UUID de la notification créée, ou null si dédoublonnée
+  if (!data) return null;
 
   // Envoi push immédiat pour les tâches assignées
   if (params.type === 'TACHE_ASSIGNEE') {
@@ -138,5 +121,5 @@ export async function createNotification(params: {
       .catch((err) => console.error('[push] Erreur Edge Function:', err));
   }
 
-  return data as Notification;
+  return { id: data } as Notification;
 }

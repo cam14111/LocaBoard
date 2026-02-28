@@ -370,6 +370,17 @@ export interface Database {
         Args: { p_type: string; p_entity_type: string; p_entity_id: string };
         Returns: void;
       };
+      create_notification: {
+        Args: {
+          p_user_id: string;
+          p_type: string;
+          p_titre: string;
+          p_message: string;
+          p_entity_type: string | null;
+          p_entity_id: string | null;
+        };
+        Returns: string | null;
+      };
     };
     Enums: {
       user_role: UserRole;
