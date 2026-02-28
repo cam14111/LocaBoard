@@ -132,9 +132,8 @@ export default function ContractGeneratorModal({
     setGenerating(true);
     try {
       const contractData = buildContractData();
-      const html = generateContract(contractData);
       const fileName = `Contrat_${reservation.locataire_nom}_${reservation.date_debut}.pdf`;
-      const pdfBlob = await generateContractPDF(html, fileName);
+      const pdfBlob = await generateContractPDF(contractData, fileName);
       const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
       if (existingContrat) {
