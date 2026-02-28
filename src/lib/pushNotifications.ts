@@ -20,8 +20,12 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 /** Sauvegarde un abonnement push en base de données */
 async function savePushSubscription(subscription: PushSubscription): Promise<void> {
   const json = subscription.toJSON();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Non authentifié');
+
   const { error } = await supabase.from('push_subscriptions').upsert(
     {
+      user_id: user.id,
       endpoint: subscription.endpoint,
       p256dh_key: json.keys?.['p256dh'] ?? '',
       auth_key: json.keys?.['auth'] ?? '',
