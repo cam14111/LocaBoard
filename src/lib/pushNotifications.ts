@@ -77,13 +77,31 @@ export async function unsubscribeFromPush(): Promise<void> {
   await deletePushSubscription(endpoint);
 }
 
-/** Vérifie si l'utilisateur est actuellement abonné aux push */
+/**
+ * Vérifie si l'utilisateur est abonné aux push.
+ * Si une subscription existe localement mais pas en base (ex : erreur RLS antérieure),
+ * elle est re-sauvegardée silencieusement pour resynchroniser.
+ */
 export async function isPushSubscribed(): Promise<boolean> {
   if (!isPushSupported()) return false;
   try {
     const sw = await navigator.serviceWorker.ready;
     const subscription = await sw.pushManager.getSubscription();
-    return subscription !== null;
+    if (!subscription) return false;
+
+    // Vérifier la présence en base et resynchroniser si absente
+    const { data } = await supabase
+      .from('push_subscriptions')
+      .select('id')
+      .eq('endpoint', subscription.endpoint)
+      .maybeSingle();
+
+    if (!data) {
+      // Subscription locale mais absente de la DB → re-sauvegarder
+      await savePushSubscription(subscription).catch(() => {});
+    }
+
+    return true;
   } catch {
     return false;
   }
