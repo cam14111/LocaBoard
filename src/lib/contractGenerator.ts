@@ -334,8 +334,8 @@ function loadScript(src: string): Promise<void> {
 
 // Génère un Blob PDF à partir du HTML du contrat.
 // Charge html2canvas + jsPDF via CDN au moment de l'appel (lazy, pas d'import statique).
-// Reproduit exactement le comportement du générateur standalone (Générateur de contrat.html) :
-// clone appendé au body de l'iframe, sections rendues en place (pas de wrapper), PNG, marge 20mm.
+// NOTE: l'iframe est hors écran (left:-9999px) mais visible (opacity:0, pas visibility:hidden)
+// et suffisamment haute pour que html2canvas calcule les styles correctement.
 export async function generateContractPDF(htmlContent: string, _fileName: string): Promise<Blob> {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
@@ -350,9 +350,10 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
 
   if (!html2canvas || !JsPDF) throw new Error('Impossible de charger les librairies PDF (html2canvas / jsPDF).');
 
-  // Iframe isolé pour éviter l'héritage des styles oklch de Tailwind
+  // Iframe hors écran MAIS visible (opacity:0 ≠ visibility:hidden) pour que
+  // html2canvas puisse calculer les styles et dimensions des éléments.
   const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:850px;height:1px;border:0;visibility:hidden';
+  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:850px;height:2200px;border:0;opacity:0;pointer-events:none;';
   document.body.appendChild(iframe);
 
   try {
@@ -368,10 +369,11 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
     const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = 210;
     const pageHeight = 297;
-    const margin = 20; // mm — même valeur que le générateur standalone
+    const margin = 20; // mm
     const contentW = pageWidth - 2 * margin; // 170 mm
 
-    // Cloner l'élément racine du contrat et le dimensionner à la largeur utile
+    // Cloner l'élément racine et le placer en position visible dans l'iframe (left:0)
+    // L'iframe étant à left:-9999px, le clone reste hors écran pour l'utilisateur.
     const contractEl =
       (iframeBody.querySelector('.contract-document') as HTMLElement | null) ??
       (iframeBody.firstElementChild as HTMLElement | null) ??
@@ -379,16 +381,20 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
     const clone = contractEl.cloneNode(true) as HTMLElement;
     clone.style.cssText = [
       clone.style.cssText,
-      `position:absolute;left:-9999px;top:0;`,
+      `position:absolute;left:0;top:0;`,
       `width:${Math.round(contentW * 3.78)}px;max-width:none;`,
       `padding:0;margin:0;background:#fff;box-sizing:border-box;`,
     ].join('');
     iframeDoc.body.appendChild(clone);
 
-    // Sections rendues en place dans le clone (pas de déplacement vers un wrapper)
+    // Sections rendues en place dans le clone
     const sections = Array.from(
       clone.querySelectorAll('.contract-header, .parties-section, .contract-section, .signature-section')
     ) as HTMLElement[];
+
+    if (sections.length === 0) {
+      throw new Error('Aucune section trouvée dans le contrat généré.');
+    }
 
     let currentY = margin;
     const maxH = pageHeight - 2 * margin;
@@ -401,17 +407,17 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
         backgroundColor: '#ffffff',
       });
 
+      if (sectionCanvas.height === 0 || sectionCanvas.width === 0) continue;
+
       const imgW = contentW;
       const imgH = (sectionCanvas.height / sectionCanvas.width) * imgW;
-      const ratio = sectionCanvas.width / imgW; // px par mm
+      const ratio = sectionCanvas.width / imgW;
 
-      // Si la section tient sur une page mais pas dans l'espace restant → nouvelle page
       if (imgH <= maxH && currentY > margin && currentY + imgH > pageHeight - margin) {
         pdf.addPage();
         currentY = margin;
       }
 
-      // Découpage si la section dépasse la hauteur d'une page (cas rare)
       let imgOffset = 0;
       while (imgOffset < imgH) {
         const availH = pageHeight - margin - currentY;
@@ -424,16 +430,21 @@ export async function generateContractPDF(htmlContent: string, _fileName: string
         sc.width = sectionCanvas.width;
         sc.height = srcH;
         sc.getContext('2d')!.drawImage(sectionCanvas, 0, srcY, sectionCanvas.width, srcH, 0, 0, sectionCanvas.width, srcH);
-        pdf.addImage(sc.toDataURL('image/png'), 'PNG', margin, currentY, imgW, sliceH);
+        pdf.addImage(sc.toDataURL('image/jpeg', 0.92), 'JPEG', margin, currentY, imgW, sliceH);
         imgOffset += sliceH;
         currentY += sliceH;
         if (imgOffset < imgH) { pdf.addPage(); currentY = margin; }
       }
-      currentY += 3; // espacement entre sections
+      currentY += 3;
     }
 
     iframeDoc.body.removeChild(clone);
-    return pdf.output('blob') as Blob;
+
+    const blob = pdf.output('blob') as Blob;
+    if (!blob || blob.size === 0) {
+      throw new Error('Le PDF généré est vide. Veuillez réessayer.');
+    }
+    return blob;
   } finally {
     document.body.removeChild(iframe);
   }
