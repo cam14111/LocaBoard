@@ -10,6 +10,13 @@ declare const self: ServiceWorkerGlobalScope;
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
+// Activation immédiate du nouveau SW (requis pour registerType: 'autoUpdate')
+self.addEventListener('message', (event: ExtendableMessageEvent) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Runtime caching : API Supabase (NetworkFirst, 5 min)
 registerRoute(
   ({ url }) => url.hostname.endsWith('.supabase.co'),
