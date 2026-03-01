@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseUrl } from '@/lib/supabase';
 import { createAuditLog } from './audit';
 import type { Document, DocumentType } from '@/types/database.types';
 
@@ -143,12 +143,13 @@ export async function getDocumentUrl(storagePath: string): Promise<string> {
   return data.signedUrl;
 }
 
-/** Génère une URL signée longue durée (1 an) pour partage par email. */
-export async function getDocumentShareUrl(storagePath: string): Promise<string> {
-  const ONE_YEAR = 365 * 24 * 3600;
-  const { data, error } = await supabase.storage
-    .from('documents')
-    .createSignedUrl(storagePath, ONE_YEAR);
+/** Crée un lien de partage court et stable pour un document (via Edge Function doc-redirect). */
+export async function createDocumentShareLink(storagePath: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('document_shares')
+    .insert({ storage_path: storagePath })
+    .select('id')
+    .single();
   if (error) throw error;
-  return data.signedUrl;
+  return `${supabaseUrl}/functions/v1/doc-redirect?id=${data.id}`;
 }

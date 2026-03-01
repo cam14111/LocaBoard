@@ -18,7 +18,7 @@ import {
   uploadDocument,
   replaceDocument,
   getDocumentUrl,
-  getDocumentShareUrl,
+  createDocumentShareLink,
   getDocumentVersionHistory,
 } from '@/lib/api/documents';
 import { usePermission } from '@/hooks/usePermission';
@@ -239,18 +239,7 @@ export default function DocumentsTab({ dossierId, dossier, reservation }: Docume
 
   async function handleSendByEmail(doc: DocType) {
     try {
-      const rawUrl = await getDocumentShareUrl(doc.storage_path);
-      // Raccourcir l'URL pour éviter les retours à la ligne (JWT trop long → lien non cliquable)
-      let shareUrl = rawUrl;
-      try {
-        const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(rawUrl)}`);
-        if (res.ok) {
-          const short = await res.text();
-          if (short.startsWith('https://is.gd/')) shareUrl = short.trim();
-        }
-      } catch {
-        // Fallback : URL longue (toujours fonctionnelle, peut ne pas être cliquable)
-      }
+      const shareUrl = await createDocumentShareLink(doc.storage_path);
       const to = reservation?.locataire_email || '';
       const subject = encodeURIComponent(`Contrat de location — ${doc.nom_fichier}`);
       const body = encodeURIComponent(
