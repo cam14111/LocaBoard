@@ -11,12 +11,14 @@ import {
   X,
   History,
   Wand2,
+  Mail,
 } from 'lucide-react';
 import {
   getDocumentsByDossier,
   uploadDocument,
   replaceDocument,
   getDocumentUrl,
+  getDocumentShareUrl,
   getDocumentVersionHistory,
 } from '@/lib/api/documents';
 import { usePermission } from '@/hooks/usePermission';
@@ -235,6 +237,20 @@ export default function DocumentsTab({ dossierId, dossier, reservation }: Docume
     }
   }
 
+  async function handleSendByEmail(doc: DocType) {
+    try {
+      const url = await getDocumentShareUrl(doc.storage_path);
+      const to = reservation?.locataire_email || '';
+      const subject = encodeURIComponent(`Contrat de location — ${doc.nom_fichier}`);
+      const body = encodeURIComponent(
+        `Bonjour,\n\nVeuillez trouver ci-dessous le lien pour télécharger votre document :\n\n${url}\n\nCordialement`,
+      );
+      window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+    } catch {
+      setError('Impossible de générer le lien du document.');
+    }
+  }
+
   // Vérifier si un document a un historique (a été remplacé ou remplace un autre)
   function hasVersionHistory(doc: DocType): boolean {
     return !!doc.remplace_document_id;
@@ -325,6 +341,13 @@ export default function DocumentsTab({ dossierId, dossier, reservation }: Docume
                 >
                   <Download className="h-3.5 w-3.5" />
                   Télécharger
+                </button>
+                <button
+                  onClick={() => handleSendByEmail(doc)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 hover:shadow-sm transition-colors"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  Envoyer
                 </button>
                 {canReplace && (
                   <button

@@ -61,7 +61,10 @@ function formatDate(dateStr: string): string {
 }
 
 function formatCurrency(amount: number): string {
-  return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  // toLocaleString('fr-FR') génère un espace fine insécable (U+202F) comme séparateur de milliers,
+  // incompatible avec certaines polices PDF. On remplace par un espace normal.
+  return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .replace(/\u202f/g, ' ').replace(/\u00a0/g, ' ') + '\u00a0€';
 }
 
 function computeNights(debut: string, fin: string): number {

@@ -203,7 +203,8 @@ export default function ContractGeneratorModal({
   const taxeSejour = Math.round((logement?.taux_taxe_sejour ?? 0) * (reservation.nb_personnes ?? 1) * nbNuits * 100) / 100;
   const totalGeneral = Math.round((loyer + forfaitMenage + taxeSejour) * 100) / 100;
   const typeVersement = dossier.type_premier_versement === 'ACOMPTE' ? 'Acompte' : 'Arrhes';
-  const fmt = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  const fmt = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .replace(/\u202f/g, ' ').replace(/\u00a0/g, ' ') + '\u00a0€';
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[3vh] px-4" role="dialog" aria-modal="true" aria-labelledby="cg-title">

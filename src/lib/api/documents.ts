@@ -142,3 +142,13 @@ export async function getDocumentUrl(storagePath: string): Promise<string> {
   if (error) throw error;
   return data.signedUrl;
 }
+
+/** Génère une URL signée longue durée (1 an) pour partage par email. */
+export async function getDocumentShareUrl(storagePath: string): Promise<string> {
+  const ONE_YEAR = 365 * 24 * 3600;
+  const { data, error } = await supabase.storage
+    .from('documents')
+    .createSignedUrl(storagePath, ONE_YEAR);
+  if (error) throw error;
+  return data.signedUrl;
+}
