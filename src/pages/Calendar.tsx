@@ -176,6 +176,7 @@ export default function Calendar() {
         onClose={() => setSelectedEvent(null)}
         onUpdated={handleCreated}
         logementId={selectedLogementId}
+        logements={logements}
       />
     </div>
   );

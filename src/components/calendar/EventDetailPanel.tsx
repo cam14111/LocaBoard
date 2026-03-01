@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Loader2, Calendar, Clock, Trash2, CheckCircle, Edit3, ExternalLink, Lock } from 'lucide-react';
+import { X, Loader2, Calendar, Clock, Trash2, CheckCircle, Edit3, ExternalLink, Lock, Home } from 'lucide-react';
 import { cancelReservation, updateReservationDates, confirmOption } from '@/lib/api/reservations';
 import { archiveBlocage } from '@/lib/api/blocages';
 import { ensureDossierForReservation, getDossierByReservation } from '@/lib/api/dossiers';
@@ -7,7 +7,7 @@ import { generateAutoTaches } from '@/lib/api/taches';
 import { parseRpcError } from '@/lib/rpcErrors';
 import { formatDateFR, computeNights } from '@/lib/dateUtils';
 import type { CalendarEvent } from '@/types/calendar.types';
-import type { Reservation, Blocage } from '@/types/database.types';
+import type { Reservation, Blocage, Logement } from '@/types/database.types';
 import { useNavigate } from 'react-router-dom';
 
 interface EventDetailPanelProps {
@@ -15,12 +15,14 @@ interface EventDetailPanelProps {
   onClose: () => void;
   onUpdated: () => void;
   logementId: string | null;
+  logements: Logement[];
 }
 
-export default function EventDetailPanel({ event, onClose, onUpdated, logementId }: EventDetailPanelProps) {
+export default function EventDetailPanel({ event, onClose, onUpdated, logementId, logements }: EventDetailPanelProps) {
   if (!event) return null;
   // Extraire le logementId depuis l'événement raw si pas de logement global sélectionné
   const effectiveLogementId = logementId || (event.raw as Reservation | Blocage).logement_id;
+  const logementNom = logements.find((l) => l.id === effectiveLogementId)?.nom;
 
   return (
     <>
@@ -28,13 +30,13 @@ export default function EventDetailPanel({ event, onClose, onUpdated, logementId
       <div className="hidden lg:block fixed inset-y-0 right-0 z-40 w-[400px]" role="dialog" aria-modal="true" aria-label="Détail de l'événement">
         <div className="fixed inset-0 bg-black/20" onClick={onClose} role="presentation" />
         <div className="absolute inset-y-0 right-0 w-[400px] bg-white shadow-xl border-l border-slate-200 overflow-y-auto animate-in slide-in-from-right duration-200">
-          <PanelContent event={event} onClose={onClose} onUpdated={onUpdated} logementId={effectiveLogementId} />
+          <PanelContent event={event} onClose={onClose} onUpdated={onUpdated} logementId={effectiveLogementId} logementNom={logementNom} />
         </div>
       </div>
 
       {/* Mobile : modal plein écran */}
       <div className="lg:hidden fixed inset-0 z-50 bg-white overflow-y-auto animate-in slide-in-from-bottom duration-200" role="dialog" aria-modal="true" aria-label="Détail de l'événement">
-        <PanelContent event={event} onClose={onClose} onUpdated={onUpdated} logementId={effectiveLogementId} />
+        <PanelContent event={event} onClose={onClose} onUpdated={onUpdated} logementId={effectiveLogementId} logementNom={logementNom} />
       </div>
     </>
   );
@@ -45,11 +47,13 @@ function PanelContent({
   onClose,
   onUpdated,
   logementId,
+  logementNom,
 }: {
   event: CalendarEvent;
   onClose: () => void;
   onUpdated: () => void;
   logementId: string;
+  logementNom?: string;
 }) {
   const isReservation = event.type === 'reservation';
   const isOption = event.type === 'option';
@@ -92,8 +96,8 @@ function PanelContent({
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Infos communes : dates */}
-        <InfoSection event={event} />
+        {/* Infos communes : dates + logement */}
+        <InfoSection event={event} logementNom={logementNom} />
 
         {/* Infos locataire (réservation/option) */}
         {!isBlocage && <TenantInfo reservation={event.raw as Reservation} />}
@@ -165,10 +169,16 @@ function PanelContent({
 
 // ─── Sous-composants info ─────────────────────────────────
 
-function InfoSection({ event }: { event: CalendarEvent }) {
+function InfoSection({ event, logementNom }: { event: CalendarEvent; logementNom?: string }) {
   const nights = computeNights(event.dateDebut, event.dateFin);
   return (
     <div className="space-y-2">
+      {logementNom && (
+        <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
+          <Home className="h-4 w-4 text-slate-400 shrink-0" />
+          <span>{logementNom}</span>
+        </div>
+      )}
       <div className="flex items-center gap-2 text-sm text-slate-600">
         <Calendar className="h-4 w-4" />
         <span>
