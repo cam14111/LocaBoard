@@ -178,6 +178,13 @@ export interface Document {
   remplace_document_id: string | null;
 }
 
+export interface DocumentShare {
+  id: string;
+  storage_path: string;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface Edl {
   id: string;
   dossier_id: string;
@@ -314,6 +321,7 @@ export interface Database {
       audit_log: DbTable<AuditLog>;
       checklist_modeles: DbTable<ChecklistModele>;
       push_subscriptions: DbTable<PushSubscriptionDb>;
+      document_shares: DbTable<DocumentShare>;
     };
     Views: { [_ in never]: never };
     Functions: {
