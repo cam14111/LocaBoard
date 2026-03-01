@@ -278,7 +278,7 @@ async function loadHandwritingFont(): Promise<void> {
   if (pdfMake.fonts?.DancingScript) return;
 
   try {
-    const response = await fetch('/fonts/DancingScript-Regular.ttf');
+    const response = await fetch(`${import.meta.env.BASE_URL}fonts/DancingScript-Regular.ttf`);
     const buffer = await response.arrayBuffer();
     const bytes = new Uint8Array(buffer);
     let binary = '';
