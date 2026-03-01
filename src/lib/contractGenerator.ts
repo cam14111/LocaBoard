@@ -10,6 +10,8 @@ export interface ContractData {
   owner_telephone?: string;
   owner_email?: string;
   owner_siret?: string;
+  owner_ville?: string;
+  owner_signature_base64?: string;
   // Logement
   property_type: string;
   property_adresse: string;
@@ -228,13 +230,16 @@ export function generateContract(data: ContractData): string {
   </div>
 
   <div class="signature-section" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc;">
-    <p style="margin-bottom: 20px;">Fait en deux exemplaires originaux, à ________________, le ________________</p>
+    <p style="margin-bottom: 20px;">Fait en deux exemplaires originaux, à <strong>${data.owner_ville ? escapeHTML(data.owner_ville) : '________________'}</strong>, le <strong>${escapeHTML(formatDate(new Date().toISOString().slice(0, 10)))}</strong></p>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 20px;">
       <div>
         <p style="font-weight: bold; margin-bottom: 8px;">Le Bailleur</p>
         <p style="margin-bottom: 4px;">${e.ownerPrenom} ${e.ownerNom}</p>
-        <p style="color: #888; font-size: 9pt; margin-bottom: 40px;">Signature précédée de la mention « Lu et approuvé »</p>
-        <div style="height: 60px; border-bottom: 1px solid #333;"></div>
+        <p style="font-family: 'Dancing Script', cursive; font-size: 18px; color: #1a3a6a; margin: 8px 0;">Lu et approuvé</p>
+        ${data.owner_signature_base64
+          ? `<img src="${data.owner_signature_base64}" style="max-width: 150px; max-height: 80px; margin-bottom: 8px;" alt="Signature" />`
+          : '<div style="height: 40px;"></div>'}
+        <div style="border-bottom: 1px solid #333; width: 210px;"></div>
       </div>
       <div>
         <p style="font-weight: bold; margin-bottom: 8px;">Le Locataire</p>
@@ -263,7 +268,47 @@ function loadScript(src: string): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PdfMake = { createPdf: (def: any) => { getBlob: (cb: (b: Blob) => void) => void } };
+type PdfMake = { createPdf: (def: any) => { getBlob: (cb: (b: Blob) => void) => void }; vfs?: Record<string, string>; fonts?: Record<string, Record<string, string>> };
+
+/** Charge la police Dancing Script et l'enregistre dans le VFS de pdfmake. */
+async function loadHandwritingFont(): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pdfMake = (window as any).pdfMake;
+  if (!pdfMake) return;
+  if (pdfMake.fonts?.DancingScript) return;
+
+  try {
+    const response = await fetch('/fonts/DancingScript-Regular.ttf');
+    const buffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+
+    pdfMake.vfs = pdfMake.vfs || {};
+    pdfMake.vfs['DancingScript-Regular.ttf'] = base64;
+
+    pdfMake.fonts = {
+      ...pdfMake.fonts,
+      Roboto: pdfMake.fonts?.Roboto ?? {
+        normal: 'Roboto-Regular.ttf',
+        bold: 'Roboto-Medium.ttf',
+        italics: 'Roboto-Italic.ttf',
+        bolditalics: 'Roboto-MediumItalic.ttf',
+      },
+      DancingScript: {
+        normal: 'DancingScript-Regular.ttf',
+        bold: 'DancingScript-Regular.ttf',
+        italics: 'DancingScript-Regular.ttf',
+        bolditalics: 'DancingScript-Regular.ttf',
+      },
+    };
+  } catch (err) {
+    console.warn('[contractGenerator] Impossible de charger la police Dancing Script:', err);
+  }
+}
 
 function buildPdfMakeDoc(data: ContractData): object {
   const nbNuits = computeNights(data.date_debut, data.date_fin);
@@ -451,7 +496,12 @@ function buildPdfMakeDoc(data: ContractData): object {
 
       // ── Signatures ──
       {
-        text: 'Fait en deux exemplaires originaux, à ________________, le ________________',
+        text: [
+          'Fait en deux exemplaires originaux, à ',
+          { text: data.owner_ville || '________________', bold: !!data.owner_ville },
+          ', le ',
+          { text: formatDate(new Date().toISOString().slice(0, 10)), bold: true },
+        ],
         style: 'body',
         margin: [0, 28, 0, 18],
       },
@@ -462,7 +512,11 @@ function buildPdfMakeDoc(data: ContractData): object {
             stack: [
               { text: 'Le Bailleur', style: 'signLabel' },
               { text: ownerName, fontSize: 10.5, margin: [0, 0, 0, 4] },
-              { text: 'Signature précédée de la mention « Lu et approuvé »', style: 'signNote' },
+              { text: 'Lu et approuvé', font: 'DancingScript', fontSize: 14, color: '#1a3a6a', margin: [0, 8, 0, 4] },
+              ...(data.owner_signature_base64
+                ? [{ image: data.owner_signature_base64, fit: [150, 80] as [number, number], margin: [0, 4, 0, 4] as [number, number, number, number] }]
+                : [{ text: '', margin: [0, 36, 0, 0] as [number, number, number, number] }]
+              ),
               { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.8, lineColor: '#333333' }] },
             ],
           },
@@ -483,13 +537,14 @@ function buildPdfMakeDoc(data: ContractData): object {
 }
 
 // Génère un Blob PDF texte à partir des données du contrat via pdfmake.
-// Aucune image — le texte est sélectionnable et cherchable dans le PDF.
 export async function generateContractPDF(data: ContractData, _fileName: string): Promise<Blob> {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js');
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js');
 
   const pdfMake = (window as Window & { pdfMake?: PdfMake }).pdfMake;
   if (!pdfMake) throw new Error('pdfMake non chargé.');
+
+  await loadHandwritingFont();
 
   const docDef = buildPdfMakeDoc(data);
 

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, FileText, Loader2, AlertTriangle, CheckCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { getLogementById } from '@/lib/api/logements';
 import { uploadDocument, getDocumentsByDossier, replaceDocument } from '@/lib/api/documents';
 import { generateContract, generateContractPDF, type ContractData } from '@/lib/contractGenerator';
@@ -42,6 +43,27 @@ export default function ContractGeneratorModal({
   const [ownerSiret, setOwnerSiret] = useState('');
   const [loyerTotal, setLoyerTotal] = useState('');
   const [includeMenage, setIncludeMenage] = useState(false);
+  const [signatureBase64, setSignatureBase64] = useState<string | null>(null);
+
+  // Charger la signature bailleur en base64 pour injection dans le PDF
+  const loadSignature = useCallback(async () => {
+    const storagePath = profile?.signature_url;
+    if (!storagePath) { setSignatureBase64(null); return; }
+    try {
+      const { data } = await supabase.storage.from('documents').createSignedUrl(storagePath, 300);
+      if (!data?.signedUrl) return;
+      const res = await fetch(data.signedUrl);
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => setSignatureBase64(reader.result as string);
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.warn('[ContractGenerator] Signature non disponible:', err);
+      setSignatureBase64(null);
+    }
+  }, [profile?.signature_url]);
+
+  useEffect(() => { if (isOpen) loadSignature(); }, [isOpen, loadSignature]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -84,6 +106,8 @@ export default function ContractGeneratorModal({
       owner_telephone: ownerTel.trim() || undefined,
       owner_email: ownerEmail.trim() || undefined,
       owner_siret: ownerSiret.trim() || undefined,
+      owner_ville: profile?.ville || undefined,
+      owner_signature_base64: signatureBase64 || undefined,
       property_type: logement?.type ?? 'appartement',
       property_adresse: logement?.adresse ?? '',
       property_surface: logement?.surface_m2,

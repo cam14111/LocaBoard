@@ -63,6 +63,8 @@ export interface Utilisateur {
   adresse: string | null;
   siret: string | null;
   telephone: string | null;
+  ville: string | null;
+  signature_url: string | null;
   created_at: string;
   archived_at: string | null;
 }

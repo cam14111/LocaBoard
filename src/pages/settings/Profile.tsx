@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
-import { updateUtilisateurProfile } from '@/lib/api/utilisateurs';
+import { updateUtilisateurProfile, uploadSignature, deleteSignature } from '@/lib/api/utilisateurs';
 import { createAuditLog } from '@/lib/api/audit';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { ArrowLeft, Bell, BellOff, Check, Loader2, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Bell, BellOff, Check, Loader2, Pencil, Trash2, Upload, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 
@@ -25,9 +25,32 @@ export default function Profile() {
   const [editAdresse, setEditAdresse] = useState('');
   const [editSiret, setEditSiret] = useState('');
   const [editTelephone, setEditTelephone] = useState('');
+  const [editVille, setEditVille] = useState('');
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState('');
   const [infoSuccess, setInfoSuccess] = useState('');
+
+  // ── Signature bailleur ─────────────────────────────────────
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
+  const [signatureCurrentUrl, setSignatureCurrentUrl] = useState<string | null>(null);
+  const [uploadingSignature, setUploadingSignature] = useState(false);
+  const [deletingSignature, setDeletingSignature] = useState(false);
+  const [signatureError, setSignatureError] = useState('');
+  const [signatureSuccess, setSignatureSuccess] = useState('');
+
+  const loadSignaturePreview = useCallback(async () => {
+    const storagePath = profile?.signature_url;
+    if (!storagePath) { setSignatureCurrentUrl(null); return; }
+    try {
+      const { data } = await supabase.storage.from('documents').createSignedUrl(storagePath, 3600);
+      if (data?.signedUrl) setSignatureCurrentUrl(data.signedUrl);
+    } catch {
+      setSignatureCurrentUrl(null);
+    }
+  }, [profile?.signature_url]);
+
+  useEffect(() => { loadSignaturePreview(); }, [loadSignaturePreview]);
 
   function openEditInfo() {
     setEditPrenom(profile?.prenom ?? '');
@@ -36,6 +59,7 @@ export default function Profile() {
     setEditAdresse((profile as { adresse?: string | null })?.adresse ?? '');
     setEditSiret((profile as { siret?: string | null })?.siret ?? '');
     setEditTelephone((profile as { telephone?: string | null })?.telephone ?? '');
+    setEditVille(profile?.ville ?? '');
     setInfoError('');
     setInfoSuccess('');
     setEditingInfo(true);
@@ -62,12 +86,13 @@ export default function Profile() {
       const profileData = profile as { adresse?: string | null; siret?: string | null } | null;
 
       // 1. Mettre à jour nom/prénom/adresse/siret dans la table users
-      const profileUpdates: { nom?: string; prenom?: string; adresse?: string; siret?: string; telephone?: string } = {};
+      const profileUpdates: { nom?: string; prenom?: string; adresse?: string; siret?: string; telephone?: string; ville?: string } = {};
       if (editNom.trim() !== profile?.nom) profileUpdates.nom = editNom.trim();
       if (editPrenom.trim() !== profile?.prenom) profileUpdates.prenom = editPrenom.trim();
       if (editAdresse.trim() !== (profileData?.adresse ?? '')) profileUpdates.adresse = editAdresse.trim();
       if (editSiret.trim() !== (profileData?.siret ?? '')) profileUpdates.siret = editSiret.trim() || '';
       if (editTelephone.trim() !== ((profile as { telephone?: string | null })?.telephone ?? '')) profileUpdates.telephone = editTelephone.trim() || '';
+      if (editVille.trim() !== (profile?.ville ?? '')) profileUpdates.ville = editVille.trim();
       if (Object.keys(profileUpdates).length > 0) {
         await updateUtilisateurProfile(user!.id, profileUpdates);
       }
@@ -266,6 +291,20 @@ export default function Profile() {
             </div>
 
             <div>
+              <label htmlFor="profile-ville" className="block text-sm font-medium text-slate-700 mb-1">
+                Ville <span className="text-slate-400 font-normal">(pour les contrats)</span>
+              </label>
+              <input
+                id="profile-ville"
+                type="text"
+                value={editVille}
+                onChange={(e) => setEditVille(e.target.value)}
+                placeholder="ex : Lyon"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
               <label htmlFor="profile-telephone" className="block text-sm font-medium text-slate-700 mb-1">
                 Téléphone <span className="text-slate-400 font-normal">(optionnel)</span>
               </label>
@@ -349,8 +388,118 @@ export default function Profile() {
               <p className="text-sm text-slate-500">SIRET</p>
               <p className="font-medium">{(profile as { siret?: string | null })?.siret || '—'}</p>
             </div>
+            <div>
+              <p className="text-sm text-slate-500">Ville</p>
+              <p className="font-medium">{profile?.ville || '—'}</p>
+            </div>
           </div>
         )}
+      </div>
+
+      {/* Signature du bailleur */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold mb-1">Signature du bailleur</h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Votre signature sera automatiquement apposée sur les contrats générés.
+        </p>
+
+        {signatureCurrentUrl && !signaturePreview && (
+          <img src={signatureCurrentUrl} alt="Signature actuelle" className="max-h-24 border border-slate-200 rounded-lg p-2 mb-3 bg-white" />
+        )}
+
+        {signaturePreview && (
+          <img src={signaturePreview} alt="Aperçu signature" className="max-h-24 border border-slate-200 rounded-lg p-2 mb-3 bg-white" />
+        )}
+
+        {signatureError && (
+          <p className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600" role="alert">{signatureError}</p>
+        )}
+
+        {signatureSuccess && (
+          <p className="mb-3 rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700 flex items-center gap-2" role="status">
+            <Check className="h-4 w-4 flex-shrink-0" />
+            {signatureSuccess}
+          </p>
+        )}
+
+        <div className="flex items-center gap-3">
+          <label className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 cursor-pointer">
+            <Upload className="h-4 w-4" />
+            {profile?.signature_url ? 'Remplacer' : 'Charger une signature'}
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setSignatureError('');
+                setSignatureSuccess('');
+                if (file.size > 2 * 1024 * 1024) {
+                  setSignatureError('Le fichier ne doit pas dépasser 2 Mo.');
+                  return;
+                }
+                setSignatureFile(file);
+                setSignaturePreview(URL.createObjectURL(file));
+              }}
+            />
+          </label>
+
+          {signatureFile && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user) return;
+                setUploadingSignature(true);
+                setSignatureError('');
+                try {
+                  await uploadSignature(user.id, signatureFile);
+                  await refreshProfile();
+                  setSignatureFile(null);
+                  if (signaturePreview) URL.revokeObjectURL(signaturePreview);
+                  setSignaturePreview(null);
+                  setSignatureSuccess('Signature enregistrée.');
+                  await loadSignaturePreview();
+                } catch (err) {
+                  setSignatureError(err instanceof Error ? err.message : 'Erreur lors de l\'upload.');
+                } finally {
+                  setUploadingSignature(false);
+                }
+              }}
+              disabled={uploadingSignature}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+            >
+              {uploadingSignature ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Enregistrer
+            </button>
+          )}
+
+          {profile?.signature_url && !signatureFile && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user || !profile?.signature_url) return;
+                setDeletingSignature(true);
+                setSignatureError('');
+                try {
+                  await deleteSignature(user.id, profile.signature_url);
+                  await refreshProfile();
+                  setSignatureCurrentUrl(null);
+                  setSignatureSuccess('Signature supprimée.');
+                } catch (err) {
+                  setSignatureError(err instanceof Error ? err.message : 'Erreur lors de la suppression.');
+                } finally {
+                  setDeletingSignature(false);
+                }
+              }}
+              disabled={deletingSignature}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              {deletingSignature ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Supprimer
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Notifications push */}

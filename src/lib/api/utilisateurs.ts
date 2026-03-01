@@ -127,7 +127,7 @@ export async function inviteCoHote(params: {
 /** Met à jour le profil (nom, prénom, email, adresse, siret, telephone) d'un utilisateur */
 export async function updateUtilisateurProfile(
   userId: string,
-  updates: { nom?: string; prenom?: string; email?: string; adresse?: string; siret?: string; telephone?: string },
+  updates: { nom?: string; prenom?: string; email?: string; adresse?: string; siret?: string; telephone?: string; ville?: string; signature_url?: string },
 ) {
   if (Object.keys(updates).length === 0) return;
 
@@ -281,3 +281,39 @@ export async function reactiverUtilisateur(userId: string) {
 
 /** Alias rétrocompatible */
 export const reactivateUtilisateur = reactiverUtilisateur;
+
+/** Upload la signature du bailleur dans le bucket documents.
+ *  Retourne le storage_path pour stockage dans le profil. */
+export async function uploadSignature(userId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'png';
+  const storagePath = `signatures/${userId}/signature.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('documents')
+    .upload(storagePath, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  await updateUtilisateurProfile(userId, { signature_url: storagePath });
+
+  await createAuditLog({
+    entity_type: 'utilisateur',
+    entity_id: userId,
+    action: 'signature_uploaded',
+    metadata: { storage_path: storagePath },
+  });
+
+  return storagePath;
+}
+
+/** Supprime la signature du bailleur. */
+export async function deleteSignature(userId: string, storagePath: string): Promise<void> {
+  await supabase.storage.from('documents').remove([storagePath]);
+  await updateUtilisateurProfile(userId, { signature_url: '' });
+
+  await createAuditLog({
+    entity_type: 'utilisateur',
+    entity_id: userId,
+    action: 'signature_deleted',
+  });
+}
