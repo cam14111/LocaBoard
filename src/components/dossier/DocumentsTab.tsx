@@ -239,11 +239,22 @@ export default function DocumentsTab({ dossierId, dossier, reservation }: Docume
 
   async function handleSendByEmail(doc: DocType) {
     try {
-      const url = await getDocumentShareUrl(doc.storage_path);
+      const rawUrl = await getDocumentShareUrl(doc.storage_path);
+      // Raccourcir l'URL pour éviter les retours à la ligne (JWT trop long → lien non cliquable)
+      let shareUrl = rawUrl;
+      try {
+        const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(rawUrl)}`);
+        if (res.ok) {
+          const short = await res.text();
+          if (short.startsWith('https://is.gd/')) shareUrl = short.trim();
+        }
+      } catch {
+        // Fallback : URL longue (toujours fonctionnelle, peut ne pas être cliquable)
+      }
       const to = reservation?.locataire_email || '';
       const subject = encodeURIComponent(`Contrat de location — ${doc.nom_fichier}`);
       const body = encodeURIComponent(
-        `Bonjour,\n\nVeuillez trouver ci-dessous le lien pour télécharger votre document :\n\n${url}\n\nCordialement`,
+        `Bonjour,\n\nVeuillez trouver ci-dessous le lien pour télécharger votre document :\n\n${shareUrl}\n\nCordialement`,
       );
       window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
     } catch {
