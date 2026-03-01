@@ -68,6 +68,7 @@ interface DocumentsTabProps {
 
 export default function DocumentsTab({ dossierId, dossier, reservation }: DocumentsTabProps) {
   const canUploadAll = usePermission('document:upload_all');
+  const canGenerateContract = usePermission('contrat:generate');
   const canReplace = usePermission('document:replace');
   const [showContractGenerator, setShowContractGenerator] = useState(false);
   // Co-hôte : peut uniquement upload EDL
@@ -402,8 +403,8 @@ export default function DocumentsTab({ dossierId, dossier, reservation }: Docume
         </div>
       ) : (canUploadAll || canUploadEdl) ? (
         <div className="space-y-2">
-          {/* Bouton de génération de contrat — admin + dossier + réservation disponibles */}
-          {canUploadAll && dossier && reservation && (
+          {/* Bouton de génération de contrat — admin + co-hôte (pas concierge) */}
+          {canGenerateContract && dossier && reservation && (
             <button
               onClick={() => setShowContractGenerator(true)}
               className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-primary-300 px-4 py-3 text-sm font-medium text-primary-600 hover:border-primary-400 hover:bg-primary-50 transition-colors"

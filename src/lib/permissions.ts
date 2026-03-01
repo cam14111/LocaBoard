@@ -11,6 +11,7 @@ export type Permission =
   | 'edl:edit'
   | 'document:upload_all'
   | 'document:replace'
+  | 'contrat:generate'
   | 'tache:create'
   | 'tache:assign'
   | 'tache:complete'
@@ -30,6 +31,7 @@ const COHOTE_PERMISSIONS = new Set<Permission>([
   'edl:create',
   'edl:edit',
   'tache:complete',
+  'contrat:generate',
 ]);
 
 // Permissions de base accordées au concierge
