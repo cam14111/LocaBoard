@@ -238,8 +238,7 @@ export function generateContract(data: ContractData): string {
         <p style="font-family: 'Dancing Script', cursive; font-size: 18px; color: #1a3a6a; margin: 8px 0;">Lu et approuvé</p>
         ${data.owner_signature_base64
           ? `<img src="${data.owner_signature_base64}" style="max-width: 150px; max-height: 80px; margin-bottom: 8px;" alt="Signature" />`
-          : '<div style="height: 40px;"></div>'}
-        <div style="border-bottom: 1px solid #333; width: 210px;"></div>
+          : '<div style="height: 40px;"></div><div style="border-bottom: 1px solid #333; width: 210px;"></div>'}
       </div>
       <div>
         <p style="font-weight: bold; margin-bottom: 8px;">Le Locataire</p>
@@ -515,9 +514,11 @@ function buildPdfMakeDoc(data: ContractData): object {
               { text: 'Lu et approuvé', font: 'DancingScript', fontSize: 14, color: '#1a3a6a', margin: [0, 8, 0, 4] },
               ...(data.owner_signature_base64
                 ? [{ image: data.owner_signature_base64, fit: [150, 80] as [number, number], margin: [0, 4, 0, 4] as [number, number, number, number] }]
-                : [{ text: '', margin: [0, 36, 0, 0] as [number, number, number, number] }]
+                : [
+                    { text: '', margin: [0, 36, 0, 0] as [number, number, number, number] },
+                    { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.8, lineColor: '#333333' }] },
+                  ]
               ),
-              { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 210, y2: 0, lineWidth: 0.8, lineColor: '#333333' }] },
             ],
           },
           {
