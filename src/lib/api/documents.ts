@@ -77,10 +77,12 @@ export async function replaceDocument(oldDocumentId: string, params: {
   file: File;
 }) {
   // Archive l'ancien document
-  await supabase
+  const { error: archiveError } = await supabase
     .from('documents')
     .update({ archived_at: new Date().toISOString() })
     .eq('id', oldDocumentId);
+
+  if (archiveError) throw archiveError;
 
   const {
     data: { user },
