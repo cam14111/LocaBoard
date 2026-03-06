@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getUnreadCount } from '@/lib/api/notifications';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 /** Hook pour le polling du compteur de notifications non-lues */
 export function useUnreadNotifications() {
@@ -32,18 +33,25 @@ export function useUnreadNotifications() {
       }
     })();
 
-    // Polling toutes les 60s
-    const interval = setInterval(() => {
-      if (!user) return;
-      getUnreadCount(user.id).then((c) => {
-        if (!cancelled) setCount(c);
-      }).catch(() => {});
-    }, 60_000);
+    // Realtime : mise à jour instantanée à chaque changement sur les notifications de l'utilisateur
+    const channel = supabase
+      .channel(`notifications-count-${user.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        getUnreadCount(user.id).then((c) => {
+          if (!cancelled) setCount(c);
+        }).catch(() => {});
+      })
+      .subscribe();
 
     return () => {
       cancelled = true;
       mountedRef.current = false;
-      clearInterval(interval);
+      supabase.removeChannel(channel);
     };
   }, [user]);
 

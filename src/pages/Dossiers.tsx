@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FolderOpen, Loader2, Calendar, Search, Euro, List, Columns3, Home } from 'lucide-react';
 import { getDossiers } from '@/lib/api/dossiers';
 import { useSelectedLogement } from '@/hooks/useSelectedLogement';
+import { supabase } from '@/lib/supabase';
 import { formatDateFR } from '@/lib/dateUtils';
 import { PIPELINE_LABELS, PIPELINE_COLORS } from '@/lib/pipeline';
 import DossiersKanban from '@/components/dossier/DossiersKanban';
@@ -60,6 +61,28 @@ export default function Dossiers() {
     load();
     return () => { cancelled = true; };
   }, [selectedLogementId]);
+
+  // Realtime : recharge les dossiers dès qu'une modification survient
+  useEffect(() => {
+    const channelName = selectedLogementId ? `dossiers-${selectedLogementId}` : 'dossiers-all';
+    const filter = selectedLogementId ? `logement_id=eq.${selectedLogementId}` : undefined;
+
+    const channel = supabase
+      .channel(channelName)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'dossiers',
+        ...(filter ? { filter } : {}),
+      }, () => {
+        getDossiers({ logement_id: selectedLogementId || undefined, limit: 200 })
+          .then((data) => setDossiers(data as unknown as DossierWithReservation[]))
+          .catch(() => {});
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedLogementId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filtrage côté client (recherche + filtre pipeline)
   const filtered = useMemo(() => {

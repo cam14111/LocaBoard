@@ -16,6 +16,7 @@ import {
   deleteNotification,
 } from '@/lib/api/notifications';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import type { Notification, NotificationType } from '@/types/database.types';
 
 const TYPE_ICONS: Record<NotificationType, typeof Clock> = {
@@ -100,6 +101,24 @@ export default function NotificationsPanel({ onClose }: NotificationsPanelProps)
   useEffect(() => {
     load();
   }, [load]);
+
+  // Realtime : rafraîchit la liste si une nouvelle notification arrive pendant que le panel est ouvert
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`notifications-panel-${user.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        load();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, load]);
 
   async function handleClick(n: Notification) {
     if (!n.read_at) {

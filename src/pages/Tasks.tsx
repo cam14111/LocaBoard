@@ -17,6 +17,7 @@ import {
 import { useSelectedLogement } from '@/hooks/useSelectedLogement';
 import { useAuth } from '@/hooks/useAuth';
 import { getTaches, createTache, updateTache, completeTache, cancelTache, reactivateTache } from '@/lib/api/taches';
+import { supabase } from '@/lib/supabase';
 import { getActiveUtilisateurs } from '@/lib/api/utilisateurs';
 import { formatDateFR, toDateString } from '@/lib/dateUtils';
 import type { Tache, TacheType, TacheStatut, Utilisateur } from '@/types/database.types';
@@ -94,6 +95,26 @@ export default function Tasks() {
   useEffect(() => {
     getActiveUtilisateurs().then(setActiveUsers).catch(() => setActiveUsers([]));
   }, []);
+
+  // Realtime : recharge les tâches dès qu'une modification survient
+  useEffect(() => {
+    const channelName = selectedLogementId ? `taches-${selectedLogementId}` : 'taches-all';
+    const filter = selectedLogementId ? `logement_id=eq.${selectedLogementId}` : undefined;
+
+    const channel = supabase
+      .channel(channelName)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'taches',
+        ...(filter ? { filter } : {}),
+      }, () => {
+        loadTaches();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedLogementId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => {
     let list = taches;
