@@ -1,8 +1,10 @@
 {
-  "disableAllHooks": true,
   "permissions": {
     "allow": [
-      "mcp__claude_ai_Mermaid_Chart__validate_and_render_mermaid_diagram"
+      "mcp__claude_ai_Mermaid_Chart__validate_and_render_mermaid_diagram",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier/ Location/app/ -/ Kombai/src/pages/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier/ Location/app/ -/ Kombai/src/components/dossier/**)"
     ]
-  }
+  },
+  "disableAllHooks": true
 }
