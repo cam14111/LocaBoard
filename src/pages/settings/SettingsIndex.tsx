@@ -37,6 +37,9 @@ export default function SettingsIndex() {
 
         return card;
       })}
+      <p className="text-center text-xs text-slate-400 mt-6 pt-4 border-t border-slate-100">
+        Version {__APP_VERSION__}
+      </p>
     </div>
   );
 }
