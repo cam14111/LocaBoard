@@ -21,12 +21,14 @@ export function useUnreadNotifications() {
 
   useEffect(() => {
     mountedRef.current = true;
+    if (!user) return;
+
     // Fetch initial
     let cancelled = false;
+    const userId = user.id;
     (async () => {
-      if (!user) return;
       try {
-        const c = await getUnreadCount(user.id);
+        const c = await getUnreadCount(userId);
         if (!cancelled) setCount(c);
       } catch {
         // Non bloquant
@@ -35,14 +37,14 @@ export function useUnreadNotifications() {
 
     // Realtime : mise à jour instantanée à chaque changement sur les notifications de l'utilisateur
     const channel = supabase
-      .channel(`notifications-count-${user.id}`)
+      .channel(`notifications-count-${userId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'notifications',
-        filter: `user_id=eq.${user.id}`,
+        filter: `user_id=eq.${userId}`,
       }, () => {
-        getUnreadCount(user.id).then((c) => {
+        getUnreadCount(userId).then((c) => {
           if (!cancelled) setCount(c);
         }).catch(() => {});
       })
