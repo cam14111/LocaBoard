@@ -10,7 +10,7 @@
 -- Les deux fonctions bénéficient de cet index :
 --   - expire_active_options  : expiration_at <= now()
 --   - notify_options_expiring_soon : expiration_at BETWEEN now() AND now() + 24h
-CREATE INDEX idx_reservations_active_options_expiring
+CREATE INDEX IF NOT EXISTS idx_reservations_active_options_expiring
   ON reservations (expiration_at)
   WHERE type = 'OPTION' AND statut = 'OPTION_ACTIVE' AND archived_at IS NULL;
 
@@ -22,7 +22,7 @@ CREATE INDEX idx_reservations_active_options_expiring
 -- L'index existant idx_notifications_user_unread ne couvre que (user_id, read_at).
 -- Chaque appel scanne une large portion de la table notifications par utilisateur.
 -- Fix : index composite couvrant exactement les 4 colonnes du JOIN.
-CREATE INDEX idx_notifications_dedup
+CREATE INDEX IF NOT EXISTS idx_notifications_dedup
   ON notifications (user_id, type, entity_type, entity_id);
 
 -- ── 3. Index arrivées/départs demain (notify_taches_and_stays_watchlist) ──────
@@ -31,11 +31,11 @@ CREATE INDEX idx_notifications_dedup
 --     AND (date_debut = current_date + 1 OR date_fin = current_date + 1)
 -- Aucun index sur date_debut ou date_fin filtré par statut/type.
 -- PostgreSQL fait deux index partiels en bitmap OR — nécessite deux index séparés.
-CREATE INDEX idx_reservations_date_debut_confirmee
+CREATE INDEX IF NOT EXISTS idx_reservations_date_debut_confirmee
   ON reservations (date_debut)
   WHERE type = 'RESERVATION' AND statut = 'CONFIRMEE' AND archived_at IS NULL;
 
-CREATE INDEX idx_reservations_date_fin_confirmee
+CREATE INDEX IF NOT EXISTS idx_reservations_date_fin_confirmee
   ON reservations (date_fin)
   WHERE type = 'RESERVATION' AND statut = 'CONFIRMEE' AND archived_at IS NULL;
 
@@ -44,6 +44,6 @@ CREATE INDEX idx_reservations_date_fin_confirmee
 -- L'index existant idx_reservations_statut ON (statut) ne filtre pas archived_at,
 -- ce qui force un filtre supplémentaire ligne par ligne après l'index scan.
 -- Fix : index partiel excluant les archives d'emblée.
-CREATE INDEX idx_reservations_statut_non_archive
+CREATE INDEX IF NOT EXISTS idx_reservations_statut_non_archive
   ON reservations (statut)
   WHERE archived_at IS NULL;

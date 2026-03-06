@@ -180,6 +180,8 @@ export async function updateUtilisateurRole(
 }
 
 /** Met à jour les permissions d'un utilisateur.
+ *  Pour paiement:mark_paid, passe par la RPC SECURITY DEFINER admin_set_mark_paid
+ *  qui bypasse le trigger restrict_user_self_updates et synchronise aussi logement_users.
  *  Ignore silencieusement les permissions interdites au concierge. */
 export async function updateUtilisateurPermissions(
   userId: string,
@@ -190,6 +192,24 @@ export async function updateUtilisateurPermissions(
   const sanitized = { ...permissions };
   if (userRole === 'CONCIERGE') {
     delete sanitized['paiement:mark_paid'];
+  }
+
+  // paiement:mark_paid passe par une RPC dédiée (bypass trigger + sync logement_users)
+  if ('paiement:mark_paid' in sanitized) {
+    const enabled = sanitized['paiement:mark_paid'];
+    const { error } = await supabase.rpc('admin_set_mark_paid', {
+      p_user_id: userId,
+      p_enabled: enabled,
+    });
+    if (error) throw error;
+
+    await createAuditLog({
+      entity_type: 'utilisateur',
+      entity_id: userId,
+      action: 'permissions_updated',
+      metadata: { permissions: sanitized },
+    });
+    return;
   }
 
   const { error } = await supabase
