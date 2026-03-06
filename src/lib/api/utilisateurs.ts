@@ -197,7 +197,8 @@ export async function updateUtilisateurPermissions(
   // paiement:mark_paid passe par une RPC dédiée (bypass trigger + sync logement_users)
   if ('paiement:mark_paid' in sanitized) {
     const enabled = sanitized['paiement:mark_paid'];
-    const { error } = await supabase.rpc('admin_set_mark_paid', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.rpc as any)('admin_set_mark_paid', {
       p_user_id: userId,
       p_enabled: enabled,
     });
