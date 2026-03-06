@@ -44,7 +44,7 @@ export default function PipelineStepper({
 
   // Précharger le contrat existant pour la modal de contrat signé
   useEffect(() => {
-    if (currentStatut === 'CONTRAT_SIGNE') {
+    if (currentStatut === 'CONTRAT_ENVOYE') {
       getDocumentsByDossier(dossierId)
         .then((docs) => {
           const contrat = docs.find((d) => d.type === 'CONTRAT') ?? null;
@@ -68,7 +68,7 @@ export default function PipelineStepper({
       return;
     }
     // US5 : Si la cible est ACOMPTE_RECU (depuis CONTRAT_SIGNE), ouvrir la modal d'import du contrat signé
-    if (target === 'ACOMPTE_RECU' && currentStatut === 'CONTRAT_SIGNE') {
+    if (target === 'CONTRAT_SIGNE' && currentStatut === 'CONTRAT_ENVOYE') {
       setShowSignedContractModal(true);
       return;
     }

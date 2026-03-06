@@ -55,7 +55,7 @@ export default function SignedContractUploadModal({
           file: selectedFile,
         });
       }
-      await updatePipelineStatut(dossierId, 'ACOMPTE_RECU');
+      await updatePipelineStatut(dossierId, 'CONTRAT_SIGNE');
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'import.');
@@ -68,7 +68,7 @@ export default function SignedContractUploadModal({
     setUploading(true);
     setError('');
     try {
-      await updatePipelineStatut(dossierId, 'ACOMPTE_RECU');
+      await updatePipelineStatut(dossierId, 'CONTRAT_SIGNE');
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors du changement de statut.');
