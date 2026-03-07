@@ -58,20 +58,41 @@ export async function markPaiementPaid(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase
-    .from('paiements')
-    .update({
-      statut: 'PAYE' as PaiementStatut,
-      method,
-      paid_at: new Date().toISOString(),
-      paid_by_user_id: user?.id ?? null,
-      proof_document_id: proofDocumentId ?? null,
-    })
-    .eq('id', id);
+  // Récupérer le rôle de l'utilisateur courant
+  const { data: userData } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user?.id ?? '')
+    .single();
 
-  if (error) {
-    const details = [error.message, error.details, error.hint].filter(Boolean).join(' — ');
-    throw new Error(details || 'Erreur lors de la mise à jour du paiement');
+  if (userData?.role === 'COHOTE') {
+    // Co-hôte : passer par la RPC SECURITY DEFINER (bypasse la policy paiements_update_admin)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await (supabase.rpc as any)('cohote_mark_paiement_paid', {
+      p_paiement_id: id,
+      p_method: method,
+    });
+    if (rpcError) {
+      const details = [rpcError.message, rpcError.details, rpcError.hint].filter(Boolean).join(' — ');
+      throw new Error(details || 'Erreur lors de la mise à jour du paiement');
+    }
+  } else {
+    // Admin / autre rôle : UPDATE direct
+    const { error } = await supabase
+      .from('paiements')
+      .update({
+        statut: 'PAYE' as PaiementStatut,
+        method,
+        paid_at: new Date().toISOString(),
+        paid_by_user_id: user?.id ?? null,
+        proof_document_id: proofDocumentId ?? null,
+      })
+      .eq('id', id);
+
+    if (error) {
+      const details = [error.message, error.details, error.hint].filter(Boolean).join(' — ');
+      throw new Error(details || 'Erreur lors de la mise à jour du paiement');
+    }
   }
 
   await createAuditLog({
