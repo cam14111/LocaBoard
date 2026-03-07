@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
+import { tryAutoAdvancePipeline } from '@/lib/pipelineAutomate';
 import type { Edl, EdlItem, EdlType, EdlStatut, EdlItemEtat } from '@/types/database.types';
 
 export async function getEdlByDossier(dossierId: string) {
@@ -88,6 +89,13 @@ export async function startEdl(edlId: string) {
 export async function finalizeEdl(edlId: string, hasIncident: boolean) {
   const newStatut: EdlStatut = hasIncident ? 'TERMINE_INCIDENT' : 'TERMINE_OK';
 
+  // Charger le dossier_id avant la mise à jour pour l'auto-advance pipeline
+  const { data: edlData } = await supabase
+    .from('edls')
+    .select('dossier_id')
+    .eq('id', edlId)
+    .single();
+
   const { error } = await supabase
     .from('edls')
     .update({ statut: newStatut, completed_at: new Date().toISOString() })
@@ -101,6 +109,23 @@ export async function finalizeEdl(edlId: string, hasIncident: boolean) {
     action: 'finalized',
     metadata: { statut: newStatut, has_incident: hasIncident },
   });
+
+  // Auto-advance pipeline si applicable (CHECKIN_FAIT → EDL_ENTREE_OK/INCIDENT, CHECKOUT_FAIT → EDL_OK/INCIDENT)
+  if (edlData?.dossier_id) {
+    const { data: dossierData } = await supabase
+      .from('dossiers')
+      .select('pipeline_statut')
+      .eq('id', edlData.dossier_id)
+      .single();
+
+    if (dossierData?.pipeline_statut) {
+      try {
+        await tryAutoAdvancePipeline(edlData.dossier_id, dossierData.pipeline_statut);
+      } catch {
+        // Non-bloquant
+      }
+    }
+  }
 }
 
 export async function reopenEdl(edlId: string) {

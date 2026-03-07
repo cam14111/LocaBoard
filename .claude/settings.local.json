@@ -3,7 +3,16 @@
     "allow": [
       "mcp__claude_ai_Mermaid_Chart__validate_and_render_mermaid_diagram",
       "Read(//c/Users/cam14/Desktop/LMNP/Calendrier/ Location/app/ -/ Kombai/src/pages/**)",
-      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier/ Location/app/ -/ Kombai/src/components/dossier/**)"
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier/ Location/app/ -/ Kombai/src/components/dossier/**)",
+      "Read(//c/Users/cam14/.claude/projects/c--Users-cam14-Desktop-LMNP-Calendrier-Location-app---Kombai/memory/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/pages/settings/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/lib/api/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/contexts/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/lib/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/types/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/supabase/migrations/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/**)",
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/**)"
     ]
   },
   "disableAllHooks": true
