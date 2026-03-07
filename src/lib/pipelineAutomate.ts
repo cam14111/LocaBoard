@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { createAuditLog } from '@/lib/api/audit';
 import type { PipelineStatut } from '@/types/database.types';
 
 /**
@@ -57,27 +56,11 @@ export async function tryAutoAdvancePipeline(
   const target = await resolveAutoAdvanceTarget(dossierId, currentStatut);
   if (!target) return null;
 
-  // Mise à jour directe pour éviter l'import circulaire avec dossiers.ts
-  const { data: before } = await supabase
-    .from('dossiers')
-    .select('pipeline_statut, logement_id')
-    .eq('id', dossierId)
-    .single();
-
-  await supabase
-    .from('dossiers')
-    .update({ pipeline_statut: target })
-    .eq('id', dossierId);
-
-  await createAuditLog({
-    entity_type: 'dossier',
-    entity_id: dossierId,
-    logement_id: before?.logement_id ?? undefined,
-    action: 'pipeline_changed',
-    changed_fields: {
-      pipeline_statut: { before: before?.pipeline_statut ?? currentStatut, after: target },
-    },
-    metadata: { motif: 'auto' },
+  // RPC SECURITY DEFINER : contourne RLS + insère l'audit log (fonctionne pour tous les rôles)
+  await supabase.rpc('auto_advance_pipeline', {
+    p_dossier_id: dossierId,
+    p_from_statut: currentStatut,
+    p_to_statut: target,
   });
 
   return target;

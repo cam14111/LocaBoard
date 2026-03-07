@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
 import { computeAutoAdvance } from '@/lib/pipelineAutomate';
+import type { PipelineStatut } from '@/types/database.types';
 import type { Edl, EdlItem, EdlType, EdlStatut, EdlItemEtat } from '@/types/database.types';
 
 export async function getEdlByDossier(dossierId: string) {
@@ -127,20 +128,11 @@ export async function finalizeEdl(edlId: string, hasIncident: boolean) {
 
       if (target) {
         try {
-          await supabase
-            .from('dossiers')
-            .update({ pipeline_statut: target })
-            .eq('id', edlData.dossier_id);
-
-          await createAuditLog({
-            entity_type: 'dossier',
-            entity_id: edlData.dossier_id,
-            logement_id: dossierData.logement_id ?? undefined,
-            action: 'pipeline_changed',
-            changed_fields: {
-              pipeline_statut: { before: dossierData.pipeline_statut, after: target },
-            },
-            metadata: { motif: 'auto' },
+          // RPC SECURITY DEFINER : contourne RLS + insère l'audit log
+          await supabase.rpc('auto_advance_pipeline', {
+            p_dossier_id: edlData.dossier_id,
+            p_from_statut: dossierData.pipeline_statut as PipelineStatut,
+            p_to_statut: target,
           });
         } catch {
           // Non-bloquant
