@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
-import { tryAutoAdvancePipeline } from '@/lib/pipelineAutomate';
+import { computeAutoAdvance } from '@/lib/pipelineAutomate';
 import type { Edl, EdlItem, EdlType, EdlStatut, EdlItemEtat } from '@/types/database.types';
 
 export async function getEdlByDossier(dossierId: string) {
@@ -89,10 +89,10 @@ export async function startEdl(edlId: string) {
 export async function finalizeEdl(edlId: string, hasIncident: boolean) {
   const newStatut: EdlStatut = hasIncident ? 'TERMINE_INCIDENT' : 'TERMINE_OK';
 
-  // Charger le dossier_id avant la mise à jour pour l'auto-advance pipeline
+  // Charger dossier_id + type avant la mise à jour pour l'auto-advance pipeline
   const { data: edlData } = await supabase
     .from('edls')
-    .select('dossier_id')
+    .select('dossier_id, type')
     .eq('id', edlId)
     .single();
 
@@ -110,19 +110,41 @@ export async function finalizeEdl(edlId: string, hasIncident: boolean) {
     metadata: { statut: newStatut, has_incident: hasIncident },
   });
 
-  // Auto-advance pipeline si applicable (CHECKIN_FAIT → EDL_ENTREE_OK/INCIDENT, CHECKOUT_FAIT → EDL_OK/INCIDENT)
-  if (edlData?.dossier_id) {
+  // Auto-advance pipeline : on utilise le statut EDL qu'on vient de calculer (pas de re-query)
+  if (edlData?.dossier_id && edlData?.type) {
     const { data: dossierData } = await supabase
       .from('dossiers')
-      .select('pipeline_statut')
+      .select('pipeline_statut, logement_id')
       .eq('id', edlData.dossier_id)
       .single();
 
     if (dossierData?.pipeline_statut) {
-      try {
-        await tryAutoAdvancePipeline(edlData.dossier_id, dossierData.pipeline_statut);
-      } catch {
-        // Non-bloquant
+      const target = computeAutoAdvance(
+        dossierData.pipeline_statut,
+        [],
+        [{ type: edlData.type, statut: newStatut }],
+      );
+
+      if (target) {
+        try {
+          await supabase
+            .from('dossiers')
+            .update({ pipeline_statut: target })
+            .eq('id', edlData.dossier_id);
+
+          await createAuditLog({
+            entity_type: 'dossier',
+            entity_id: edlData.dossier_id,
+            logement_id: dossierData.logement_id ?? undefined,
+            action: 'pipeline_changed',
+            changed_fields: {
+              pipeline_statut: { before: dossierData.pipeline_statut, after: target },
+            },
+            metadata: { motif: 'auto' },
+          });
+        } catch {
+          // Non-bloquant
+        }
       }
     }
   }
