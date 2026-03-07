@@ -68,7 +68,7 @@ BEGIN
 
   -- 4. Avancer le pipeline
   UPDATE dossiers
-  SET pipeline_statut = p_to_statut::pipeline_statut
+  SET pipeline_statut = p_to_statut::dossier_pipeline_statut
   WHERE id = p_dossier_id;
 
   -- 5. Audit log
