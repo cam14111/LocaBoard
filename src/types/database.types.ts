@@ -405,6 +405,10 @@ export interface Database {
         Args: { p_user_id: string; p_logement_ids: string[] };
         Returns: void;
       };
+      auto_advance_pipeline: {
+        Args: { p_dossier_id: string; p_from_statut: string; p_to_statut: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       user_role: UserRole;
