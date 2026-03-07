@@ -187,8 +187,8 @@ export default function EdlMobile() {
             const target: PipelineStatut = incident ? 'EDL_INCIDENT' : 'EDL_OK';
             if (target !== ps) {
               await updatePipelineStatut(dossierId, target);
-              setPipelineUpdated(true);
             }
+            setPipelineUpdated(true);
           }
         }
       } catch {
