@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { getEdlById, updateEdlItem, startEdl, finalizeEdl, reopenEdl, parsePhotoUrls } from '@/lib/api/edl';
 import { getDossierById, updatePipelineStatut } from '@/lib/api/dossiers';
+import CloseDossierModal from '@/components/dossier/CloseDossierModal';
 import {
   countCompleted,
   isEdlFinalized,
@@ -46,6 +47,7 @@ export default function EdlMobile() {
   const [showReopenModal, setShowReopenModal] = useState(false);
   const [reopening, setReopening] = useState(false);
   const [pipelineUpdated, setPipelineUpdated] = useState(false);
+  const [showCloseDossierModal, setShowCloseDossierModal] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -340,6 +342,18 @@ export default function EdlMobile() {
         {finalizeModal}
         {reopenModal}
 
+        {/* Modale clôture dossier — proposée après EDL de départ */}
+        {showCloseDossierModal && dossierId && (
+          <CloseDossierModal
+            dossierId={dossierId}
+            onClosed={() => {
+              setShowCloseDossierModal(false);
+              navigate('/dossiers');
+            }}
+            onClose={() => setShowCloseDossierModal(false)}
+          />
+        )}
+
         {/* Header */}
         <header className="flex items-center justify-between bg-white border-b border-slate-200 px-4 py-3 flex-shrink-0">
           <button onClick={() => setShowSummary(false)} className="p-1">
@@ -382,12 +396,32 @@ export default function EdlMobile() {
           </div>
         )}
 
-        {/* Confirmation mise à jour pipeline */}
+        {/* Confirmation mise à jour pipeline + proposition clôture pour EDL départ */}
         {pipelineUpdated && (
-          <div className="mx-4 mt-2 rounded-xl bg-primary-50 border border-primary-200 px-3 py-2 flex items-center gap-2">
-            <ChevronRight className="h-4 w-4 text-primary-600 flex-shrink-0" />
-            <p className="text-xs text-primary-700 font-medium">Pipeline du dossier mis à jour.</p>
-          </div>
+          edl.type === 'DEPART' ? (
+            <div className="mx-4 mt-2 rounded-xl bg-green-50 border border-green-200 px-3 py-2.5 space-y-2">
+              <div className="flex items-center gap-2">
+                <ChevronRight className="h-4 w-4 text-green-600 flex-shrink-0" />
+                <p className="text-xs text-green-700 font-medium">Pipeline du dossier mis à jour.</p>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-green-800 font-medium">
+                  Voulez-vous clôturer le dossier ?
+                </p>
+                <button
+                  onClick={() => setShowCloseDossierModal(true)}
+                  className="flex-shrink-0 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                >
+                  Clôturer
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-4 mt-2 rounded-xl bg-primary-50 border border-primary-200 px-3 py-2 flex items-center gap-2">
+              <ChevronRight className="h-4 w-4 text-primary-600 flex-shrink-0" />
+              <p className="text-xs text-primary-700 font-medium">Pipeline du dossier mis à jour.</p>
+            </div>
+          )
         )}
 
         {/* Liste des items */}
@@ -459,6 +493,17 @@ export default function EdlMobile() {
   // ─── Vue Item ───────────────────────────────────────────────
   return (
     <div className="flex flex-col h-screen bg-slate-50">
+      {/* Modale clôture dossier — accessible depuis la vue item aussi */}
+      {showCloseDossierModal && dossierId && (
+        <CloseDossierModal
+          dossierId={dossierId}
+          onClosed={() => {
+            setShowCloseDossierModal(false);
+            navigate('/dossiers');
+          }}
+          onClose={() => setShowCloseDossierModal(false)}
+        />
+      )}
 
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-4 py-3 flex-shrink-0">

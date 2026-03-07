@@ -1,7 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
 import { dismissNotificationsForEntity } from './notifications';
-import type { Paiement, PaiementStatut, PaiementMethod } from '@/types/database.types';
+import { tryAutoAdvancePipeline } from '@/lib/pipelineAutomate';
+import type { Paiement, PaiementStatut, PaiementMethod, PipelineStatut } from '@/types/database.types';
 
 export async function getPaiementsByDossier(dossierId: string) {
   const { data, error } = await supabase
@@ -45,10 +46,10 @@ export async function markPaiementPaid(
   id: string,
   method: PaiementMethod,
   proofDocumentId?: string,
-) {
+): Promise<{ autoAdvanced?: PipelineStatut }> {
   const { data: before } = await supabase
     .from('paiements')
-    .select('statut, dossier_id')
+    .select('statut, dossier_id, type')
     .eq('id', id)
     .single();
 
@@ -105,6 +106,31 @@ export async function markPaiementPaid(
 
   // Paiement soldé → effacer la notification de retard du dossier
   dismissNotificationsForEntity('PAIEMENT_EN_RETARD', 'dossier', before.dossier_id);
+
+  // Vérifier si ce paiement déclenche un auto-advance pipeline
+  // (ex : ARRHES payé alors que le pipeline est déjà à CONTRAT_SIGNE)
+  let autoAdvanced: PipelineStatut | undefined;
+  if (before.type === 'ARRHES' || before.type === 'ACOMPTE' || before.type === 'SOLDE') {
+    try {
+      const { data: dossier } = await supabase
+        .from('dossiers')
+        .select('pipeline_statut')
+        .eq('id', before.dossier_id)
+        .single();
+
+      if (dossier) {
+        const result = await tryAutoAdvancePipeline(
+          before.dossier_id,
+          dossier.pipeline_statut as PipelineStatut,
+        );
+        autoAdvanced = result ?? undefined;
+      }
+    } catch {
+      // Non bloquant — le pipeline peut être avancé manuellement
+    }
+  }
+
+  return { autoAdvanced };
 }
 
 export async function markPaiementOverdue(id: string) {

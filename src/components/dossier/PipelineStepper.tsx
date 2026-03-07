@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Check, Circle, ChevronRight, ChevronLeft, Loader2, AlertTriangle, X } from 'lucide-react';
-import { updatePipelineStatut } from '@/lib/api/dossiers';
+import { advancePipelineStatut } from '@/lib/api/dossiers';
 import { getDocumentsByDossier } from '@/lib/api/documents';
 import CancelDossierModal from './CancelDossierModal';
 import CloseDossierModal from './CloseDossierModal';
@@ -41,6 +41,7 @@ export default function PipelineStepper({
   const [motif, setMotif] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [autoAdvanceLabel, setAutoAdvanceLabel] = useState<string | null>(null);
 
   // Précharger le contrat existant pour la modal de contrat signé
   useEffect(() => {
@@ -85,9 +86,12 @@ export default function PipelineStepper({
     setLoading(true);
     setError('');
     try {
-      await updatePipelineStatut(dossierId, confirmAction.target, motif.trim() || undefined);
+      const result = await advancePipelineStatut(dossierId, confirmAction.target, motif.trim() || undefined);
       setConfirmAction(null);
       setMotif('');
+      if (result.autoAdvanced) {
+        setAutoAdvanceLabel(PIPELINE_LABELS[result.autoAdvanced]);
+      }
       onUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la transition.');
@@ -98,6 +102,14 @@ export default function PipelineStepper({
 
   return (
     <div className="space-y-6">
+      {/* Bandeau auto-advance (disparaît au prochain rechargement) */}
+      {autoAdvanceLabel && (
+        <div className="flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-700">
+          <Check className="h-4 w-4 flex-shrink-0" />
+          <span>Étape <strong>{autoAdvanceLabel}</strong> validée automatiquement.</span>
+        </div>
+      )}
+
       {/* Modal import contrat signé (US5) */}
       <SignedContractUploadModal
         isOpen={showSignedContractModal}

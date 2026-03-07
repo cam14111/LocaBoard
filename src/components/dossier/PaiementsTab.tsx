@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { markPaiementPaid, updatePaiement, createPaiement, deletePaiement } from '@/lib/api/paiements';
 import { formatDateFR } from '@/lib/dateUtils';
+import { PIPELINE_LABELS } from '@/lib/pipeline';
 import type { Paiement, PaiementMethod } from '@/types/database.types';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -58,13 +59,18 @@ export default function PaiementsTab({ paiements, dossierId, onUpdated }: Paieme
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [autoAdvanceLabel, setAutoAdvanceLabel] = useState<string | null>(null);
 
   async function handleMarkPaid(id: string) {
     setLoading(true);
     setError('');
+    setAutoAdvanceLabel(null);
     try {
-      await markPaiementPaid(id, selectedMethod);
+      const result = await markPaiementPaid(id, selectedMethod);
       setPayingId(null);
+      if (result.autoAdvanced) {
+        setAutoAdvanceLabel(PIPELINE_LABELS[result.autoAdvanced]);
+      }
       onUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : (err as { message?: string })?.message || 'Erreur inattendue lors de la confirmation du paiement');
@@ -160,6 +166,14 @@ export default function PaiementsTab({ paiements, dossierId, onUpdated }: Paieme
 
   return (
     <div className="space-y-3">
+      {/* Bandeau auto-advance pipeline */}
+      {autoAdvanceLabel && (
+        <div className="flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-700">
+          <Check className="h-4 w-4 flex-shrink-0" />
+          <span>Paiement confirmé. Pipeline avancé automatiquement : <strong>{autoAdvanceLabel}</strong>.</span>
+        </div>
+      )}
+
       {paiements.length === 0 && !showAddExtra ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
           <CreditCard className="mx-auto h-8 w-8 text-slate-300 mb-2" />

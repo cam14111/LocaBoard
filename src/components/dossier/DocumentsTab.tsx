@@ -66,9 +66,10 @@ interface DocumentsTabProps {
   dossierId: string;
   dossier?: Dossier;
   reservation?: Reservation | null;
+  onUpdated?: () => void;
 }
 
-export default function DocumentsTab({ dossierId, dossier, reservation }: DocumentsTabProps) {
+export default function DocumentsTab({ dossierId, dossier, reservation, onUpdated }: DocumentsTabProps) {
   const canUploadAll = usePermission('document:upload_all');
   const canGenerateContract = usePermission('contrat:generate');
   const canReplace = usePermission('document:replace');
@@ -92,6 +93,10 @@ export default function DocumentsTab({ dossierId, dossier, reservation }: Docume
   // Historique des versions (E06-04)
   const [versionHistory, setVersionHistory] = useState<DocType[] | null>(null);
   const [versionLoading, setVersionLoading] = useState(false);
+
+  // Confirmation "Marquer Contrat envoyé" après envoi par mail
+  const [pendingContratPipelineConfirm, setPendingContratPipelineConfirm] = useState(false);
+  const [markingContratEnvoye, setMarkingContratEnvoye] = useState(false);
   const [versionDocType, setVersionDocType] = useState<string>('');
   const [versionMap, setVersionMap] = useState<Map<string, number>>(new Map());
 
@@ -246,8 +251,28 @@ export default function DocumentsTab({ dossierId, dossier, reservation }: Docume
         `Bonjour,\n\nVeuillez trouver ci-dessous le lien pour télécharger votre document :\n\n${shareUrl}\n\nCordialement`,
       );
       window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+
+      // Proposer de marquer "Contrat envoyé" dans le pipeline si applicable
+      if (doc.type === 'CONTRAT' && dossier?.pipeline_statut === 'OPTION_POSEE') {
+        setPendingContratPipelineConfirm(true);
+      }
     } catch {
       setError('Impossible de générer le lien du document.');
+    }
+  }
+
+  async function handleMarkContratEnvoye() {
+    if (!dossier) return;
+    setMarkingContratEnvoye(true);
+    try {
+      const { updatePipelineStatut } = await import('@/lib/api/dossiers');
+      await updatePipelineStatut(dossier.id, 'CONTRAT_ENVOYE');
+      setPendingContratPipelineConfirm(false);
+      onUpdated?.();
+    } catch {
+      setError('Impossible de mettre à jour le pipeline.');
+    } finally {
+      setMarkingContratEnvoye(false);
     }
   }
 
@@ -275,6 +300,33 @@ export default function DocumentsTab({ dossierId, dossier, reservation }: Docume
 
   return (
     <div className="space-y-3">
+      {/* Bandeau confirmation "Contrat envoyé" */}
+      {pendingContratPipelineConfirm && (
+        <div className="flex items-start gap-3 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800">
+          <Mail className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="font-medium">Souhaitez-vous marquer l'étape "Contrat envoyé" comme réalisée ?</p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={handleMarkContratEnvoye}
+              disabled={markingContratEnvoye}
+              className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {markingContratEnvoye && <Loader2 className="h-3 w-3 animate-spin" />}
+              Oui, marquer
+            </button>
+            <button
+              onClick={() => setPendingContratPipelineConfirm(false)}
+              disabled={markingContratEnvoye}
+              className="rounded-lg border border-blue-300 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            >
+              Non
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Liste documents */}
       {documents.length === 0 && !showUpload ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">

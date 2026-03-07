@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
 import { createDefaultPaymentSchedule } from './paiements';
 import { computeNights } from '@/lib/dateUtils';
+import { tryAutoAdvancePipeline } from '@/lib/pipelineAutomate';
 import type { Dossier, PipelineStatut } from '@/types/database.types';
 
 export async function getDossierByReservation(reservationId: string) {
@@ -222,6 +223,23 @@ export async function ensureDossierForReservation(
 
     return dossier;
   }
+}
+
+/**
+ * Wrapper enrichi : avance le pipeline puis vérifie si un auto-advance différé
+ * est applicable (paiement déjà encaissé ou EDL déjà finalisé avant cette étape).
+ */
+export async function advancePipelineStatut(
+  dossierId: string,
+  newStatut: PipelineStatut,
+  motif?: string,
+): Promise<{ finalStatut: PipelineStatut; autoAdvanced?: PipelineStatut }> {
+  await updatePipelineStatut(dossierId, newStatut, motif);
+  const autoAdvanced = await tryAutoAdvancePipeline(dossierId, newStatut).catch(() => null);
+  return {
+    finalStatut: autoAdvanced ?? newStatut,
+    autoAdvanced: autoAdvanced ?? undefined,
+  };
 }
 
 export async function createDossier(params: {
