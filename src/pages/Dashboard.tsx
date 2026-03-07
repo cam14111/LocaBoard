@@ -45,12 +45,14 @@ interface DashboardData {
     locataire_prenom: string;
     date_debut: string;
     nb_personnes: number;
+    logement_nom?: string;
   }>;
   departs: Array<{
     id: string;
     locataire_nom: string;
     locataire_prenom: string;
     date_fin: string;
+    logement_nom?: string;
   }>;
   tachesCount: number;
   paiementsEnAttente: number;
@@ -106,7 +108,7 @@ export default function Dashboard() {
         // Arrivées aujourd'hui
         let arrivQuery = supabase
           .from('reservations')
-          .select('id, locataire_nom, locataire_prenom, date_debut, nb_personnes')
+          .select('id, locataire_nom, locataire_prenom, date_debut, nb_personnes, logement_id')
           .eq('date_debut', today)
           .in('statut', ['CONFIRMEE', 'OPTION_ACTIVE'])
           .is('archived_at', null);
@@ -118,12 +120,30 @@ export default function Dashboard() {
         // Départs aujourd'hui
         let depQuery = supabase
           .from('reservations')
-          .select('id, locataire_nom, locataire_prenom, date_fin')
+          .select('id, locataire_nom, locataire_prenom, date_fin, logement_id')
           .eq('date_fin', today)
           .in('statut', ['CONFIRMEE', 'OPTION_ACTIVE'])
           .is('archived_at', null);
         if (selectedLogementId) depQuery = depQuery.eq('logement_id', selectedLogementId);
         const { data: departs } = await depQuery;
+
+        if (cancelled) return;
+
+        // Noms des logements pour arrivées/départs (uniquement si tous les logements)
+        const logementIdsJour = [
+          ...new Set([
+            ...(arrivees ?? []).map((r) => (r as { logement_id?: string }).logement_id).filter(Boolean),
+            ...(departs ?? []).map((r) => (r as { logement_id?: string }).logement_id).filter(Boolean),
+          ]),
+        ] as string[];
+        const logementNomJourMap = new Map<string, string>();
+        if (logementIdsJour.length > 0) {
+          const { data: logementsJour } = await supabase
+            .from('logements')
+            .select('id, nom')
+            .in('id', logementIdsJour);
+          (logementsJour ?? []).forEach((l) => logementNomJourMap.set(l.id, l.nom));
+        }
 
         if (cancelled) return;
 
@@ -317,8 +337,14 @@ export default function Dashboard() {
         if (cancelled) return;
 
         setData({
-          arrivees: arrivees ?? [],
-          departs: departs ?? [],
+          arrivees: (arrivees ?? []).map((r) => ({
+            ...r,
+            logement_nom: logementNomJourMap.get((r as { logement_id?: string }).logement_id ?? '') ?? undefined,
+          })),
+          departs: (departs ?? []).map((r) => ({
+            ...r,
+            logement_nom: logementNomJourMap.get((r as { logement_id?: string }).logement_id ?? '') ?? undefined,
+          })),
           tachesCount: tachesCount ?? 0,
           paiementsEnAttente,
           paiementsEnRetard,
@@ -354,17 +380,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard
-          icon={<LogIn className="h-5 w-5 text-emerald-600" />}
-          label="Arrivées aujourd'hui"
-          value={data?.arrivees.length ?? 0}
-        />
-        <KpiCard
-          icon={<LogOut className="h-5 w-5 text-blue-600" />}
-          label="Départs aujourd'hui"
-          value={data?.departs.length ?? 0}
-        />
+      <div className="grid grid-cols-2 gap-4">
         <button
           onClick={() => navigate('/taches')}
           className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm text-left hover:border-primary-300 transition-colors"
@@ -500,9 +516,14 @@ export default function Dashboard() {
             <ul className="space-y-2">
               {data!.arrivees.map((r) => (
                 <li key={r.id} className="flex items-center justify-between text-sm">
-                  <span className="font-medium">
-                    {r.locataire_prenom} {r.locataire_nom}
-                  </span>
+                  <div>
+                    <span className="font-medium">
+                      {r.locataire_prenom} {r.locataire_nom}
+                    </span>
+                    {!selectedLogementId && r.logement_nom && (
+                      <p className="text-xs text-slate-400">{r.logement_nom}</p>
+                    )}
+                  </div>
                   <span className="text-slate-500">{r.nb_personnes} pers.</span>
                 </li>
               ))}
@@ -520,8 +541,11 @@ export default function Dashboard() {
           ) : (
             <ul className="space-y-2">
               {data!.departs.map((r) => (
-                <li key={r.id} className="text-sm font-medium">
-                  {r.locataire_prenom} {r.locataire_nom}
+                <li key={r.id} className="text-sm">
+                  <span className="font-medium">{r.locataire_prenom} {r.locataire_nom}</span>
+                  {!selectedLogementId && r.logement_nom && (
+                    <p className="text-xs text-slate-400">{r.logement_nom}</p>
+                  )}
                 </li>
               ))}
             </ul>
@@ -573,26 +597,6 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function KpiCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        {icon}
-        <span className="text-sm font-medium text-slate-500">{label}</span>
-      </div>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
     </div>
   );
 }
