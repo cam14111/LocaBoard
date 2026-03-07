@@ -280,6 +280,15 @@ export interface ChecklistModele {
   updated_at: string;
 }
 
+export interface LogementUser {
+  id: string;
+  user_id: string;
+  logement_id: string;
+  role: UserRole;
+  can_mark_payment: boolean;
+  created_at: string;
+}
+
 export interface PushSubscriptionDb {
   id: string;
   user_id: string;
@@ -322,6 +331,7 @@ export interface Database {
       checklist_modeles: DbTable<ChecklistModele>;
       push_subscriptions: DbTable<PushSubscriptionDb>;
       document_shares: DbTable<DocumentShare>;
+      logement_users: DbTable<LogementUser>;
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -390,6 +400,10 @@ export interface Database {
           p_entity_id: string | null;
         };
         Returns: string | null;
+      };
+      admin_set_logement_users: {
+        Args: { p_user_id: string; p_logement_ids: string[] };
+        Returns: void;
       };
     };
     Enums: {

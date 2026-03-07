@@ -338,3 +338,35 @@ export async function deleteSignature(userId: string, storagePath: string): Prom
     action: 'signature_deleted',
   });
 }
+
+/** Récupère les IDs des logements assignés à un utilisateur */
+export async function getLogementUsers(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('logement_users')
+    .select('logement_id')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => row.logement_id as string);
+}
+
+/** Remplace atomiquement les logements assignés à un utilisateur (via RPC SECURITY DEFINER) */
+export async function setLogementUsers(
+  userId: string,
+  logementIds: string[],
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.rpc as any)('admin_set_logement_users', {
+    p_user_id: userId,
+    p_logement_ids: logementIds,
+  });
+
+  if (error) throw error;
+
+  await createAuditLog({
+    entity_type: 'utilisateur',
+    entity_id: userId,
+    action: 'logements_updated',
+    metadata: { logement_count: logementIds.length },
+  });
+}

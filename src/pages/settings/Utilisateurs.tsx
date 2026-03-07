@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import {
   Users,
   Loader2,
@@ -13,6 +13,7 @@ import {
   Pencil,
   KeyRound,
   ChevronDown,
+  Building2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -24,9 +25,12 @@ import {
   suspendreUtilisateur,
   reactiverUtilisateur,
   resetUtilisateurPassword,
+  getLogementUsers,
+  setLogementUsers,
 } from '@/lib/api/utilisateurs';
 import { markPaidToggleMode } from '@/lib/permissions';
-import type { Utilisateur, UserRole } from '@/types/database.types';
+import { LogementContext } from '@/contexts/LogementContext';
+import type { Utilisateur, UserRole, Logement } from '@/types/database.types';
 
 // ─── Labels & couleurs ────────────────────────────────────────
 
@@ -48,13 +52,135 @@ const ROLE_OPTIONS: { value: Extract<UserRole, 'ADMIN' | 'COHOTE' | 'CONCIERGE'>
   { value: 'CONCIERGE', label: 'Concierge', description: 'Tâches assignées, EDL, check-in/check-out uniquement' },
 ];
 
+// ─── Composant LogementAccesSection ──────────────────────────
+
+interface LogementAccesSectionProps {
+  allLogements: Logement[];
+  assignedIds: string[] | null;
+  onLoad: () => Promise<void>;
+  onSave: (ids: string[]) => Promise<void>;
+  saving: boolean;
+}
+
+function LogementAccesSection({ allLogements, assignedIds, onLoad, onSave, saving }: LogementAccesSectionProps) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [localIds, setLocalIds] = useState<string[] | null>(null);
+  const [error, setError] = useState('');
+
+  const displayIds = localIds ?? assignedIds ?? [];
+  const isDirty =
+    localIds !== null &&
+    JSON.stringify([...localIds].sort()) !== JSON.stringify([...(assignedIds ?? [])].sort());
+
+  async function handleOpen() {
+    setOpen(true);
+    if (assignedIds === null && !loading) {
+      setLoading(true);
+      try {
+        await onLoad();
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  function toggleLogement(id: string) {
+    const base = localIds ?? assignedIds ?? [];
+    setLocalIds(base.includes(id) ? base.filter((x) => x !== id) : [...base, id]);
+  }
+
+  async function handleSave() {
+    if (!localIds) return;
+    setError('');
+    try {
+      await onSave(localIds);
+      setLocalIds(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur lors de la sauvegarde.');
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => (open ? setOpen(false) : handleOpen())}
+        className="w-full flex items-center justify-between text-xs text-slate-500 hover:text-slate-700"
+      >
+        <span className="flex items-center gap-1.5">
+          <Building2 className="h-3.5 w-3.5" />
+          Logements accessibles
+          {assignedIds !== null && (
+            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium">
+              {assignedIds.length}/{allLogements.length}
+            </span>
+          )}
+        </span>
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="mt-2 space-y-2">
+          {loading && (
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Loader2 className="h-3 w-3 animate-spin" /> Chargement…
+            </div>
+          )}
+          {!loading && allLogements.length === 0 && (
+            <p className="text-xs text-slate-400 italic">Aucun logement actif.</p>
+          )}
+          {!loading && allLogements.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+              {allLogements.map((l) => (
+                <label
+                  key={l.id}
+                  className="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-1.5 cursor-pointer hover:bg-slate-50 text-xs"
+                >
+                  <input
+                    type="checkbox"
+                    checked={displayIds.includes(l.id)}
+                    onChange={() => toggleLogement(l.id)}
+                    className="rounded text-primary-600"
+                  />
+                  <span className="truncate text-slate-700">{l.nom}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          {error && (
+            <p className="text-xs text-red-600" role="alert">
+              {error}
+            </p>
+          )}
+          {isDirty && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+              Enregistrer les accès
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Composant principal ──────────────────────────────────────
 
 export default function UtilisateursPage() {
   const { user: currentUser } = useAuth();
+  const logementCtx = useContext(LogementContext);
+  const logements = logementCtx?.logements ?? [];
   const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState('');
+
+  // Assignations de logements par userId
+  const [logementAssignments, setLogementAssignments] = useState<Record<string, string[]>>({});
+  const [savingLogements, setSavingLogements] = useState<Set<string>>(new Set());
 
   // Modal invitation
   const [showInvite, setShowInvite] = useState(false);
@@ -250,6 +376,27 @@ export default function UtilisateursPage() {
     }
   }
 
+  // ─── Logements accessibles ───────────────────────────────────
+
+  async function handleLoadLogements(userId: string) {
+    const ids = await getLogementUsers(userId);
+    setLogementAssignments((prev) => ({ ...prev, [userId]: ids }));
+  }
+
+  async function handleSaveLogements(userId: string, logementIds: string[]) {
+    setSavingLogements((prev) => new Set(prev).add(userId));
+    try {
+      await setLogementUsers(userId, logementIds);
+      setLogementAssignments((prev) => ({ ...prev, [userId]: logementIds }));
+    } finally {
+      setSavingLogements((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    }
+  }
+
   // ─── Réinitialisation mot de passe ───────────────────────────
 
   async function handleResetPassword(u: Utilisateur) {
@@ -415,6 +562,19 @@ export default function UtilisateursPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Section logements accessibles — co-hôtes et concierges uniquement */}
+                {(u.role === 'COHOTE' || u.role === 'CONCIERGE') && (
+                  <div className="mt-3 pt-3 border-t border-slate-100">
+                    <LogementAccesSection
+                      allLogements={logements}
+                      assignedIds={logementAssignments[u.id] ?? null}
+                      onLoad={() => handleLoadLogements(u.id)}
+                      onSave={(ids) => handleSaveLogements(u.id, ids)}
+                      saving={savingLogements.has(u.id)}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
