@@ -23,6 +23,7 @@ function makeItem(overrides: Partial<EdlItem> = {}): EdlItem {
     photo_url: null,
     commentaire: null,
     ordre: 1,
+    piece_id: null,
     ...overrides,
   };
 }
