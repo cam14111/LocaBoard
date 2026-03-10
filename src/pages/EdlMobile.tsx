@@ -659,7 +659,7 @@ export default function EdlMobile() {
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
           <p className="text-slate-400 text-sm text-center">Aucun item dans cet EDL.</p>
-          {edl && !isEdlFinalized(edl) && (
+          {edl && !isEdlFinalized(edl.statut) && (
             <button
               onClick={handleSyncFromPieces}
               disabled={syncing}
