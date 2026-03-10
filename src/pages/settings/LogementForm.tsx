@@ -10,6 +10,7 @@ import type { SaisonConfig } from '@/lib/saisonUtils';
 import type { TypePiece, Utilisateur } from '@/types/database.types';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 import { useAuth } from '@/hooks/useAuth';
+import { useSelectedLogement } from '@/hooks/useSelectedLogement';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -142,6 +143,7 @@ export default function LogementForm() {
   const isEdit = id !== undefined && id !== 'nouveau';
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { refreshLogements } = useSelectedLogement();
 
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [form, setForm] = useState<FormData>(INITIAL);
@@ -465,6 +467,9 @@ export default function LogementForm() {
       if (accessLoaded) {
         await setLogementAccess(logementId, selectedUserIds);
       }
+
+      // Forcer le rafraîchissement du contexte pour que tous les écrans voient le nouveau logement
+      await refreshLogements();
 
       navigate('/parametres/logements');
     } catch {
