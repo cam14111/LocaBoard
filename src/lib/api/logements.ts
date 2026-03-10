@@ -66,10 +66,7 @@ export async function updateLogement(id: string, updates: Partial<Logement>) {
 }
 
 export async function archiveLogement(id: string) {
-  const { error } = await supabase
-    .from('logements')
-    .update({ archived_at: new Date().toISOString() })
-    .eq('id', id);
+  const { error } = await supabase.rpc('archive_logement', { p_logement_id: id });
 
   if (error) throw error;
 

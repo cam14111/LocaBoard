@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Pencil, Archive, Home, Building2, Loader2 } from 'lucide-react';
 import { getLogements, archiveLogement } from '@/lib/api/logements';
-import { supabase } from '@/lib/supabase';
 import PermissionGate from '@/components/ui/PermissionGate';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import type { Logement } from '@/types/database.types';
@@ -58,34 +57,19 @@ export default function LogementsList() {
 
     setArchiving(logement.id);
     try {
-      // Vérifier les réservations actives
-      const { data: reservations } = await supabase
-        .from('reservations')
-        .select('id')
-        .eq('logement_id', logement.id)
-        .is('archived_at', null)
-        .in('statut', ['OPTION_ACTIVE', 'CONFIRMEE'])
-        .limit(1);
-
-      if (reservations && reservations.length > 0) {
-        setDialog({
-          open: true,
-          variant: 'error',
-          title: 'Archivage impossible',
-          message: 'Ce logement a des réservations actives. Annulez-les avant de l\'archiver.',
-        });
-        return;
-      }
-
       await archiveLogement(logement.id);
       setLogements((prev) => prev.filter((l) => l.id !== logement.id));
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Erreur archivage:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      const isReservations = msg.includes('RESERVATIONS_ACTIVES');
       setDialog({
         open: true,
         variant: 'error',
-        title: 'Erreur',
-        message: 'Une erreur est survenue lors de l\'archivage du logement.',
+        title: isReservations ? 'Archivage impossible' : 'Erreur',
+        message: isReservations
+          ? 'Ce logement a des réservations actives. Annulez-les avant de l\'archiver.'
+          : 'Une erreur est survenue lors de l\'archivage du logement.',
       });
     } finally {
       setArchiving(null);
