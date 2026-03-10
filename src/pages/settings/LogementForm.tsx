@@ -862,8 +862,8 @@ export default function LogementForm() {
                     />
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </>
         )}
 
