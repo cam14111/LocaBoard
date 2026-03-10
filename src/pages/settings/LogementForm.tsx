@@ -737,58 +737,61 @@ export default function LogementForm() {
             ════════════════════════════════════════════════════════ */}
         {activeTab === 'tarifs' && (
           <>
-            {/* Tarifs par défaut (hors saison) */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-              <h3 className="font-medium text-slate-900">Tarifs par défaut</h3>
-              <p className="text-xs text-slate-500">
-                {saisonsEnabled
-                  ? 'Ces tarifs servent de référence quand la tarification saisonnière est désactivée.'
-                  : 'Tarifs appliqués à toutes les réservations (pas de saisonnalité).'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="forfait_menage_eur" className="block text-sm font-medium text-slate-700">Forfait ménage (€)</label>
-                  <input id="forfait_menage_eur" type="number" min={0} step={0.01} value={form.forfait_menage_eur}
-                    onChange={(e) => handleChange('forfait_menage_eur', e.target.value)} placeholder="0.00" className={INPUT_CLASS} />
-                </div>
-                <div>
-                  <label htmlFor="loyer_nuit_defaut" className="block text-sm font-medium text-slate-700">Loyer / nuit (€)</label>
-                  <input id="loyer_nuit_defaut" type="number" min={0} step={0.01} value={form.loyer_nuit_defaut}
-                    onChange={(e) => handleChange('loyer_nuit_defaut', e.target.value)} placeholder="0.00" className={INPUT_CLASS} />
-                </div>
-                <div>
-                  <label htmlFor="loyer_semaine_defaut" className="block text-sm font-medium text-slate-700">Loyer / semaine (€)</label>
-                  <input id="loyer_semaine_defaut" type="number" min={0} step={0.01} value={form.loyer_semaine_defaut}
-                    onChange={(e) => handleChange('loyer_semaine_defaut', e.target.value)} placeholder="0.00" className={INPUT_CLASS} />
-                </div>
+            {/* Forfait ménage — commun aux deux modes */}
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="font-medium text-slate-900 mb-4">Forfait ménage</h3>
+              <div className="w-48">
+                <label htmlFor="forfait_menage_eur" className="block text-sm font-medium text-slate-700 mb-1">Montant (€)</label>
+                <input id="forfait_menage_eur" type="number" min={0} step={0.01} value={form.forfait_menage_eur}
+                  onChange={(e) => handleChange('forfait_menage_eur', e.target.value)} placeholder="0.00" className={INPUT_CLASS} />
               </div>
             </div>
 
-            {/* Tarification saisonnière */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-slate-900">Tarification saisonnière</h3>
-                <Toggle checked={saisonsEnabled} onChange={toggleSaisons} label="" />
-              </div>
+            {/* Sélecteur de mode tarifaire */}
+            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1 gap-1">
+              <button type="button" onClick={() => toggleSaisons(false)}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${!saisonsEnabled ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
+                Tarification unique
+              </button>
+              <button type="button" onClick={() => toggleSaisons(true)}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${saisonsEnabled ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
+                Tarification saisonnière
+              </button>
+            </div>
 
-              {!saisonsEnabled ? (
-                <p className="text-xs text-slate-400">
-                  Activez pour définir des tarifs différents selon la période de l'année.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
-                      <Info className="h-3.5 w-3.5" />
-                      La haute saison couvre automatiquement les périodes non couvertes par les deux autres.
-                    </p>
-                    <button type="button" onClick={resetSaisons}
-                      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700">
-                      <RotateCcw className="h-3.5 w-3.5" />
-                      Réinitialiser
-                    </button>
+            {/* ── Tarification unique ── */}
+            {!saisonsEnabled && (
+              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="loyer_nuit_defaut" className="block text-sm font-medium text-slate-700">Loyer / nuit (€)</label>
+                    <input id="loyer_nuit_defaut" type="number" min={0} step={0.01} value={form.loyer_nuit_defaut}
+                      onChange={(e) => handleChange('loyer_nuit_defaut', e.target.value)} placeholder="0.00" className={INPUT_CLASS} />
                   </div>
+                  <div>
+                    <label htmlFor="loyer_semaine_defaut" className="block text-sm font-medium text-slate-700">Loyer / semaine (€)</label>
+                    <input id="loyer_semaine_defaut" type="number" min={0} step={0.01} value={form.loyer_semaine_defaut}
+                      onChange={(e) => handleChange('loyer_semaine_defaut', e.target.value)} placeholder="Optionnel" className={INPUT_CLASS} />
+                  </div>
+                </div>
+              </div>
+            )}
 
+            {/* ── Tarification saisonnière ── */}
+            {saisonsEnabled && (
+              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <Info className="h-3.5 w-3.5" />
+                    La haute saison couvre automatiquement les périodes non couvertes par les deux autres.
+                  </p>
+                  <button type="button" onClick={resetSaisons}
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Réinitialiser
+                  </button>
+                </div>
+                <div className="space-y-4">
                   {/* Basse saison */}
                   {basse && (
                     <SaisonCard
