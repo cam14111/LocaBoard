@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { getLogements } from '@/lib/api/logements';
+import { supabase } from '@/lib/supabase';
 import type { Logement } from '@/types/database.types';
 
 const STORAGE_KEY = 'calloc_selected_logement';
@@ -45,7 +46,20 @@ export function LogementProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => { refreshLogements(); }, [refreshLogements]);
+  useEffect(() => {
+    refreshLogements();
+
+    // Subscription Realtime : rafraîchir quand un logement est créé, modifié ou archivé
+    // Garantit que l'écran Utilisateurs voit immédiatement les nouveaux logements
+    const channel = supabase
+      .channel('logements-context')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'logements' }, () => {
+        refreshLogements();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [refreshLogements]);
 
   function selectLogement(id: string | null) {
     setSelectedLogementId(id);

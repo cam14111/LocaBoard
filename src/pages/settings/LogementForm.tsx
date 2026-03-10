@@ -4,10 +4,12 @@ import { ArrowLeft, Loader2, Save, Plus, Trash2, ChevronUp, ChevronDown, RotateC
 import { createLogement, getLogementById, updateLogement } from '@/lib/api/logements';
 import { getLogementPieces, upsertLogementPieces, generateDefaultPieces, adjustPiecesForCount } from '@/lib/api/logementPieces';
 import { getLogementSaisons, upsertLogementSaisons } from '@/lib/api/logementSaisons';
+import { getActiveUtilisateurs, getLogementAccess, setLogementAccess } from '@/lib/api/utilisateurs';
 import { getDefaultSaisons, validateSaisons, computeHauteSaisonPeriods, SAISON_BASSE, SAISON_HAUTE, SAISON_TRES_HAUTE } from '@/lib/saisonUtils';
 import type { SaisonConfig } from '@/lib/saisonUtils';
-import type { TypePiece } from '@/types/database.types';
+import type { TypePiece, Utilisateur } from '@/types/database.types';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
+import { useAuth } from '@/hooks/useAuth';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -26,12 +28,13 @@ const ANIMAUX_TAILLE_OPTIONS = [
   { value: 'grand', label: 'Grand (> 25 kg)' },
 ];
 
-type TabId = 'general' | 'pieces' | 'tarifs';
+type TabId = 'general' | 'pieces' | 'tarifs' | 'acces';
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: 'general', label: 'Général' },
   { id: 'pieces', label: 'Pièces EDL' },
   { id: 'tarifs', label: 'Tarifs' },
+  { id: 'acces', label: 'Accès' },
 ];
 
 const INPUT_CLASS = 'mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none';
@@ -138,6 +141,7 @@ export default function LogementForm() {
   const { id } = useParams();
   const isEdit = id !== undefined && id !== 'nouveau';
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [form, setForm] = useState<FormData>(INITIAL);
@@ -146,6 +150,9 @@ export default function LogementForm() {
   const [saisonsEnabled, setSaisonsEnabled] = useState(false);
   const [saisons, setSaisons] = useState<SaisonConfig[]>([]);
   const [saisonsLoaded, setSaisonsLoaded] = useState(false);
+  const [activeUsers, setActiveUsers] = useState<Utilisateur[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [accessLoaded, setAccessLoaded] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -188,6 +195,30 @@ export default function LogementForm() {
       .finally(() => setLoading(false));
   }, [id, isEdit]);
 
+  // Chargement des utilisateurs actifs non-admin au montage
+  useEffect(() => {
+    getActiveUtilisateurs()
+      .then((users) => setActiveUsers(users.filter((u) => u.role !== 'ADMIN' && u.id !== user?.id)))
+      .catch(() => { /* silencieux */ });
+
+    // Pour une création, l'onglet Accès est vide par défaut (aucun accès pré-coché)
+    if (!isEdit) setAccessLoaded(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Chargement lazy des accès logement (onglet Accès, mode édition uniquement)
+  const loadAccess = useCallback(async () => {
+    if (!isEdit || accessLoaded) return;
+    try {
+      const ids = await getLogementAccess(id!);
+      setSelectedUserIds(ids);
+    } catch {
+      // Silencieux
+    } finally {
+      setAccessLoaded(true);
+    }
+  }, [id, isEdit, accessLoaded]);
+
   // Chargement lazy des pièces
   const loadPieces = useCallback(async () => {
     if (!isEdit || piecesLoaded) return;
@@ -227,7 +258,8 @@ export default function LogementForm() {
   useEffect(() => {
     if (activeTab === 'pieces') loadPieces();
     if (activeTab === 'tarifs') loadSaisons();
-  }, [activeTab, loadPieces, loadSaisons]);
+    if (activeTab === 'acces') loadAccess();
+  }, [activeTab, loadPieces, loadSaisons, loadAccess]);
 
   // ─── Handlers formulaire ─────────────────────────────────
 
@@ -427,6 +459,11 @@ export default function LogementForm() {
           // Désactivé : supprimer les saisons existantes
           await upsertLogementSaisons(logementId, []);
         }
+      }
+
+      // Sauvegarder les accès utilisateurs (si l'onglet a été chargé)
+      if (accessLoaded) {
+        await setLogementAccess(logementId, selectedUserIds);
       }
 
       navigate('/parametres/logements');
@@ -865,6 +902,58 @@ export default function LogementForm() {
               </div>
             )}
           </>
+        )}
+
+        {/* ════════════════════════════════════════════════════════
+            ONGLET : ACCÈS
+            ════════════════════════════════════════════════════════ */}
+        {activeTab === 'acces' && (
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <h3 className="font-medium text-slate-900">Accès co-hôtes et concierges</h3>
+            <p className="text-sm text-slate-500">
+              L'administrateur a toujours accès à tous les logements. Cochez les utilisateurs qui doivent voir et gérer ce logement.
+            </p>
+
+            {!accessLoaded ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
+              </div>
+            ) : activeUsers.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">Aucun co-hôte ou concierge actif.</p>
+            ) : (
+              <ul className="space-y-2">
+                {activeUsers.map((u) => {
+                  const checked = selectedUserIds.includes(u.id);
+                  return (
+                    <li key={u.id}>
+                      <label className="flex items-center gap-3 cursor-pointer rounded-lg p-2 hover:bg-slate-50 transition-colors">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                          checked={checked}
+                          onChange={(e) => {
+                            setSelectedUserIds((prev) =>
+                              e.target.checked ? [...prev, u.id] : prev.filter((uid) => uid !== u.id),
+                            );
+                          }}
+                        />
+                        <span className="text-sm text-slate-700 font-medium">
+                          {u.prenom} {u.nom}
+                        </span>
+                        <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium ${
+                          u.role === 'COHOTE'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-purple-100 text-purple-700'
+                        }`}>
+                          {u.role === 'COHOTE' ? 'Co-hôte' : 'Concierge'}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         )}
 
         {/* ════════════════════════════════════════════════════════

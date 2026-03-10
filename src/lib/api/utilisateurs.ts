@@ -370,3 +370,35 @@ export async function setLogementUsers(
     metadata: { logement_count: logementIds.length },
   });
 }
+
+/** Récupère les IDs des utilisateurs ayant accès à un logement */
+export async function getLogementAccess(logementId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('logement_users')
+    .select('user_id')
+    .eq('logement_id', logementId);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => row.user_id as string);
+}
+
+/** Remplace atomiquement les utilisateurs ayant accès à un logement (via RPC SECURITY DEFINER) */
+export async function setLogementAccess(
+  logementId: string,
+  userIds: string[],
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.rpc as any)('admin_set_logement_access', {
+    p_logement_id: logementId,
+    p_user_ids: userIds,
+  });
+
+  if (error) throw error;
+
+  await createAuditLog({
+    entity_type: 'logement',
+    entity_id: logementId,
+    action: 'acces_updated',
+    metadata: { user_count: userIds.length },
+  });
+}
