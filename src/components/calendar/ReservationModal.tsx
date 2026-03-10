@@ -244,7 +244,7 @@ export default function ReservationModal({
           newId,
           localLogementId,
           typePremierVersement,
-          isOption ? 'OPTION_POSEE' : undefined,
+          'OPTION_POSEE',
         );
         // Génération auto tâches uniquement pour les réservations confirmées
         if (!isOption) {
