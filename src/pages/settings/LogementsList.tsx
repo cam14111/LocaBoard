@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Pencil, Archive, Home, Building2, Loader2 } from 'luci
 import { getLogements, archiveLogement } from '@/lib/api/logements';
 import { supabase } from '@/lib/supabase';
 import PermissionGate from '@/components/ui/PermissionGate';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import type { Logement } from '@/types/database.types';
 
 const typeIcons: Record<string, typeof Home> = {
@@ -11,10 +12,21 @@ const typeIcons: Record<string, typeof Home> = {
   appartement: Building2,
 };
 
+interface DialogState {
+  open: boolean;
+  variant: 'confirm' | 'error' | 'info';
+  title: string;
+  message: string;
+  logement?: Logement;
+}
+
+const CLOSED_DIALOG: DialogState = { open: false, variant: 'confirm', title: '', message: '' };
+
 export default function LogementsList() {
   const [logements, setLogements] = useState<Logement[]>([]);
   const [loading, setLoading] = useState(true);
   const [archiving, setArchiving] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<DialogState>(CLOSED_DIALOG);
 
   async function fetchLogements() {
     try {
@@ -29,8 +41,20 @@ export default function LogementsList() {
 
   useEffect(() => { fetchLogements(); }, []);
 
-  async function handleArchive(logement: Logement) {
-    if (!confirm(`Archiver le logement « ${logement.nom} » ? Cette action est réversible.`)) return;
+  function handleArchiveClick(logement: Logement) {
+    setDialog({
+      open: true,
+      variant: 'confirm',
+      title: 'Archiver le logement',
+      message: `Archiver le logement « ${logement.nom} » ? Cette action est réversible.`,
+      logement,
+    });
+  }
+
+  async function confirmArchive() {
+    const logement = dialog.logement;
+    setDialog(CLOSED_DIALOG);
+    if (!logement) return;
 
     setArchiving(logement.id);
     try {
@@ -44,7 +68,12 @@ export default function LogementsList() {
         .limit(1);
 
       if (reservations && reservations.length > 0) {
-        alert('Impossible d\'archiver ce logement : il a des réservations actives.');
+        setDialog({
+          open: true,
+          variant: 'error',
+          title: 'Archivage impossible',
+          message: 'Ce logement a des réservations actives. Annulez-les avant de l\'archiver.',
+        });
         return;
       }
 
@@ -52,7 +81,12 @@ export default function LogementsList() {
       setLogements((prev) => prev.filter((l) => l.id !== logement.id));
     } catch (err) {
       console.error('Erreur archivage:', err);
-      alert('Erreur lors de l\'archivage du logement.');
+      setDialog({
+        open: true,
+        variant: 'error',
+        title: 'Erreur',
+        message: 'Une erreur est survenue lors de l\'archivage du logement.',
+      });
     } finally {
       setArchiving(null);
     }
@@ -153,7 +187,7 @@ export default function LogementsList() {
                   <PermissionGate permission="logement:archive">
                     <button
                       type="button"
-                      onClick={() => handleArchive(logement)}
+                      onClick={() => handleArchiveClick(logement)}
                       disabled={archiving === logement.id}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
                     >
@@ -171,6 +205,16 @@ export default function LogementsList() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={dialog.open}
+        variant={dialog.variant}
+        title={dialog.title}
+        message={dialog.message}
+        confirmLabel="Archiver"
+        onConfirm={confirmArchive}
+        onClose={() => setDialog(CLOSED_DIALOG)}
+      />
     </div>
   );
 }
