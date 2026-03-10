@@ -12,7 +12,8 @@
       "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/types/**)",
       "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/supabase/migrations/**)",
       "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/**)",
-      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/**)"
+      "Read(//c/Users/cam14/Desktop/LMNP/Calendrier Location/app/src/**)",
+      "WebFetch(domain:api.supabase.com)"
     ]
   },
   "disableAllHooks": true
