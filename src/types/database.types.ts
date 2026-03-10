@@ -442,6 +442,10 @@ export interface Database {
         Args: { p_dossier_id: string; p_from_statut: string; p_to_statut: string };
         Returns: boolean;
       };
+      archive_logement: {
+        Args: { p_logement_id: string };
+        Returns: void;
+      };
     };
     Enums: {
       user_role: UserRole;
