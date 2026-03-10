@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { getEdlByDossier, createEdl, reopenEdl } from '@/lib/api/edl';
 import { getChecklistModeles } from '@/lib/api/checklists';
+import { getLogementPieces } from '@/lib/api/logementPieces';
 import { getIncidentsByDossier, getIncidentPhotoUrl, updateIncident, deleteIncident } from '@/lib/api/incidents';
 import type { IncidentWithPhotos } from '@/lib/api/incidents';
 import IncidentModal from './IncidentModal';
@@ -66,6 +67,7 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
   const [creating, setCreating] = useState(false);
   const [selectedType, setSelectedType] = useState<EdlType>('ARRIVEE');
   const [selectedChecklist, setSelectedChecklist] = useState('');
+  const [useLogementPieces, setUseLogementPieces] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [incidentEdlId, setIncidentEdlId] = useState<string | null>(null);
   const [confirmReopenId, setConfirmReopenId] = useState<string | null>(null);
@@ -110,13 +112,24 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
     setCreating(true);
     setError('');
     try {
-      const checklist = checklists.find((c) => c.id === selectedChecklist);
-      const items = checklist
-        ? checklist.items.map((item, i) => ({
-            checklist_item_label: item.label,
-            ordre: item.ordre ?? i + 1,
-          }))
-        : [];
+      let items: Array<{ checklist_item_label: string; ordre: number; piece_id?: string }> = [];
+
+      if (useLogementPieces) {
+        const pieces = await getLogementPieces(logementId);
+        items = pieces.map((p) => ({
+          checklist_item_label: p.nom,
+          ordre: p.ordre,
+          piece_id: p.id,
+        }));
+      } else {
+        const checklist = checklists.find((c) => c.id === selectedChecklist);
+        items = checklist
+          ? checklist.items.map((item, i) => ({
+              checklist_item_label: item.label,
+              ordre: item.ordre ?? i + 1,
+            }))
+          : [];
+      }
 
       await createEdl({
         dossier_id: dossierId,
@@ -547,7 +560,16 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
               </option>
             </select>
           </div>
-          {checklists.length > 0 && (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useLogementPieces}
+              onChange={(e) => setUseLogementPieces(e.target.checked)}
+              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+            />
+            <span className="text-xs text-slate-700">Pré-remplir depuis les pièces du logement</span>
+          </label>
+          {!useLogementPieces && checklists.length > 0 && (
             <div>
               <label className="block text-xs text-slate-600 mb-1">Modèle de checklist (optionnel)</label>
               <select
@@ -575,7 +597,7 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
               Créer
             </button>
             <button
-              onClick={() => { setShowCreate(false); setError(''); }}
+              onClick={() => { setShowCreate(false); setError(''); setUseLogementPieces(false); }}
               className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
             >
               Annuler

@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
 import { computeAutoAdvance } from '@/lib/pipelineAutomate';
+import { getLogementPieces } from './logementPieces';
 import type { PipelineStatut } from '@/types/database.types';
 import type { Edl, EdlItem, EdlType, EdlStatut, EdlItemEtat } from '@/types/database.types';
 
@@ -69,6 +70,22 @@ export async function createEdl(params: {
   });
 
   return data as Edl;
+}
+
+/** Peuple un EDL existant avec les pièces configurées pour le logement */
+export async function addItemsFromPieces(edlId: string, logementId: string): Promise<void> {
+  const pieces = await getLogementPieces(logementId);
+  if (pieces.length === 0) return;
+
+  const itemsToInsert = pieces.map((p) => ({
+    edl_id: edlId,
+    checklist_item_label: p.nom,
+    ordre: p.ordre,
+    piece_id: p.id,
+  }));
+
+  const { error } = await supabase.from('edl_items').insert(itemsToInsert);
+  if (error) throw error;
 }
 
 export async function updateEdlItem(

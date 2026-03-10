@@ -15,7 +15,7 @@ import {
   Camera,
   Pencil,
 } from 'lucide-react';
-import { getEdlById, updateEdlItem, startEdl, finalizeEdl, reopenEdl, parsePhotoUrls } from '@/lib/api/edl';
+import { getEdlById, updateEdlItem, startEdl, finalizeEdl, reopenEdl, parsePhotoUrls, addItemsFromPieces } from '@/lib/api/edl';
 import { getDossierById, updatePipelineStatut } from '@/lib/api/dossiers';
 import CloseDossierModal from '@/components/dossier/CloseDossierModal';
 import {
@@ -51,6 +51,7 @@ export default function EdlMobile() {
   const [finalizing, setFinalizing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
 
   // Debounce pour le commentaire
@@ -79,6 +80,21 @@ export default function EdlMobile() {
       if (commentTimerRef.current) clearTimeout(commentTimerRef.current);
     };
   }, []);
+
+  async function handleSyncFromPieces() {
+    if (!dossierId || !edlId) return;
+    setSyncing(true);
+    setError('');
+    try {
+      const dossier = await getDossierById(dossierId);
+      await addItemsFromPieces(edlId, dossier.logement_id);
+      await loadEdl();
+    } catch {
+      setError('Impossible de générer les étapes depuis les pièces.');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const completedCount = countCompleted(items);
   const totalCount = items.length;
@@ -641,8 +657,18 @@ export default function EdlMobile() {
           )}
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center p-4">
-          <p className="text-slate-400 text-sm">Aucun item dans cet EDL.</p>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
+          <p className="text-slate-400 text-sm text-center">Aucun item dans cet EDL.</p>
+          {edl && !isEdlFinalized(edl) && (
+            <button
+              onClick={handleSyncFromPieces}
+              disabled={syncing}
+              className="flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-60"
+            >
+              {syncing && <Loader2 className="h-4 w-4 animate-spin" />}
+              Générer depuis les pièces du logement
+            </button>
+          )}
         </div>
       )}
 
