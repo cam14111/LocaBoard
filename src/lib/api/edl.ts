@@ -55,7 +55,6 @@ export async function createEdl(params: {
       edl_id: data.id,
       checklist_item_label: item.checklist_item_label,
       ordre: item.ordre,
-      ...(item.piece_id ? { piece_id: item.piece_id } : {}),
     }));
 
     const { error: itemsError } = await supabase.from('edl_items').insert(itemsToInsert);
@@ -81,7 +80,6 @@ export async function addItemsFromPieces(edlId: string, logementId: string): Pro
     edl_id: edlId,
     checklist_item_label: p.nom,
     ordre: p.ordre,
-    piece_id: p.id,
   }));
 
   const { error } = await supabase.from('edl_items').insert(itemsToInsert);
