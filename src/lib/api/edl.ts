@@ -29,7 +29,7 @@ export async function getEdlById(id: string) {
 export async function createEdl(params: {
   dossier_id: string;
   type: EdlType;
-  items: Array<{ checklist_item_label: string; ordre: number }>;
+  items: Array<{ checklist_item_label: string; ordre: number; piece_id?: string }>;
 }) {
   const {
     data: { user },
@@ -54,6 +54,7 @@ export async function createEdl(params: {
       edl_id: data.id,
       checklist_item_label: item.checklist_item_label,
       ordre: item.ordre,
+      ...(item.piece_id ? { piece_id: item.piece_id } : {}),
     }));
 
     const { error: itemsError } = await supabase.from('edl_items').insert(itemsToInsert);

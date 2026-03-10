@@ -1,9 +1,12 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, useCallback, type FormEvent } from 'react';
 import { X, Loader2, CalendarDays, Clock, Info, AlertTriangle } from 'lucide-react';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 import { createReservation } from '@/lib/api/reservations';
 import { ensureDossierForReservation } from '@/lib/api/dossiers';
 import { generateAutoTaches } from '@/lib/api/taches';
+import { getLogementSaisons } from '@/lib/api/logementSaisons';
+import { computeRentWithFallback } from '@/lib/saisonUtils';
+import type { SaisonConfig } from '@/lib/saisonUtils';
 import { parseRpcError } from '@/lib/rpcErrors';
 import { toDateString } from '@/lib/dateUtils';
 import { useSelectedLogement } from '@/hooks/useSelectedLogement';
@@ -85,6 +88,59 @@ export default function ReservationModal({
     form.date_fin,
   );
 
+  // ─── Chargement des saisons du logement ─────────────────
+  const [saisonsCache, setSaisonsCache] = useState<Record<string, SaisonConfig[]>>({});
+
+  const loadSaisons = useCallback(async (lid: string) => {
+    if (!lid || saisonsCache[lid]) return;
+    try {
+      const data = await getLogementSaisons(lid);
+      setSaisonsCache((prev) => ({
+        ...prev,
+        [lid]: data.map((s) => ({
+          nom_saison: s.nom_saison,
+          loyer_nuit: s.loyer_nuit,
+          loyer_semaine: s.loyer_semaine,
+          date_debut: s.date_debut,
+          date_fin: s.date_fin,
+          ordre: s.ordre,
+        })),
+      }));
+    } catch {
+      setSaisonsCache((prev) => ({ ...prev, [lid]: [] }));
+    }
+  }, [saisonsCache]);
+
+  useEffect(() => {
+    if (localLogementId) loadSaisons(localLogementId);
+  }, [localLogementId, loadSaisons]);
+
+  // ─── Calcul automatique du loyer ──────────────────────────
+  const rentResult = useMemo(() => {
+    if (!form.date_debut || !form.date_fin || !localLogementId || !currentLogement) return null;
+    const saisons = saisonsCache[localLogementId] ?? [];
+    const result = computeRentWithFallback(
+      form.date_debut,
+      form.date_fin,
+      saisons,
+      {
+        loyer_nuit_defaut: currentLogement.loyer_nuit_defaut,
+        loyer_semaine_defaut: currentLogement.loyer_semaine_defaut,
+      },
+    );
+    return result.total > 0 ? result : null;
+  }, [form.date_debut, form.date_fin, localLogementId, currentLogement, saisonsCache]);
+
+  // Pré-remplir le loyer quand le calcul change
+  const [loyerAutoFilled, setLoyerAutoFilled] = useState(false);
+
+  useEffect(() => {
+    if (rentResult && rentResult.total > 0 && !loyerAutoFilled) {
+      setForm((prev) => ({ ...prev, loyer_total: rentResult.total.toString() }));
+      setLoyerAutoFilled(true);
+    }
+  }, [rentResult, loyerAutoFilled]);
+
   // Réinitialiser le formulaire quand la modal s'ouvre avec une nouvelle date
   useEffect(() => {
     if (isOpen) {
@@ -92,6 +148,7 @@ export default function ReservationModal({
       setForm(getInitialForm(initialDate));
       setTypePremierVersement('ARRHES');
       setError('');
+      setLoyerAutoFilled(false);
     }
   }, [isOpen, initialDate, logementId]);
 
@@ -118,6 +175,10 @@ export default function ReservationModal({
       // Si la date d'arrivée devient >= date de départ, réinitialiser le départ
       if (field === 'date_debut' && next.date_fin && value >= next.date_fin) {
         next.date_fin = '';
+      }
+      // Recalculer le loyer quand les dates changent
+      if (field === 'date_debut' || field === 'date_fin') {
+        setLoyerAutoFilled(false);
       }
       return next;
     });
@@ -440,9 +501,25 @@ export default function ReservationModal({
                 min={0}
                 step={0.01}
                 value={form.loyer_total}
-                onChange={(e) => handleChange('loyer_total', e.target.value)}
+                onChange={(e) => { handleChange('loyer_total', e.target.value); setLoyerAutoFilled(true); }}
                 className={INPUT}
               />
+              {rentResult && rentResult.breakdown.length > 0 && (
+                <div className="mt-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 space-y-0.5">
+                  {rentResult.breakdown.map((line, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span>{line.nuits} nuit{line.nuits > 1 ? 's' : ''} {line.nom_saison} x {line.tarif_nuit}€</span>
+                      <span className="font-medium">{line.montant.toFixed(2)}€</span>
+                    </div>
+                  ))}
+                  {rentResult.breakdown.length > 1 && (
+                    <div className="flex justify-between border-t border-slate-200 pt-1 mt-1 font-medium text-slate-700">
+                      <span>Total suggéré</span>
+                      <span>{rentResult.total.toFixed(2)}€</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

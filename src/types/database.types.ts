@@ -69,6 +69,8 @@ export interface Utilisateur {
   archived_at: string | null;
 }
 
+export type TypePiece = 'CUISINE' | 'SEJOUR' | 'CHAMBRE' | 'SALLE_DE_BAIN' | 'ENTREE' | 'TERRASSE' | 'WC' | 'AUTRE';
+
 export interface Logement {
   id: string;
   nom: string;
@@ -77,6 +79,8 @@ export interface Logement {
   surface_m2: number | null;
   capacite_personnes: number;
   nb_pieces: number | null;
+  nb_chambres: number;
+  nb_salles_de_bain: number;
   heure_checkin: string;
   heure_checkout: string;
   buffer_heures: number;
@@ -203,6 +207,7 @@ export interface EdlItem {
   photo_url: string | null;
   commentaire: string | null;
   ordre: number;
+  piece_id: string | null;
 }
 
 export interface Incident {
@@ -271,6 +276,28 @@ export interface AuditLog {
   timestamp: string;
 }
 
+export interface LogementPiece {
+  id: string;
+  logement_id: string;
+  nom: string;
+  type_piece: TypePiece;
+  ordre: number;
+  created_at: string;
+}
+
+export interface LogementSaison {
+  id: string;
+  logement_id: string;
+  nom_saison: string;
+  loyer_nuit: number;
+  loyer_semaine: number | null;
+  date_debut: string; // format MM-DD
+  date_fin: string;   // format MM-DD
+  ordre: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ChecklistModele {
   id: string;
   logement_id: string;
@@ -329,6 +356,8 @@ export interface Database {
       notifications: DbTable<Notification>;
       audit_log: DbTable<AuditLog>;
       checklist_modeles: DbTable<ChecklistModele>;
+      logement_pieces: DbTable<LogementPiece>;
+      logement_saisons: DbTable<LogementSaison>;
       push_subscriptions: DbTable<PushSubscriptionDb>;
       document_shares: DbTable<DocumentShare>;
       logement_users: DbTable<LogementUser>;

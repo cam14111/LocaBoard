@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
 import { createDefaultPaymentSchedule } from './paiements';
+import { createEdl } from './edl';
+import { getLogementPieces } from './logementPieces';
 import { computeNights } from '@/lib/dateUtils';
 import { tryAutoAdvancePipeline } from '@/lib/pipelineAutomate';
 import type { Dossier, PipelineStatut } from '@/types/database.types';
@@ -219,6 +221,22 @@ export async function ensureDossierForReservation(
       }
     } catch (err) {
       console.warn('Échec création échéancier:', err);
+    }
+
+    // Auto-création EDL arrivée + départ à partir des pièces du logement
+    try {
+      const pieces = await getLogementPieces(logementId);
+      if (pieces.length > 0) {
+        const items = pieces.map((p) => ({
+          checklist_item_label: p.nom,
+          ordre: p.ordre,
+          piece_id: p.id,
+        }));
+        await createEdl({ dossier_id: dossier.id, type: 'ARRIVEE', items });
+        await createEdl({ dossier_id: dossier.id, type: 'DEPART', items });
+      }
+    } catch (err) {
+      console.warn('Échec auto-création EDL:', err);
     }
 
     return dossier;
