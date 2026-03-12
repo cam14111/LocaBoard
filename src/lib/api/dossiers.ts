@@ -238,14 +238,20 @@ export async function ensureDossierForReservation(
           } catch (err: unknown) {
             if ((err as { code?: string })?.code !== '23505') throw err;
             // EDL déjà existant : peupler ses items s'il en est dépourvu
-            const { data: existing } = await supabase
+            const { data: existingEdl } = await supabase
               .from('edls')
-              .select('id, edl_items(id)')
+              .select('id')
               .eq('dossier_id', dossier.id)
               .eq('type', type)
               .single();
-            if (existing && (existing.edl_items as { id: string }[]).length === 0) {
-              await addItemsFromPieces(existing.id, logementId);
+            if (existingEdl) {
+              const { count } = await supabase
+                .from('edl_items')
+                .select('id', { count: 'exact', head: true })
+                .eq('edl_id', existingEdl.id);
+              if (count === 0) {
+                await addItemsFromPieces(existingEdl.id, logementId);
+              }
             }
           }
         }
