@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
 import { createDefaultPaymentSchedule } from './paiements';
-import { createEdl } from './edl';
+import { createEdl, addItemsFromPieces } from './edl';
 import { getLogementPieces } from './logementPieces';
 import { computeNights } from '@/lib/dateUtils';
 import { tryAutoAdvancePipeline } from '@/lib/pipelineAutomate';
@@ -236,8 +236,17 @@ export async function ensureDossierForReservation(
           try {
             await createEdl({ dossier_id: dossier.id, type, items });
           } catch (err: unknown) {
-            // Ignorer les doublons (EDL déjà créé lors d'une tentative précédente)
             if ((err as { code?: string })?.code !== '23505') throw err;
+            // EDL déjà existant : peupler ses items s'il en est dépourvu
+            const { data: existing } = await supabase
+              .from('edls')
+              .select('id, edl_items(id)')
+              .eq('dossier_id', dossier.id)
+              .eq('type', type)
+              .single();
+            if (existing && (existing.edl_items as { id: string }[]).length === 0) {
+              await addItemsFromPieces(existing.id, logementId);
+            }
           }
         }
       }
