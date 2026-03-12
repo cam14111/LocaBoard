@@ -49,16 +49,20 @@ export async function createEdl(params: {
 
   if (error) throw error;
 
-  // Créer les items de checklist
+  // Créer les items de checklist — inserts unitaires pour éviter le paramètre
+  // ?columns= (format entre guillemets) non supporté par certaines versions de PostgREST
   if (params.items.length > 0) {
-    const itemsToInsert = params.items.map((item) => ({
-      edl_id: data.id,
-      checklist_item_label: item.checklist_item_label,
-      ordre: item.ordre,
-    }));
-
-    const { error: itemsError } = await supabase.from('edl_items').insert(itemsToInsert);
-    if (itemsError) throw itemsError;
+    const results = await Promise.all(
+      params.items.map((item) =>
+        supabase.from('edl_items').insert({
+          edl_id: data.id,
+          checklist_item_label: item.checklist_item_label,
+          ordre: item.ordre,
+        })
+      )
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw failed.error;
   }
 
   await createAuditLog({
@@ -76,14 +80,17 @@ export async function addItemsFromPieces(edlId: string, logementId: string): Pro
   const pieces = await getLogementPieces(logementId);
   if (pieces.length === 0) return;
 
-  const itemsToInsert = pieces.map((p) => ({
-    edl_id: edlId,
-    checklist_item_label: p.nom,
-    ordre: p.ordre,
-  }));
-
-  const { error } = await supabase.from('edl_items').insert(itemsToInsert);
-  if (error) throw error;
+  const results = await Promise.all(
+    pieces.map((p) =>
+      supabase.from('edl_items').insert({
+        edl_id: edlId,
+        checklist_item_label: p.nom,
+        ordre: p.ordre,
+      })
+    )
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
 }
 
 export async function updateEdlItem(
