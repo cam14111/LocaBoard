@@ -232,8 +232,14 @@ export async function ensureDossierForReservation(
           ordre: p.ordre,
           piece_id: p.id,
         }));
-        await createEdl({ dossier_id: dossier.id, type: 'ARRIVEE', items });
-        await createEdl({ dossier_id: dossier.id, type: 'DEPART', items });
+        for (const type of ['ARRIVEE', 'DEPART'] as const) {
+          try {
+            await createEdl({ dossier_id: dossier.id, type, items });
+          } catch (err: unknown) {
+            // Ignorer les doublons (EDL déjà créé lors d'une tentative précédente)
+            if ((err as { code?: string })?.code !== '23505') throw err;
+          }
+        }
       }
     } catch (err) {
       console.warn('Échec auto-création EDL:', err);
