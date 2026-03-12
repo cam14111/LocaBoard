@@ -42,12 +42,14 @@ export default function App() {
             <Route path="/login" element={<Login />} />
 
             <Route element={<ProtectedRoute />}>
+              {/* EDL fullscreen : hors AppLayout pour éviter le scroll parent */}
+              <Route path="dossiers/:dossierId/edl/:edlId" element={<EdlMobile />} />
+
               <Route element={<LogementProvider><AppLayout /></LogementProvider>}>
                 <Route index element={<Dashboard />} />
                 <Route path="calendrier" element={<Calendar />} />
                 <Route path="dossiers" element={<Dossiers />} />
                 <Route path="dossiers/:id" element={<DossierDetail />} />
-                <Route path="dossiers/:dossierId/edl/:edlId" element={<EdlMobile />} />
                 <Route path="taches" element={<Tasks />} />
                 <Route path="paiements" element={<PaiementsGlobal />} />
                 <Route path="parametres" element={<SettingsLayout />}>
