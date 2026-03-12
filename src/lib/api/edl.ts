@@ -86,6 +86,7 @@ export async function addItemsFromPieces(edlId: string, logementId: string): Pro
         edl_id: edlId,
         checklist_item_label: p.nom,
         ordre: p.ordre,
+        etat: null,
       })
     )
   );
