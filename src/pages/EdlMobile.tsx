@@ -89,8 +89,12 @@ export default function EdlMobile() {
       const dossier = await getDossierById(dossierId);
       await addItemsFromPieces(edlId, dossier.logement_id);
       await loadEdl();
-    } catch {
-      setError('Impossible de générer les étapes depuis les pièces.');
+    } catch (err) {
+      const detail = err && typeof err === 'object' && 'message' in err
+        ? ` (${(err as { message: string }).message})`
+        : '';
+      setError(`Impossible de générer les étapes depuis les pièces.${detail}`);
+      console.error('[EdlMobile] addItemsFromPieces error:', err);
     } finally {
       setSyncing(false);
     }
