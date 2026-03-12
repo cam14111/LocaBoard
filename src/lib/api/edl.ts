@@ -58,6 +58,7 @@ export async function createEdl(params: {
           edl_id: data.id,
           checklist_item_label: item.checklist_item_label,
           ordre: item.ordre,
+          etat: null,
         })
       )
     );
