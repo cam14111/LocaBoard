@@ -139,6 +139,8 @@ export async function cancelDossierCascade(
   }
 
   // 5. Tâches A_FAIRE/EN_COURS → ANNULEE (FAIT restent FAIT)
+  // Utilise le RPC SECURITY DEFINER pour contourner les restrictions RLS
+  // (cf. migrations 010/011/012 — UPDATE direct bloqué par triggers/CHECK)
   const { data: tachesToCancel } = await supabase
     .from('taches')
     .select('id')
@@ -148,10 +150,7 @@ export async function cancelDossierCascade(
   let tachesAnnulees = 0;
   if (tachesToCancel && tachesToCancel.length > 0) {
     const ids = tachesToCancel.map((t) => t.id);
-    const { error: taskErr } = await supabase
-      .from('taches')
-      .update({ statut: 'ANNULEE' })
-      .in('id', ids);
+    const { error: taskErr } = await supabase.rpc('cancel_taches_bulk', { p_tache_ids: ids });
     if (taskErr) throw taskErr;
     tachesAnnulees = ids.length;
   }
