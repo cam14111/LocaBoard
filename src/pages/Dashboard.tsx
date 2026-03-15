@@ -330,7 +330,22 @@ export default function Dashboard() {
               .in('edl_id', edlIds)
               .eq('etat', 'ANOMALIE');
 
-            if ((anomalyItems ?? []).length > 0) {
+            // Exclure les items dont l'incident associé est déjà résolu
+            const allAnomalyItems = anomalyItems ?? [];
+            let activeAnomalyItems = allAnomalyItems;
+            if (allAnomalyItems.length > 0) {
+              const { data: resolvedIncs } = await supabase
+                .from('incidents')
+                .select('edl_item_id')
+                .in('edl_item_id', allAnomalyItems.map((i) => i.id))
+                .eq('statut', 'RESOLU');
+              const resolvedSet = new Set(
+                (resolvedIncs ?? []).map((i) => i.edl_item_id).filter(Boolean) as string[],
+              );
+              activeAnomalyItems = allAnomalyItems.filter((i) => !resolvedSet.has(i.id));
+            }
+
+            if (activeAnomalyItems.length > 0) {
               const edlMap = new Map(
                 (edlsData ?? []).map((e) => [e.id, { dossier_id: e.dossier_id as string, type: e.type as 'ARRIVEE' | 'DEPART' }]),
               );
@@ -340,7 +355,7 @@ export default function Dashboard() {
                 string,
                 { edl_type: 'ARRIVEE' | 'DEPART'; anomalies: Array<{ id: string; label: string }> }
               >();
-              for (const item of anomalyItems ?? []) {
+              for (const item of activeAnomalyItems) {
                 const edl = edlMap.get(item.edl_id);
                 if (!edl) continue;
                 const existing = anomalyGroupMap.get(edl.dossier_id);
