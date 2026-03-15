@@ -104,8 +104,9 @@ export async function markPaiementPaid(
     metadata: { method },
   });
 
-  // Paiement soldé → effacer la notification de retard du dossier
+  // Paiement soldé → effacer les notifications de retard et bientôt dû du dossier
   dismissNotificationsForEntity('PAIEMENT_EN_RETARD', 'dossier', before.dossier_id);
+  dismissNotificationsForEntity('PAIEMENT_DU_BIENTOT', 'dossier', before.dossier_id);
 
   // Vérifier si ce paiement déclenche un auto-advance pipeline
   // (ex : ARRHES payé alors que le pipeline est déjà à CONTRAT_SIGNE)
