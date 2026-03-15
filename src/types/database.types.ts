@@ -419,6 +419,10 @@ export interface Database {
         Args: { p_paiement_ids: string[] };
         Returns: void;
       };
+      dismiss_dossier_cascade_notifications: {
+        Args: { p_dossier_id: string };
+        Returns: void;
+      };
       reactivate_tache: {
         Args: { p_tache_id: string };
         Returns: void;

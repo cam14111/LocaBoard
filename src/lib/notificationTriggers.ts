@@ -69,8 +69,10 @@ async function notifyExpiredOptions(userId: string) {
 async function notifyOverduePaiements(userId: string) {
   const { data: overdue } = await supabase
     .from('paiements')
-    .select('id, type, montant_eur, echeance_date, dossier_id')
-    .eq('statut', 'EN_RETARD');
+    .select('id, type, montant_eur, echeance_date, dossier_id, dossiers!inner(pipeline_statut)')
+    .eq('statut', 'EN_RETARD')
+    .not('dossiers.pipeline_statut', 'in', '("ANNULE","CLOTURE")') as unknown as
+    { data: Array<{ id: string; type: string; montant_eur: number; echeance_date: string; dossier_id: string }> | null };
 
   if (!overdue || overdue.length === 0) return;
 
@@ -109,10 +111,12 @@ async function notifyUpcomingPaiements(userId: string) {
 
   const { data: upcoming } = await supabase
     .from('paiements')
-    .select('id, type, montant_eur, echeance_date, dossier_id')
+    .select('id, type, montant_eur, echeance_date, dossier_id, dossiers!inner(pipeline_statut)')
     .eq('statut', 'DU')
     .gte('echeance_date', todayStr)
-    .lte('echeance_date', in3daysStr);
+    .lte('echeance_date', in3daysStr)
+    .not('dossiers.pipeline_statut', 'in', '("ANNULE","CLOTURE")') as unknown as
+    { data: Array<{ id: string; type: string; montant_eur: number; echeance_date: string; dossier_id: string }> | null };
 
   if (!upcoming || upcoming.length === 0) return;
 
@@ -175,13 +179,18 @@ async function notifyTachesEnRetard(userId: string) {
 
   const { data: overdue } = await supabase
     .from('taches')
-    .select('id, titre, echeance_at, assignee_user_id')
+    .select('id, titre, echeance_at, assignee_user_id, dossiers(pipeline_statut)')
     .in('statut', ['A_FAIRE', 'EN_COURS'])
-    .lt('echeance_at', now);
+    .lt('echeance_at', now) as unknown as
+    { data: Array<{ id: string; titre: string; echeance_at: string; assignee_user_id: string | null; dossiers: { pipeline_statut: string } | null }> | null };
 
   if (!overdue || overdue.length === 0) return;
 
   for (const t of overdue) {
+    // Ignorer les tâches d'un dossier annulé ou clôturé
+    const dossierStatut = t.dossiers?.pipeline_statut;
+    if (dossierStatut === 'ANNULE' || dossierStatut === 'CLOTURE') continue;
+
     const targetUser = t.assignee_user_id || userId;
     const daysLate = Math.floor(
       (Date.now() - new Date(t.echeance_at).getTime()) / 86_400_000,

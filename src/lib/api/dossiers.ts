@@ -154,7 +154,10 @@ export async function cancelDossierCascade(
     tachesAnnulees = ids.length;
   }
 
-  // 6. Audit log complet
+  // 6. Dismiss toutes les notifications liées au dossier, ses tâches et sa réservation
+  await supabase.rpc('dismiss_dossier_cascade_notifications', { p_dossier_id: dossierId });
+
+  // 7. Audit log complet
   await createAuditLog({
     entity_type: 'dossier',
     entity_id: dossierId,
