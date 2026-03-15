@@ -281,8 +281,9 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
           const Icon = cfg.icon;
           const okItems = edl.edl_items.filter((i) => i.etat === 'OK').length;
           const anomalyItems = edl.edl_items.filter((i) => i.etat === 'ANOMALIE').length;
+          const resolvedAnomalyItems = edl.edl_items.filter((i) => i.etat === 'ANOMALIE_RESOLUE').length;
           const totalItems = edl.edl_items.length;
-          const completedItems = okItems + anomalyItems;
+          const completedItems = okItems + anomalyItems + resolvedAnomalyItems;
           const isFinalized = edl.statut === 'TERMINE_OK' || edl.statut === 'TERMINE_INCIDENT';
           const edlIncidents = incidents.filter((inc) => inc.edl_id === edl.id);
           const canReport = edl.statut !== 'NON_COMMENCE';
@@ -312,6 +313,12 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
                       {okItems > 0 && anomalyItems > 0 && ' · '}
                       {anomalyItems > 0 && (
                         <span className="text-red-600">{anomalyItems} anomalie{anomalyItems > 1 ? 's' : ''}</span>
+                      )}
+                      {resolvedAnomalyItems > 0 && (
+                        <>
+                          {(okItems > 0 || anomalyItems > 0) && ' · '}
+                          <span className="text-amber-600">{resolvedAnomalyItems} résolue{resolvedAnomalyItems > 1 ? 's' : ''}</span>
+                        </>
                       )}
                       {completedItems === 0 && `0/${totalItems}`}
                     </span>
@@ -351,10 +358,12 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
                           <CheckCircle className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
                         ) : item.etat === 'ANOMALIE' ? (
                           <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                        ) : item.etat === 'ANOMALIE_RESOLUE' ? (
+                          <CheckCircle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
                         ) : (
                           <Circle className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
                         )}
-                        <span className={item.etat ? 'text-slate-700' : 'text-slate-400'}>
+                        <span className={item.etat === 'ANOMALIE_RESOLUE' ? 'text-slate-400 line-through' : item.etat ? 'text-slate-700' : 'text-slate-400'}>
                           {item.checklist_item_label}
                         </span>
                       </div>

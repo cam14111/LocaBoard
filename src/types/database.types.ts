@@ -32,7 +32,7 @@ export type DocumentType = 'CONTRAT' | 'PREUVE_PAIEMENT' | 'EDL' | 'PIECE_IDENTI
 
 export type EdlType = 'ARRIVEE' | 'DEPART';
 export type EdlStatut = 'NON_COMMENCE' | 'EN_COURS' | 'TERMINE_OK' | 'TERMINE_INCIDENT';
-export type EdlItemEtat = 'OK' | 'ANOMALIE';
+export type EdlItemEtat = 'OK' | 'ANOMALIE' | 'ANOMALIE_RESOLUE';
 
 export type IncidentSeverite = 'MINEUR' | 'MAJEUR';
 export type IncidentStatut = 'OUVERT' | 'RESOLU';

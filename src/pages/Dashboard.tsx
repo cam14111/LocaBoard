@@ -330,20 +330,8 @@ export default function Dashboard() {
               .in('edl_id', edlIds)
               .eq('etat', 'ANOMALIE');
 
-            // Exclure les items dont l'incident associé est déjà résolu
-            const allAnomalyItems = anomalyItems ?? [];
-            let activeAnomalyItems = allAnomalyItems;
-            if (allAnomalyItems.length > 0) {
-              const { data: resolvedIncs } = await supabase
-                .from('incidents')
-                .select('edl_item_id')
-                .in('edl_item_id', allAnomalyItems.map((i) => i.id))
-                .eq('statut', 'RESOLU');
-              const resolvedSet = new Set(
-                (resolvedIncs ?? []).map((i) => i.edl_item_id).filter(Boolean) as string[],
-              );
-              activeAnomalyItems = allAnomalyItems.filter((i) => !resolvedSet.has(i.id));
-            }
+            // Les items ANOMALIE_RESOLUE sont déjà exclus par le filtre .eq('etat', 'ANOMALIE')
+            const activeAnomalyItems = anomalyItems ?? [];
 
             if (activeAnomalyItems.length > 0) {
               const edlMap = new Map(

@@ -461,6 +461,8 @@ export default function EdlMobile() {
                   <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                 ) : item.etat === 'ANOMALIE' ? (
                   <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                ) : item.etat === 'ANOMALIE_RESOLUE' ? (
+                  <CheckCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
                 ) : (
                   <Circle className="h-5 w-5 text-slate-300 flex-shrink-0" />
                 )}
@@ -700,7 +702,9 @@ export default function EdlMobile() {
                     ? 'w-2 bg-green-400'
                     : item.etat === 'ANOMALIE'
                       ? 'w-2 bg-red-400'
-                      : 'w-2 bg-slate-200'
+                      : item.etat === 'ANOMALIE_RESOLUE'
+                        ? 'w-2 bg-amber-400'
+                        : 'w-2 bg-slate-200'
               }`}
             />
           ))}
