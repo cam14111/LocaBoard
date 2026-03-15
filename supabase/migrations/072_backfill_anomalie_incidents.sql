@@ -5,12 +5,17 @@
 
 DO $$
 DECLARE
-  r_item    RECORD;
-  v_edl     RECORD;
-  v_dos     RECORD;
-  v_inc_id  UUID;
-  v_desc    TEXT;
+  r_item       RECORD;
+  v_edl        RECORD;
+  v_dos        RECORD;
+  v_inc_id     UUID;
+  v_desc       TEXT;
+  v_actor_id   UUID;
+  v_fallback   UUID;
 BEGIN
+  -- Fallback : premier utilisateur du système (si realise_par_user_id est NULL)
+  SELECT id INTO v_fallback FROM users ORDER BY created_at LIMIT 1;
+
   FOR r_item IN
     SELECT ei.id, ei.edl_id, ei.checklist_item_label
       FROM edl_items ei
@@ -20,11 +25,14 @@ BEGIN
        )
      ORDER BY ei.id
   LOOP
-    SELECT id, dossier_id INTO v_edl FROM edls WHERE id = r_item.edl_id;
+    SELECT id, dossier_id, realise_par_user_id INTO v_edl FROM edls WHERE id = r_item.edl_id;
     IF NOT FOUND THEN CONTINUE; END IF;
 
     SELECT id, logement_id INTO v_dos FROM dossiers WHERE id = v_edl.dossier_id;
     IF NOT FOUND THEN CONTINUE; END IF;
+
+    v_actor_id := COALESCE(v_edl.realise_par_user_id, v_fallback);
+    IF v_actor_id IS NULL THEN CONTINUE; END IF;
 
     v_desc := 'Anomalie : ' || r_item.checklist_item_label;
 
@@ -37,7 +45,7 @@ BEGIN
       v_desc,
       'MINEUR'::incident_severite,
       'OUVERT'::incident_statut,
-      NULL,
+      v_actor_id,
       r_item.id
     )
     RETURNING id INTO v_inc_id;
