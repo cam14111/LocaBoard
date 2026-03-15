@@ -106,18 +106,16 @@ export async function updateEdlItem(
   // Réagir aux changements de statut de l'item (fire-and-forget, non-bloquant)
   if (updates.etat === 'ANOMALIE') {
     // Créer automatiquement un incident + tâche pour cette anomalie
-    supabase.rpc('create_incident_for_edl_item', { p_edl_item_id: itemId })
-      .then(({ error: rpcErr }) => {
-        if (rpcErr) console.error('Échec création incident pour anomalie EDL:', rpcErr);
-      })
-      .catch(() => {});
+    void (async () => {
+      const { error: rpcErr } = await supabase.rpc('create_incident_for_edl_item', { p_edl_item_id: itemId });
+      if (rpcErr) console.error('Échec création incident pour anomalie EDL:', rpcErr);
+    })();
   } else if (updates.etat === 'OK') {
     // Annuler la tâche et résoudre l'incident liés à cet item
-    supabase.rpc('cleanup_incident_for_edl_item', { p_edl_item_id: itemId })
-      .then(({ error: rpcErr }) => {
-        if (rpcErr) console.error('Échec nettoyage incident pour item OK:', rpcErr);
-      })
-      .catch(() => {});
+    void (async () => {
+      const { error: rpcErr } = await supabase.rpc('cleanup_incident_for_edl_item', { p_edl_item_id: itemId });
+      if (rpcErr) console.error('Échec nettoyage incident pour item OK:', rpcErr);
+    })();
   }
 }
 
