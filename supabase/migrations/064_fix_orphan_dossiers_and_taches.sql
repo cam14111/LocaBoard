@@ -2,10 +2,12 @@
 -- 1. Tâches A_FAIRE/EN_COURS sans dossier (dossier_id IS NULL) → ANNULEE
 -- 2. Dossiers actifs dont la réservation est ANNULEE → pipeline ANNULE + cascade tâches
 
+SET search_path TO public;
+
 -- ─── 1. Tâches sans dossier ───────────────────────────────────────────────────
 
 UPDATE taches
-SET statut = 'ANNULEE'::tache_statut
+SET statut = 'ANNULEE'
 WHERE dossier_id IS NULL
   AND statut IN ('A_FAIRE', 'EN_COURS');
 
@@ -13,7 +15,7 @@ WHERE dossier_id IS NULL
 
 -- 2a. Annuler le pipeline du dossier
 UPDATE dossiers
-SET pipeline_statut = 'ANNULE'::pipeline_statut
+SET pipeline_statut = 'ANNULE'
 WHERE pipeline_statut NOT IN ('ANNULE', 'CLOTURE')
   AND reservation_id IN (
     SELECT id FROM reservations WHERE statut = 'ANNULEE'
@@ -21,7 +23,7 @@ WHERE pipeline_statut NOT IN ('ANNULE', 'CLOTURE')
 
 -- 2b. Cascade : annuler les tâches A_FAIRE/EN_COURS de ces dossiers
 UPDATE taches
-SET statut = 'ANNULEE'::tache_statut
+SET statut = 'ANNULEE'
 WHERE statut IN ('A_FAIRE', 'EN_COURS')
   AND dossier_id IN (
     SELECT id FROM dossiers WHERE pipeline_statut = 'ANNULE'
