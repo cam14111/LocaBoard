@@ -16,6 +16,8 @@ import {
   Trash2,
   Check,
   X,
+  Wrench,
+  CheckCircle2,
 } from 'lucide-react';
 import { getEdlByDossier, createEdl, reopenEdl } from '@/lib/api/edl';
 import { getChecklistModeles } from '@/lib/api/checklists';
@@ -23,7 +25,8 @@ import { getLogementPieces } from '@/lib/api/logementPieces';
 import { getIncidentsByDossier, getIncidentPhotoUrl, updateIncident, deleteIncident } from '@/lib/api/incidents';
 import type { IncidentWithPhotos } from '@/lib/api/incidents';
 import IncidentModal from './IncidentModal';
-import type { Edl, EdlItem, EdlType, ChecklistModele, IncidentSeverite } from '@/types/database.types';
+import { supabase } from '@/lib/supabase';
+import type { Edl, EdlItem, EdlType, ChecklistModele, IncidentSeverite, Tache } from '@/types/database.types';
 
 const EDL_TYPE_LABELS: Record<string, string> = {
   ARRIVEE: "État des lieux d'arrivée",
@@ -40,6 +43,18 @@ const STATUT_CONFIG: Record<string, { icon: typeof Circle; color: string; label:
 const SEVERITE_CONFIG: Record<IncidentSeverite, { color: string; bgColor: string; label: string }> = {
   MINEUR: { color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', label: 'Mineur' },
   MAJEUR: { color: 'text-red-700', bgColor: 'bg-red-50 border-red-200', label: 'Majeur' },
+};
+
+const INCIDENT_STATUT_CONFIG = {
+  OUVERT: { color: 'text-orange-700', bgColor: 'bg-orange-100', label: 'Ouvert' },
+  RESOLU: { color: 'text-green-700', bgColor: 'bg-green-100', label: 'Résolu' },
+};
+
+const TACHE_STATUT_LABELS: Record<string, string> = {
+  A_FAIRE: 'À faire',
+  EN_COURS: 'En cours',
+  FAIT: 'Fait',
+  ANNULEE: 'Annulée',
 };
 
 /** Formatte une date ISO en format lisible */
@@ -78,6 +93,8 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
   const [savingIncident, setSavingIncident] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingIncident, setDeletingIncident] = useState(false);
+  const [linkedTaches, setLinkedTaches] = useState<Pick<Tache, 'id' | 'incident_id' | 'statut' | 'titre'>[]>([]);
+  const [resolvingIncidentId, setResolvingIncidentId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const loadEdls = useCallback(async () => {
@@ -88,9 +105,22 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
       ]);
       setEdls(edlData);
       setIncidents(incidentData);
+
+      // Charger les tâches liées aux incidents
+      const incidentIds = incidentData.map((i) => i.id);
+      if (incidentIds.length > 0) {
+        const { data: tachesData } = await supabase
+          .from('taches')
+          .select('id, incident_id, statut, titre')
+          .in('incident_id', incidentIds);
+        setLinkedTaches((tachesData ?? []) as Pick<Tache, 'id' | 'incident_id' | 'statut' | 'titre'>[]);
+      } else {
+        setLinkedTaches([]);
+      }
     } catch {
       setEdls([]);
       setIncidents([]);
+      setLinkedTaches([]);
     } finally {
       setLoading(false);
     }
@@ -196,6 +226,18 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
       // Silencieux
     } finally {
       setSavingIncident(false);
+    }
+  }
+
+  async function handleResolveIncident(incidentId: string) {
+    setResolvingIncidentId(incidentId);
+    try {
+      await supabase.rpc('resolve_incident', { p_incident_id: incidentId });
+      await loadEdls();
+    } catch {
+      // Silencieux
+    } finally {
+      setResolvingIncidentId(null);
     }
   }
 
@@ -334,19 +376,26 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
                   </p>
                   {edlIncidents.map((inc) => {
                     const sev = SEVERITE_CONFIG[inc.severite];
+                    const statutCfg = INCIDENT_STATUT_CONFIG[inc.statut] || INCIDENT_STATUT_CONFIG.OUVERT;
+                    const isResolu = inc.statut === 'RESOLU';
                     const isEditing = editIncidentId === inc.id;
                     const isDeleteConfirm = deleteConfirmId === inc.id;
+                    const tacheLinked = linkedTaches.find((t) => t.incident_id === inc.id);
 
                     return (
                       <div
                         key={inc.id}
-                        className={`rounded-lg border px-3 py-2 ${sev.bgColor}`}
+                        className={`rounded-lg border px-3 py-2 ${sev.bgColor} ${isResolu ? 'opacity-60' : ''}`}
                       >
-                        {/* En-tête : sévérité + date + actions */}
+                        {/* En-tête : sévérité + statut + date + actions */}
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] font-bold uppercase ${sev.color}`}>
                               {sev.label}
+                            </span>
+                            <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statutCfg.bgColor} ${statutCfg.color}`}>
+                              {isResolu && <CheckCircle2 className="h-2.5 w-2.5" />}
+                              {statutCfg.label}
                             </span>
                             <span className="text-[10px] text-slate-400">
                               {formatDate(inc.created_at)}
@@ -354,6 +403,18 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
                           </div>
                           {!isEditing && !isDeleteConfirm && (
                             <div className="flex items-center gap-1">
+                              {!isResolu && !tacheLinked && (
+                                <button
+                                  onClick={() => handleResolveIncident(inc.id)}
+                                  disabled={resolvingIncidentId === inc.id}
+                                  className="p-1 rounded text-green-500 hover:text-green-700 hover:bg-white/60 transition-colors"
+                                  title="Résoudre manuellement"
+                                >
+                                  {resolvingIncidentId === inc.id
+                                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    : <CheckCircle2 className="h-3.5 w-3.5" />}
+                                </button>
+                              )}
                               <button
                                 onClick={() => startEditIncident(inc)}
                                 className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-white/60 transition-colors"
@@ -453,6 +514,25 @@ export default function EdlTab({ dossierId, logementId }: EdlTabProps) {
                                 />
                               </a>
                             ))}
+                          </div>
+                        )}
+
+                        {/* Tâche liée */}
+                        {tacheLinked && (
+                          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-600">
+                            <Wrench className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">
+                              Tâche : {tacheLinked.titre}
+                            </span>
+                            <span className={`inline-flex rounded-full px-1.5 py-0.5 font-semibold ${
+                              tacheLinked.statut === 'FAIT'
+                                ? 'bg-green-100 text-green-700'
+                                : tacheLinked.statut === 'ANNULEE'
+                                  ? 'bg-slate-100 text-slate-500'
+                                  : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {TACHE_STATUT_LABELS[tacheLinked.statut] || tacheLinked.statut}
+                            </span>
                           </div>
                         )}
                       </div>

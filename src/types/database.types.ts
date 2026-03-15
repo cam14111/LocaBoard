@@ -35,6 +35,7 @@ export type EdlStatut = 'NON_COMMENCE' | 'EN_COURS' | 'TERMINE_OK' | 'TERMINE_IN
 export type EdlItemEtat = 'OK' | 'ANOMALIE';
 
 export type IncidentSeverite = 'MINEUR' | 'MAJEUR';
+export type IncidentStatut = 'OUVERT' | 'RESOLU';
 
 export type TacheType = 'MENAGE' | 'ACCUEIL' | 'REMISE_CLES' | 'MAINTENANCE' | 'AUTRE';
 export type TacheStatut = 'A_FAIRE' | 'EN_COURS' | 'FAIT' | 'ANNULEE';
@@ -216,6 +217,7 @@ export interface Incident {
   dossier_id: string;
   description: string;
   severite: IncidentSeverite;
+  statut: IncidentStatut;
   created_by_user_id: string;
   created_at: string;
 }
@@ -241,6 +243,7 @@ export interface Tache {
   completed_by_user_id: string | null;
   proof_photo_url: string | null;
   auto_generated: boolean;
+  incident_id: string | null;
   created_at: string;
 }
 
@@ -427,6 +430,18 @@ export interface Database {
         Args: { p_tache_id: string };
         Returns: void;
       };
+      create_tache_for_incident: {
+        Args: { p_incident_id: string };
+        Returns: string;
+      };
+      resolve_incident: {
+        Args: { p_incident_id: string };
+        Returns: void;
+      };
+      reopen_incident: {
+        Args: { p_incident_id: string };
+        Returns: void;
+      };
       dismiss_notifications_for_entity: {
         Args: { p_type: string; p_entity_type: string; p_entity_id: string };
         Returns: void;
@@ -472,6 +487,7 @@ export interface Database {
       edl_statut: EdlStatut;
       edl_item_etat: EdlItemEtat;
       incident_severite: IncidentSeverite;
+      incident_statut: IncidentStatut;
       tache_type: TacheType;
       tache_statut: TacheStatut;
       notification_type: NotificationType;

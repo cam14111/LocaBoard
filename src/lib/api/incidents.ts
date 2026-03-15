@@ -77,6 +77,17 @@ export async function createIncident(params: {
     if (photoError) throw photoError;
   }
 
+  // Créer automatiquement une tâche de suivi liée à l'incident
+  let tacheId: string | null = null;
+  const { data: rpcData, error: tacheError } = await supabase.rpc('create_tache_for_incident', {
+    p_incident_id: incident.id,
+  });
+  if (tacheError) {
+    console.error('Échec création tâche pour incident:', tacheError);
+  } else {
+    tacheId = rpcData as string | null;
+  }
+
   // Audit log
   await createAuditLog({
     entity_type: 'incident',
@@ -87,6 +98,7 @@ export async function createIncident(params: {
       description: params.description.substring(0, 100),
       photo_count: params.photos.length,
       edl_item_id: params.edl_item_id ?? null,
+      tache_id: tacheId,
     },
   });
 
@@ -115,6 +127,17 @@ export async function updateIncident(
 
 /** Supprime un incident et ses photos (Storage + DB) */
 export async function deleteIncident(incidentId: string): Promise<void> {
+  // Annuler la tâche liée si elle est encore active
+  const { data: linkedTache } = await supabase
+    .from('taches')
+    .select('id, statut')
+    .eq('incident_id', incidentId)
+    .maybeSingle();
+
+  if (linkedTache && ['A_FAIRE', 'EN_COURS'].includes(linkedTache.statut)) {
+    await supabase.rpc('cancel_tache', { p_tache_id: linkedTache.id });
+  }
+
   // Récupérer les photos pour supprimer du Storage
   const { data: photos } = await supabase
     .from('incident_photos')

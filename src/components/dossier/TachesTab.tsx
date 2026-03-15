@@ -11,6 +11,7 @@ import {
   Pencil,
   RotateCcw,
   User,
+  ShieldAlert,
 } from 'lucide-react';
 import {
   getTachesByDossier,
@@ -222,6 +223,12 @@ export default function TachesTab({ dossierId, logementId }: TachesTabProps) {
                       >
                         {TYPE_LABELS[tache.type]}
                       </span>
+                      {tache.incident_id && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600" title="Liée à un incident EDL">
+                          <ShieldAlert className="h-2.5 w-2.5" />
+                          Incident
+                        </span>
+                      )}
                     </div>
 
                     {tache.description && (

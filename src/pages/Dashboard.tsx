@@ -220,6 +220,7 @@ export default function Dashboard() {
             .from('incidents')
             .select('dossier_id, severite, created_at')
             .in('dossier_id', dossierIdArray)
+            .eq('statut', 'OUVERT')
             .order('created_at', { ascending: false });
           rawIncidents = incData ?? [];
         }

@@ -182,6 +182,17 @@ export async function completeTache(id: string, proofPhotoUrl?: string) {
 
   // Tâche soldée → effacer la notification de retard
   dismissNotificationsForEntity('TACHE_EN_RETARD', 'tache', id);
+
+  // Si la tâche est liée à un incident, le passer en RESOLU
+  const { data: completedTache } = await supabase
+    .from('taches')
+    .select('incident_id')
+    .eq('id', id)
+    .single();
+
+  if (completedTache?.incident_id) {
+    await supabase.rpc('resolve_incident', { p_incident_id: completedTache.incident_id });
+  }
 }
 
 export async function cancelTache(id: string) {
@@ -207,6 +218,17 @@ export async function reactivateTache(id: string) {
     entity_id: id,
     action: 'reactivated',
   });
+
+  // Si la tâche est liée à un incident, le rouvrir
+  const { data: reactivated } = await supabase
+    .from('taches')
+    .select('incident_id')
+    .eq('id', id)
+    .single();
+
+  if (reactivated?.incident_id) {
+    await supabase.rpc('reopen_incident', { p_incident_id: reactivated.incident_id });
+  }
 }
 
 /** Génère les tâches automatiques à la confirmation d'une réservation (E08-05) */
