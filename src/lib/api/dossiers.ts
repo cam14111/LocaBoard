@@ -121,6 +121,8 @@ export async function cancelDossierCascade(
   }
 
   // 4. Paiements DU/EN_RETARD → ANNULE (PAYE restent PAYE)
+  // Utilise le RPC SECURITY DEFINER pour contourner les restrictions RLS
+  // (UPDATE direct bloqué pour les non-admin — cf. migrations 017/040)
   const { data: paiementsToCancel } = await supabase
     .from('paiements')
     .select('id')
@@ -130,10 +132,7 @@ export async function cancelDossierCascade(
   let paiementsAnnules = 0;
   if (paiementsToCancel && paiementsToCancel.length > 0) {
     const ids = paiementsToCancel.map((p) => p.id);
-    const { error: payErr } = await supabase
-      .from('paiements')
-      .update({ statut: 'ANNULE' })
-      .in('id', ids);
+    const { error: payErr } = await supabase.rpc('cancel_paiements_bulk', { p_paiement_ids: ids });
     if (payErr) throw payErr;
     paiementsAnnules = ids.length;
   }
