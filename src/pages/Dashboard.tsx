@@ -19,6 +19,15 @@ import { toDateString, formatDateFR } from '@/lib/dateUtils';
 import { PIPELINE_LABELS, PIPELINE_COLORS } from '@/lib/pipeline';
 import type { PipelineStatut } from '@/types/database.types';
 
+interface AnomalieEdlGroupe {
+  dossier_id: string;
+  locataire_nom: string;
+  locataire_prenom: string;
+  logement_nom: string;
+  edl_type: 'ARRIVEE' | 'DEPART';
+  anomalies: Array<{ id: string; label: string }>;
+}
+
 interface IncidentGroupe {
   dossier_id: string;
   locataire_nom: string;
@@ -58,6 +67,7 @@ interface DashboardData {
   paiementsEnAttente: number;
   paiementsEnRetard: number;
   optionsExpirantes: OptionExpirante[];
+  anomaliesEdl: AnomalieEdlGroupe[];
   incidents: IncidentGroupe[];
   prochaines: Array<{
     id: string;
@@ -304,6 +314,92 @@ export default function Dashboard() {
 
         if (cancelled) return;
 
+        // Anomalies EDL — items marqués ANOMALIE dans les EDLs des dossiers actifs
+        let anomaliesEdl: AnomalieEdlGroupe[] = [];
+        if (dossierIdArray.length > 0) {
+          const { data: edlsData } = await supabase
+            .from('edls')
+            .select('id, dossier_id, type')
+            .in('dossier_id', dossierIdArray);
+
+          const edlIds = (edlsData ?? []).map((e) => e.id);
+          if (edlIds.length > 0) {
+            const { data: anomalyItems } = await supabase
+              .from('edl_items')
+              .select('id, edl_id, checklist_item_label')
+              .in('edl_id', edlIds)
+              .eq('etat', 'ANOMALIE');
+
+            if ((anomalyItems ?? []).length > 0) {
+              const edlMap = new Map(
+                (edlsData ?? []).map((e) => [e.id, { dossier_id: e.dossier_id as string, type: e.type as 'ARRIVEE' | 'DEPART' }]),
+              );
+
+              // Grouper par dossier_id
+              const anomalyGroupMap = new Map<
+                string,
+                { edl_type: 'ARRIVEE' | 'DEPART'; anomalies: Array<{ id: string; label: string }> }
+              >();
+              for (const item of anomalyItems ?? []) {
+                const edl = edlMap.get(item.edl_id);
+                if (!edl) continue;
+                const existing = anomalyGroupMap.get(edl.dossier_id);
+                if (existing) {
+                  existing.anomalies.push({ id: item.id, label: item.checklist_item_label });
+                } else {
+                  anomalyGroupMap.set(edl.dossier_id, {
+                    edl_type: edl.type,
+                    anomalies: [{ id: item.id, label: item.checklist_item_label }],
+                  });
+                }
+              }
+
+              // Charger noms locataires + logements pour les dossiers concernés
+              const anomalyDossierIds = [...anomalyGroupMap.keys()];
+              const anomalyResIds = anomalyDossierIds
+                .map((did) => dossierReservationMap.get(did))
+                .filter((rid): rid is string => !!rid);
+              const anomalyResMap = new Map<string, { locataire_nom: string; locataire_prenom: string }>();
+              if (anomalyResIds.length > 0) {
+                const { data: resData } = await supabase
+                  .from('reservations')
+                  .select('id, locataire_nom, locataire_prenom')
+                  .in('id', anomalyResIds);
+                (resData ?? []).forEach((r) => anomalyResMap.set(r.id, r));
+              }
+
+              const anomalyLogIds = anomalyDossierIds
+                .map((did) => dossierLogementMap.get(did))
+                .filter((lid): lid is string => !!lid);
+              const anomalyLogNomMap = new Map<string, string>();
+              if (anomalyLogIds.length > 0) {
+                const { data: logData } = await supabase
+                  .from('logements')
+                  .select('id, nom')
+                  .in('id', anomalyLogIds);
+                (logData ?? []).forEach((l) => anomalyLogNomMap.set(l.id, l.nom));
+              }
+
+              anomaliesEdl = anomalyDossierIds.map((dossier_id) => {
+                const g = anomalyGroupMap.get(dossier_id)!;
+                const rid = dossierReservationMap.get(dossier_id);
+                const lid = dossierLogementMap.get(dossier_id);
+                const res = rid ? anomalyResMap.get(rid) : undefined;
+                return {
+                  dossier_id,
+                  locataire_nom: res?.locataire_nom ?? '',
+                  locataire_prenom: res?.locataire_prenom ?? '',
+                  logement_nom: lid ? (anomalyLogNomMap.get(lid) ?? '') : '',
+                  edl_type: g.edl_type,
+                  anomalies: g.anomalies,
+                };
+              });
+            }
+          }
+        }
+
+        if (cancelled) return;
+
         // Prochaines arrivées (7 jours)
         let prochQuery = supabase
           .from('reservations')
@@ -350,6 +446,7 @@ export default function Dashboard() {
           paiementsEnAttente,
           paiementsEnRetard,
           optionsExpirantes: (optionsExpirantes ?? []) as OptionExpirante[],
+          anomaliesEdl,
           incidents,
           prochaines: prochainesWithDossier,
         });
@@ -449,6 +546,46 @@ export default function Dashboard() {
                 <span className="rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-xs font-medium whitespace-nowrap">
                   {formatTimeRemaining(opt.expiration_at)}
                 </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Anomalies EDL */}
+      {data && data.anomaliesEdl.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-3">
+            <AlertTriangle className="h-4 w-4" />
+            Anomalies EDL ({data.anomaliesEdl.reduce((s, g) => s + g.anomalies.length, 0)})
+          </h2>
+          <div className="space-y-2">
+            {data.anomaliesEdl.map((grp) => (
+              <button
+                key={grp.dossier_id}
+                onClick={() => navigate(`/dossiers/${grp.dossier_id}`, { state: { tab: 'edl' } })}
+                className="flex w-full items-start gap-3 rounded-lg bg-white border border-amber-100 px-3 py-2.5 text-left text-sm hover:bg-amber-50 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-900">
+                    {grp.locataire_prenom} {grp.locataire_nom}
+                    <span className="ml-2 text-xs font-normal text-amber-700">
+                      EDL {grp.edl_type === 'ARRIVEE' ? 'entrée' : 'sortie'}
+                    </span>
+                  </p>
+                  {grp.logement_nom && (
+                    <p className="text-xs text-slate-500 mt-0.5">{grp.logement_nom}</p>
+                  )}
+                  <ul className="mt-1.5 space-y-0.5">
+                    {grp.anomalies.map((a) => (
+                      <li key={a.id} className="flex items-center gap-1.5 text-xs text-slate-600">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                        {a.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 mt-1" />
               </button>
             ))}
           </div>
