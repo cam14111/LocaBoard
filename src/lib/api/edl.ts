@@ -102,6 +102,23 @@ export async function updateEdlItem(
 ) {
   const { error } = await supabase.from('edl_items').update(updates).eq('id', itemId);
   if (error) throw error;
+
+  // Réagir aux changements de statut de l'item (fire-and-forget, non-bloquant)
+  if (updates.etat === 'ANOMALIE') {
+    // Créer automatiquement un incident + tâche pour cette anomalie
+    supabase.rpc('create_incident_for_edl_item', { p_edl_item_id: itemId })
+      .then(({ error: rpcErr }) => {
+        if (rpcErr) console.error('Échec création incident pour anomalie EDL:', rpcErr);
+      })
+      .catch(() => {});
+  } else if (updates.etat === 'OK') {
+    // Annuler la tâche et résoudre l'incident liés à cet item
+    supabase.rpc('cleanup_incident_for_edl_item', { p_edl_item_id: itemId })
+      .then(({ error: rpcErr }) => {
+        if (rpcErr) console.error('Échec nettoyage incident pour item OK:', rpcErr);
+      })
+      .catch(() => {});
+  }
 }
 
 export async function startEdl(edlId: string) {

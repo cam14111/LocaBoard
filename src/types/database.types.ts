@@ -218,6 +218,7 @@ export interface Incident {
   description: string;
   severite: IncidentSeverite;
   statut: IncidentStatut;
+  edl_item_id: string | null;
   created_by_user_id: string;
   created_at: string;
 }
@@ -433,6 +434,14 @@ export interface Database {
       create_tache_for_incident: {
         Args: { p_incident_id: string };
         Returns: string;
+      };
+      create_incident_for_edl_item: {
+        Args: { p_edl_item_id: string };
+        Returns: string;
+      };
+      cleanup_incident_for_edl_item: {
+        Args: { p_edl_item_id: string };
+        Returns: void;
       };
       resolve_incident: {
         Args: { p_incident_id: string };
