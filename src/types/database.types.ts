@@ -411,6 +411,10 @@ export interface Database {
         Args: { p_tache_id: string };
         Returns: void;
       };
+      cancel_taches_bulk: {
+        Args: { p_tache_ids: string[] };
+        Returns: void;
+      };
       reactivate_tache: {
         Args: { p_tache_id: string };
         Returns: void;
