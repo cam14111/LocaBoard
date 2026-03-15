@@ -270,16 +270,19 @@ async function notifyDepartsDemain(userId: string) {
 async function notifyEdlAReaRealiser(userId: string) {
   const today = new Date().toISOString().substring(0, 10);
 
-  // Arrivées aujourd'hui = EDL arrivée à réaliser
+  // Arrivées aujourd'hui = EDL arrivée à réaliser (sauf si EDL ARRIVEE déjà terminé)
   const { data: arrivals } = await supabase
     .from('reservations')
-    .select('id, locataire_nom, locataire_prenom')
+    .select('id, locataire_nom, locataire_prenom, dossiers!inner(id, edls(type, statut))')
     .eq('date_debut', today)
     .eq('statut', 'CONFIRMEE')
-    .is('archived_at', null);
+    .is('archived_at', null) as unknown as
+    { data: Array<{ id: string; locataire_nom: string; locataire_prenom: string; dossiers: Array<{ id: string; edls: Array<{ type: string; statut: string }> }> }> | null };
 
   if (arrivals) {
     for (const r of arrivals) {
+      const edlArrivee = r.dossiers?.[0]?.edls?.find((e) => e.type === 'ARRIVEE');
+      if (edlArrivee?.statut === 'TERMINE_OK' || edlArrivee?.statut === 'TERMINE_INCIDENT') continue;
       await createNotification({
         user_id: userId,
         type: 'ARRIVEE_IMMINENTE',
@@ -291,16 +294,19 @@ async function notifyEdlAReaRealiser(userId: string) {
     }
   }
 
-  // Départs aujourd'hui = EDL départ à réaliser
+  // Départs aujourd'hui = EDL départ à réaliser (sauf si EDL DEPART déjà terminé)
   const { data: departures } = await supabase
     .from('reservations')
-    .select('id, locataire_nom, locataire_prenom')
+    .select('id, locataire_nom, locataire_prenom, dossiers!inner(id, edls(type, statut))')
     .eq('date_fin', today)
     .eq('statut', 'CONFIRMEE')
-    .is('archived_at', null);
+    .is('archived_at', null) as unknown as
+    { data: Array<{ id: string; locataire_nom: string; locataire_prenom: string; dossiers: Array<{ id: string; edls: Array<{ type: string; statut: string }> }> }> | null };
 
   if (departures) {
     for (const r of departures) {
+      const edlDepart = r.dossiers?.[0]?.edls?.find((e) => e.type === 'DEPART');
+      if (edlDepart?.statut === 'TERMINE_OK' || edlDepart?.statut === 'TERMINE_INCIDENT') continue;
       await createNotification({
         user_id: userId,
         type: 'DEPART_IMMINENT',

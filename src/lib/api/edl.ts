@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { createAuditLog } from './audit';
+import { dismissNotificationsForEntity } from './notifications';
 import { computeAutoAdvance } from '@/lib/pipelineAutomate';
 import { getLogementPieces } from './logementPieces';
 import type { PipelineStatut } from '@/types/database.types';
@@ -135,6 +136,22 @@ export async function finalizeEdl(edlId: string, hasIncident: boolean) {
     action: 'finalized',
     metadata: { statut: newStatut, has_incident: hasIncident },
   });
+
+  // EDL finalisé → dismiss la notification ARRIVEE_IMMINENTE ou DEPART_IMMINENT de la réservation
+  if (edlData?.dossier_id && edlData?.type) {
+    const { data: dossierRes } = await supabase
+      .from('dossiers')
+      .select('reservation_id')
+      .eq('id', edlData.dossier_id)
+      .single();
+
+    if (dossierRes?.reservation_id) {
+      const notifType = edlData.type === 'ARRIVEE' ? 'ARRIVEE_IMMINENTE' : 'DEPART_IMMINENT';
+      dismissNotificationsForEntity(notifType, 'reservation', dossierRes.reservation_id);
+      // Aussi en entity_type dossier (anciennes notifs)
+      dismissNotificationsForEntity(notifType, 'dossier', edlData.dossier_id);
+    }
+  }
 
   // Auto-advance pipeline : on utilise le statut EDL qu'on vient de calculer (pas de re-query)
   if (edlData?.dossier_id && edlData?.type) {
