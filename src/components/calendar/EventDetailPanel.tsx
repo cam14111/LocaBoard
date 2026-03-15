@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Loader2, Calendar, Clock, Trash2, CheckCircle, Edit3, ExternalLink, Lock, Home } from 'lucide-react';
 import { cancelReservation, updateReservationDates, confirmOption } from '@/lib/api/reservations';
 import { archiveBlocage } from '@/lib/api/blocages';
-import { ensureDossierForReservation, getDossierByReservation } from '@/lib/api/dossiers';
+import { ensureDossierForReservation, getDossierByReservation, cancelDossierCascade } from '@/lib/api/dossiers';
 import { generateAutoTaches } from '@/lib/api/taches';
 import { parseRpcError } from '@/lib/rpcErrors';
 import { formatDateFR, computeNights } from '@/lib/dateUtils';
@@ -481,7 +481,14 @@ function CancelAction({
     setLoading(true);
     setError('');
     try {
-      await cancelReservation(reservationId, motif.trim());
+      // Si un dossier existe, cascade complète (dossier + réservation + tâches + paiements)
+      // Sinon, annulation simple de la réservation uniquement
+      try {
+        const dossier = await getDossierByReservation(reservationId);
+        await cancelDossierCascade(dossier.id, motif.trim(), 'locataire');
+      } catch {
+        await cancelReservation(reservationId, motif.trim());
+      }
       onUpdated();
       onClose();
     } catch (err) {
