@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, LogOut, User } from 'lucide-react';
+import { Bell, HelpCircle, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { useNotificationSweep } from '@/hooks/useNotificationSweep';
+import { useHelpMode } from '@/hooks/useHelpMode';
 import LogementSelector from './LogementSelector';
 import NotificationsPanel from './NotificationsPanel';
 
@@ -16,6 +17,7 @@ export default function Header() {
   const notifRef = useRef<HTMLDivElement>(null);
 
   const { count: unreadCount, refresh: refreshUnread } = useUnreadNotifications();
+  const { helpMode, toggleHelpMode } = useHelpMode();
 
   // Sweeps de notifications (options, paiements, arrivées, tâches, EDL)
   useNotificationSweep();
@@ -90,6 +92,22 @@ export default function Header() {
           </button>
           {notifOpen && <NotificationsPanel onClose={handleNotifClose} />}
         </div>
+
+        {/* Toggle aide */}
+        <button
+          type="button"
+          onClick={toggleHelpMode}
+          className={`rounded-lg p-2 transition-colors ${
+            helpMode
+              ? 'bg-primary-50 text-primary-600'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+          }`}
+          aria-label={helpMode ? "Désactiver l'aide" : "Activer l'aide"}
+          aria-pressed={helpMode}
+          title={helpMode ? "Désactiver l'aide contextuelle" : "Activer l'aide contextuelle"}
+        >
+          <HelpCircle className="h-5 w-5" />
+        </button>
 
         {/* Avatar + dropdown */}
         <div className="relative" ref={menuRef}>

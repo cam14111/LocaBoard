@@ -52,6 +52,19 @@
   }
 }
 
+/* Help mode : halo pulsant + surbrillance sur les pastilles info */
+body[data-help-mode="true"] .info-badge {
+  background-color: #dbeafe; /* primary-100 */
+  border-color: #3b82f6; /* primary-500 */
+  color: #2563eb; /* primary-600 */
+  animation: help-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes help-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.35); }
+}
+
 @supports (padding-top: env(safe-area-inset-top)) {
   .safe-top {
     padding-top: env(safe-area-inset-top);

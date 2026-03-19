@@ -8,6 +8,7 @@ import {
   ArrowRight,
   AlertTriangle,
 } from 'lucide-react';
+import InfoBadge from '@/components/ui/InfoBadge';
 import { useSelectedLogement } from '@/hooks/useSelectedLogement';
 import { getAllPaiements, type PaiementEnrichi } from '@/lib/api/paiements';
 import { getLogements } from '@/lib/api/logements';
@@ -174,7 +175,10 @@ export default function PaiementsGlobal() {
 
         {/* Statuts — chips */}
         <div>
-          <label className="text-xs text-slate-400 mb-1 block">Statut</label>
+          <div className="flex items-center gap-1 mb-1">
+            <label className="text-xs text-slate-400">Statut</label>
+            <InfoBadge helpKey="paiement_types" />
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {STATUT_OPTIONS.map((opt) => (
               <button

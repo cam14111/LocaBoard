@@ -1,7 +1,7 @@
 {
   "name": "calendrier-location",
   "private": true,
-  "version": "2026.03.15",
+  "version": "2026.03.19",
   "type": "module",
   "scripts": {
     "dev": "vite",

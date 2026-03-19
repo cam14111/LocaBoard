@@ -22,6 +22,7 @@ const LogementForm = lazy(() => import('@/pages/settings/LogementForm'));
 const ChecklistTemplates = lazy(() => import('@/pages/settings/ChecklistTemplates'));
 const AuditLogGlobal = lazy(() => import('@/pages/settings/AuditLogGlobal'));
 const Utilisateurs = lazy(() => import('@/pages/settings/Utilisateurs'));
+const Manuel = lazy(() => import('@/pages/Manuel'));
 const Login = lazy(() => import('@/pages/Login'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
@@ -52,6 +53,7 @@ export default function App() {
                 <Route path="dossiers/:id" element={<DossierDetail />} />
                 <Route path="taches" element={<Tasks />} />
                 <Route path="paiements" element={<PaiementsGlobal />} />
+                <Route path="manuel" element={<Manuel />} />
                 <Route path="parametres" element={<SettingsLayout />}>
                   <Route index element={<SettingsIndex />} />
                   <Route path="logements" element={<LogementsList />} />

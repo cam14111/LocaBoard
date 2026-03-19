@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, type FormEvent } from 'react';
 import { X, Loader2, CalendarDays, Clock, Info, AlertTriangle } from 'lucide-react';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
+import InfoBadge from '@/components/ui/InfoBadge';
 import { createReservation } from '@/lib/api/reservations';
 import { ensureDossierForReservation } from '@/lib/api/dossiers';
 import { generateAutoTaches } from '@/lib/api/taches';
@@ -526,7 +527,10 @@ export default function ReservationModal({
           {/* Choix arrhes/acompte (réservation uniquement) */}
           {!isOption && (
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-slate-900">Premier versement</h3>
+              <div className="flex items-center gap-1">
+                <h3 className="text-sm font-semibold text-slate-900">Premier versement</h3>
+                <InfoBadge helpKey="arrhes_vs_acompte" />
+              </div>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input

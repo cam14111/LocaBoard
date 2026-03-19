@@ -13,6 +13,7 @@ import {
   Clock,
   ShieldAlert,
 } from 'lucide-react';
+import InfoBadge from '@/components/ui/InfoBadge';
 import { useSelectedLogement } from '@/hooks/useSelectedLogement';
 import { supabase } from '@/lib/supabase';
 import { toDateString, formatDateFR } from '@/lib/dateUtils';
@@ -490,6 +491,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <CheckSquare className="h-5 w-5 text-amber-600" />
               <span className="text-sm font-medium text-slate-500">Tâches à faire</span>
+              <InfoBadge helpKey="taches_a_faire" />
             </div>
             <ArrowRight className="h-4 w-4 text-slate-400" />
           </div>
@@ -503,6 +505,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <Euro className="h-5 w-5 text-orange-600" />
               <span className="text-sm font-medium text-slate-500">Paiements en attente</span>
+              <InfoBadge helpKey="paiements_en_attente" />
             </div>
             <ArrowRight className="h-4 w-4 text-slate-400" />
           </div>
@@ -523,6 +526,7 @@ export default function Dashboard() {
             <h2 className="flex items-center gap-2 text-sm font-semibold text-orange-800">
               <Clock className="h-4 w-4" />
               Options expirant bientôt ({data.optionsExpirantes.length})
+              <InfoBadge helpKey="options_expirant" />
             </h2>
             <button
               onClick={() => navigate('/calendrier')}
@@ -561,6 +565,7 @@ export default function Dashboard() {
           <h2 className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-3">
             <AlertTriangle className="h-4 w-4" />
             Anomalies EDL ({data.anomaliesEdl.reduce((s, g) => s + g.anomalies.length, 0)})
+            <InfoBadge helpKey="anomalies_edl" />
           </h2>
           <div className="space-y-2">
             {data.anomaliesEdl.map((grp) => (
@@ -601,6 +606,7 @@ export default function Dashboard() {
           <h2 className="flex items-center gap-2 text-sm font-semibold text-red-800 mb-3">
             <ShieldAlert className="h-4 w-4" />
             Incidents EDL ({data.incidents.length} dossier{data.incidents.length > 1 ? 's' : ''})
+            <InfoBadge helpKey="incidents_edl" />
           </h2>
           <div className="space-y-2">
             {data.incidents.map((inc) => (

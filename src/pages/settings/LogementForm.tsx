@@ -9,6 +9,7 @@ import { getDefaultSaisons, validateSaisons, computeHauteSaisonPeriods, SAISON_B
 import type { SaisonConfig } from '@/lib/saisonUtils';
 import type { TypePiece, Utilisateur } from '@/types/database.types';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
+import InfoBadge from '@/components/ui/InfoBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useSelectedLogement } from '@/hooks/useSelectedLogement';
 
@@ -593,22 +594,32 @@ export default function LogementForm() {
                     onChange={(e) => handleChange('heure_checkout', e.target.value)} className={INPUT_CLASS} />
                 </div>
                 <div>
-                  <label htmlFor="buffer_heures" className="block text-sm font-medium text-slate-700">Tampon ménage (heures)</label>
+                  <div className="flex items-center gap-1">
+                    <label htmlFor="buffer_heures" className="text-sm font-medium text-slate-700">Tampon ménage (heures)</label>
+                    <InfoBadge helpKey="buffer_heures" />
+                  </div>
                   <input id="buffer_heures" type="number" min={0} value={form.buffer_heures}
                     onChange={(e) => handleChange('buffer_heures', e.target.value)} className={INPUT_CLASS} />
                 </div>
                 <div>
-                  <label htmlFor="taux_taxe_sejour" className="block text-sm font-medium text-slate-700">Taxe de séjour (€/pers/nuit)</label>
+                  <div className="flex items-center gap-1">
+                    <label htmlFor="taux_taxe_sejour" className="text-sm font-medium text-slate-700">Taxe de séjour (€/pers/nuit)</label>
+                    <InfoBadge helpKey="taux_taxe_sejour" />
+                  </div>
                   <input id="taux_taxe_sejour" type="number" min={0} step={0.01} value={form.taux_taxe_sejour}
                     onChange={(e) => handleChange('taux_taxe_sejour', e.target.value)} className={INPUT_CLASS} />
                 </div>
                 <div>
-                  <label htmlFor="duree_expiration_option_jours" className="block text-sm font-medium text-slate-700">Expiration option (jours)</label>
+                  <div className="flex items-center gap-1">
+                    <label htmlFor="duree_expiration_option_jours" className="text-sm font-medium text-slate-700">Expiration option (jours)</label>
+                    <InfoBadge helpKey="duree_expiration_option_jours" />
+                  </div>
                   <input id="duree_expiration_option_jours" type="number" min={1} value={form.duree_expiration_option_jours}
                     onChange={(e) => handleChange('duree_expiration_option_jours', e.target.value)} className={INPUT_CLASS} />
                 </div>
                 <div className="flex items-center gap-3 sm:col-span-2 pt-2">
                   <Toggle checked={form.taches_auto_enabled} onChange={(v) => handleChange('taches_auto_enabled', v)} label="Tâches automatiques activées" />
+                  <InfoBadge helpKey="taches_auto_enabled" />
                 </div>
               </div>
             </div>
@@ -629,7 +640,10 @@ export default function LogementForm() {
                   className={INPUT_CLASS + ' resize-none'} />
               </div>
               <div>
-                <label htmlFor="charges_incluses" className="block text-sm font-medium text-slate-700">Charges incluses</label>
+                <div className="flex items-center gap-1">
+                  <label htmlFor="charges_incluses" className="text-sm font-medium text-slate-700">Charges incluses</label>
+                  <InfoBadge helpKey="charges_incluses" />
+                </div>
                 <textarea id="charges_incluses" rows={2} value={form.charges_incluses}
                   onChange={(e) => handleChange('charges_incluses', e.target.value)} placeholder="Eau, électricité, chauffage, wifi…"
                   className={INPUT_CLASS + ' resize-none'} />
@@ -639,7 +653,10 @@ export default function LogementForm() {
             {/* Animaux */}
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
               <h3 className="font-medium text-slate-900">Animaux</h3>
-              <Toggle checked={form.animaux_autorises} onChange={(v) => handleChange('animaux_autorises', v)} label="Animaux autorisés" />
+              <div className="flex items-center gap-3">
+                <Toggle checked={form.animaux_autorises} onChange={(v) => handleChange('animaux_autorises', v)} label="Animaux autorisés" />
+                <InfoBadge helpKey="animaux_autorises" />
+              </div>
               {form.animaux_autorises && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pl-2 border-l-2 border-primary-100">
                   <div>
@@ -783,13 +800,17 @@ export default function LogementForm() {
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="font-medium text-slate-900 mb-4">Forfait ménage</h3>
               <div className="w-48">
-                <label htmlFor="forfait_menage_eur" className="block text-sm font-medium text-slate-700 mb-1">Montant (€)</label>
+                <div className="flex items-center gap-1 mb-1">
+                  <label htmlFor="forfait_menage_eur" className="text-sm font-medium text-slate-700">Montant (€)</label>
+                  <InfoBadge helpKey="forfait_menage" />
+                </div>
                 <input id="forfait_menage_eur" type="number" min={0} step={0.01} value={form.forfait_menage_eur}
                   onChange={(e) => handleChange('forfait_menage_eur', e.target.value)} placeholder="0.00" className={INPUT_CLASS} />
               </div>
             </div>
 
             {/* Sélecteur de mode tarifaire */}
+            <div className="flex items-center gap-2">
             <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1 gap-1">
               <button type="button" onClick={() => toggleSaisons(false)}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${!saisonsEnabled ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
@@ -800,18 +821,26 @@ export default function LogementForm() {
                 Tarification saisonnière
               </button>
             </div>
+            <InfoBadge helpKey="tarification_saisonniere" />
+            </div>
 
             {/* ── Tarification unique ── */}
             {!saisonsEnabled && (
               <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="loyer_nuit_defaut" className="block text-sm font-medium text-slate-700">Loyer / nuit (€)</label>
+                    <div className="flex items-center gap-1">
+                      <label htmlFor="loyer_nuit_defaut" className="text-sm font-medium text-slate-700">Loyer / nuit (€)</label>
+                      <InfoBadge helpKey="loyer_nuit_defaut" />
+                    </div>
                     <input id="loyer_nuit_defaut" type="number" min={0} step={0.01} value={form.loyer_nuit_defaut}
                       onChange={(e) => handleChange('loyer_nuit_defaut', e.target.value)} placeholder="0.00" className={INPUT_CLASS} />
                   </div>
                   <div>
-                    <label htmlFor="loyer_semaine_defaut" className="block text-sm font-medium text-slate-700">Loyer / semaine (€)</label>
+                    <div className="flex items-center gap-1">
+                      <label htmlFor="loyer_semaine_defaut" className="text-sm font-medium text-slate-700">Loyer / semaine (€)</label>
+                      <InfoBadge helpKey="loyer_semaine_defaut" />
+                    </div>
                     <input id="loyer_semaine_defaut" type="number" min={0} step={0.01} value={form.loyer_semaine_defaut}
                       onChange={(e) => handleChange('loyer_semaine_defaut', e.target.value)} placeholder="Optionnel" className={INPUT_CLASS} />
                   </div>

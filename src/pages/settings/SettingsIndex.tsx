@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Home, User, Users, ScrollText, ChevronRight } from 'lucide-react';
+import { Home, User, Users, ScrollText, BookOpen, ChevronRight } from 'lucide-react';
 import PermissionGate from '@/components/ui/PermissionGate';
 
 const menuItems = [
@@ -7,6 +7,7 @@ const menuItems = [
   { to: '/parametres/profil', label: 'Mon profil', icon: User, adminOnly: false },
   { to: '/parametres/utilisateurs', label: 'Utilisateurs', icon: Users, adminOnly: true },
   { to: '/parametres/audit-log', label: 'Journal d\'audit', icon: ScrollText, adminOnly: true },
+  { to: '/manuel', label: 'Manuel d\'utilisation', icon: BookOpen, adminOnly: false },
 ];
 
 export default function SettingsIndex() {

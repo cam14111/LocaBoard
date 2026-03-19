@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FolderOpen, Loader2, Calendar, Search, Euro, List, Columns3, Home } from 'lucide-react';
+import InfoBadge from '@/components/ui/InfoBadge';
 import { getDossiers } from '@/lib/api/dossiers';
 import { useSelectedLogement } from '@/hooks/useSelectedLogement';
 import { supabase } from '@/lib/supabase';
@@ -18,9 +19,10 @@ interface DossierWithReservation {
 }
 
 // Groupes de filtres rapides
-const FILTER_GROUPS: { label: string; statuts: PipelineStatut[] }[] = [
+const FILTER_GROUPS: { label: string; statuts: PipelineStatut[]; helpKey?: string }[] = [
   {
     label: 'En cours',
+    helpKey: 'dossiers_en_cours',
     statuts: [
       'DEMANDE_RECUE', 'OPTION_POSEE', 'CONTRAT_ENVOYE', 'CONTRAT_SIGNE',
       'ACOMPTE_RECU', 'SOLDE_DEMANDE', 'SOLDE_RECU',
@@ -28,8 +30,8 @@ const FILTER_GROUPS: { label: string; statuts: PipelineStatut[] }[] = [
       'CHECKOUT_FAIT', 'EDL_OK', 'EDL_INCIDENT',
     ],
   },
-  { label: 'Clôturés', statuts: ['CLOTURE'] },
-  { label: 'Annulés', statuts: ['ANNULE'] },
+  { label: 'Clôturés', helpKey: 'dossiers_clotures', statuts: ['CLOTURE'] },
+  { label: 'Annulés', helpKey: 'dossiers_annules', statuts: ['ANNULE'] },
 ];
 
 export default function Dossiers() {
@@ -150,26 +152,28 @@ export default function Dossiers() {
             />
           </div>
 
-          <div className="flex gap-2 mb-5 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2 mb-5 overflow-x-auto scrollbar-hide">
             {FILTER_GROUPS.map((g, i) => (
-              <button
-                key={g.label}
-                onClick={() => setActiveFilter(i)}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeFilter === i
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {g.label}
-                <span
-                  className={`inline-flex items-center justify-center h-5 min-w-[1.25rem] rounded-full px-1 text-xs ${
-                    activeFilter === i ? 'bg-primary-500 text-white' : 'bg-slate-200 text-slate-500'
+              <div key={g.label} className="flex items-center gap-1">
+                <button
+                  onClick={() => setActiveFilter(i)}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                    activeFilter === i
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  {counts[i]}
-                </span>
-              </button>
+                  {g.label}
+                  <span
+                    className={`inline-flex items-center justify-center h-5 min-w-[1.25rem] rounded-full px-1 text-xs ${
+                      activeFilter === i ? 'bg-primary-500 text-white' : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {counts[i]}
+                  </span>
+                </button>
+                {g.helpKey && <InfoBadge helpKey={g.helpKey} />}
+              </div>
             ))}
           </div>
         </>
