@@ -17,9 +17,6 @@ export default function InfoBadge({ helpKey }: InfoBadgeProps) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const entry = helpContent[helpKey];
-  if (!entry) return null;
-
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -27,6 +24,9 @@ export default function InfoBadge({ helpKey }: InfoBadgeProps) {
   }, []);
 
   const handleClose = useCallback(() => setOpen(false), []);
+
+  const entry = helpContent[helpKey];
+  if (!entry) return null;
 
   return (
     <>

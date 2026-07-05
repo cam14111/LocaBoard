@@ -13,11 +13,8 @@ import type { PipelineStatut } from '@/types/database.types';
 
 describe('pipeline — transitions métier', () => {
   describe('getNextSteps', () => {
-    it('DEMANDE_RECUE peut aller vers OPTION_POSEE ou CONTRAT_ENVOYE', () => {
-      const next = getNextSteps('DEMANDE_RECUE');
-      expect(next).toContain('OPTION_POSEE');
-      expect(next).toContain('CONTRAT_ENVOYE');
-      expect(next).toHaveLength(2);
+    it('DEMANDE_RECUE (legacy) n\'a aucune transition — les dossiers démarrent à OPTION_POSEE', () => {
+      expect(getNextSteps('DEMANDE_RECUE')).toEqual([]);
     });
 
     it('OPTION_POSEE ne peut aller que vers CONTRAT_ENVOYE', () => {
@@ -52,8 +49,8 @@ describe('pipeline — transitions métier', () => {
 
   describe('canAdvance', () => {
     // Admin peut avancer partout si la transition est autorisée
-    it('admin peut avancer DEMANDE_RECUE → CONTRAT_ENVOYE', () => {
-      expect(canAdvance('DEMANDE_RECUE', 'CONTRAT_ENVOYE', 'ADMIN')).toBe(true);
+    it('admin peut avancer OPTION_POSEE → CONTRAT_ENVOYE', () => {
+      expect(canAdvance('OPTION_POSEE', 'CONTRAT_ENVOYE', 'ADMIN')).toBe(true);
     });
 
     it('admin peut avancer CONTRAT_ENVOYE → CONTRAT_SIGNE', () => {
@@ -66,7 +63,7 @@ describe('pipeline — transitions métier', () => {
 
     // Co-hôte ne peut pas avancer vers les étapes admin-only
     it('co-hôte NE peut PAS avancer vers CONTRAT_ENVOYE', () => {
-      expect(canAdvance('DEMANDE_RECUE', 'CONTRAT_ENVOYE', 'COHOTE')).toBe(false);
+      expect(canAdvance('OPTION_POSEE', 'CONTRAT_ENVOYE', 'COHOTE')).toBe(false);
     });
 
     it('co-hôte NE peut PAS avancer vers CONTRAT_SIGNE', () => {
@@ -82,8 +79,8 @@ describe('pipeline — transitions métier', () => {
     });
 
     // Co-hôte peut avancer vers les étapes opérationnelles
-    it('co-hôte peut avancer DEMANDE_RECUE → OPTION_POSEE', () => {
-      expect(canAdvance('DEMANDE_RECUE', 'OPTION_POSEE', 'COHOTE')).toBe(true);
+    it('co-hôte peut avancer SOLDE_DEMANDE → CHECKIN_FAIT', () => {
+      expect(canAdvance('SOLDE_DEMANDE', 'CHECKIN_FAIT', 'COHOTE')).toBe(true);
     });
 
     it('co-hôte peut avancer SOLDE_RECU → CHECKIN_FAIT', () => {
@@ -181,8 +178,12 @@ describe('pipeline — transitions métier', () => {
   });
 
   describe('getStepIndex', () => {
-    it('DEMANDE_RECUE est à l\'index 0', () => {
-      expect(getStepIndex('DEMANDE_RECUE')).toBe(0);
+    it('OPTION_POSEE est à l\'index 0 (première étape réelle)', () => {
+      expect(getStepIndex('OPTION_POSEE')).toBe(0);
+    });
+
+    it('DEMANDE_RECUE (legacy) n\'est pas dans le stepper (retourne -1)', () => {
+      expect(getStepIndex('DEMANDE_RECUE')).toBe(-1);
     });
 
     it('CLOTURE est le dernier du stepper', () => {
@@ -231,8 +232,8 @@ describe('pipeline — transitions métier', () => {
       }
     });
 
-    it('PIPELINE_STEPS a 12 étapes (sans EDL_ENTREE_INCIDENT, EDL_INCIDENT et ANNULE)', () => {
-      expect(PIPELINE_STEPS).toHaveLength(12);
+    it('PIPELINE_STEPS a 11 étapes (DEMANDE_RECUE legacy, sans EDL_ENTREE_INCIDENT, EDL_INCIDENT et ANNULE)', () => {
+      expect(PIPELINE_STEPS).toHaveLength(11);
     });
   });
 });

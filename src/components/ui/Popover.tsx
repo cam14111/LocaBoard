@@ -31,33 +31,35 @@ export default function Popover({ open, onClose, anchorRef, children, className 
 
   useClickOutside(panelRef, stableOnClose, open);
 
-  // Calcul position
+  // Calcul de la position : effet de mesure du DOM (lecture layout après rendu),
+  // le setState y est nécessaire et documenté par React pour ce cas.
   useEffect(() => {
     if (!open || !anchorRef.current) return;
 
     const mobile = window.innerWidth < 640;
-    setIsMobile(mobile);
 
-    if (mobile) {
-      setPos(null);
-      return;
+    let nextPos: Position | null = null;
+    if (!mobile) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      const panelHeight = 160; // estimation
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const placement = spaceBelow > panelHeight + 8 ? 'below' : 'above';
+
+      const maxWidth = 320;
+      let left = rect.left + rect.width / 2 - maxWidth / 2;
+      // Garder dans le viewport
+      left = Math.max(16, Math.min(left, window.innerWidth - maxWidth - 16));
+
+      nextPos = {
+        top: placement === 'below' ? rect.bottom + 8 : rect.top - panelHeight - 8,
+        left,
+        placement,
+      };
     }
 
-    const rect = anchorRef.current.getBoundingClientRect();
-    const panelHeight = 160; // estimation
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const placement = spaceBelow > panelHeight + 8 ? 'below' : 'above';
-
-    const maxWidth = 320;
-    let left = rect.left + rect.width / 2 - maxWidth / 2;
-    // Garder dans le viewport
-    left = Math.max(16, Math.min(left, window.innerWidth - maxWidth - 16));
-
-    setPos({
-      top: placement === 'below' ? rect.bottom + 8 : rect.top - panelHeight - 8,
-      left,
-      placement,
-    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mesure layout post-rendu
+    setIsMobile(mobile);
+    setPos(nextPos);
   }, [open, anchorRef]);
 
   // Keyboard : Escape ferme

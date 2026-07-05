@@ -79,7 +79,9 @@ export async function dismissNotificationsForEntity(
       p_entity_type: entityType,
       p_entity_id: entityId,
     });
-  } catch {}
+  } catch {
+    // Non bloquant : l'échec du nettoyage des notifications ne doit pas interrompre l'action métier.
+  }
 }
 
 export async function createNotification(params: {

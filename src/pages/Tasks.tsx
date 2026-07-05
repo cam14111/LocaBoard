@@ -90,7 +90,6 @@ export default function Tasks() {
 
     load();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLogementId]);
 
   useEffect(() => {

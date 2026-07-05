@@ -84,7 +84,7 @@ export default function Dossiers() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [selectedLogementId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedLogementId]);
 
   // Filtrage côté client (recherche + filtre pipeline)
   const filtered = useMemo(() => {

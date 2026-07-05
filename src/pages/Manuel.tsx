@@ -77,8 +77,10 @@ export default function Manuel() {
       const id = location.hash.slice(1);
       const el = document.getElementById(id);
       if (el) {
-        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-        setActiveId(id);
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setActiveId(id);
+        }, 100);
       }
     }
   }, [location.hash]);

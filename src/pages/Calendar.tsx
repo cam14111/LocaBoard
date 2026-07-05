@@ -74,7 +74,7 @@ export default function Calendar() {
       setDayMenuPosition({ x: window.innerWidth / 2, y: window.innerHeight / 3 });
     }
     setDayMenuOpen(true);
-  }, [selectedLogementId]);
+  }, []);
 
   // Choix dans le menu action jour
   const handleDayAction = useCallback((action: DayActionChoice) => {

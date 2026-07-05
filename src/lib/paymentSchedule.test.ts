@@ -12,19 +12,19 @@ describe('computePaymentSchedule — calcul échéancier', () => {
     today: new Date(2026, 1, 1), // 1er février 2026
   };
 
-  describe('Répartition 30/70', () => {
-    it('premier versement = 30% du loyer', () => {
+  describe('Répartition 25/75 (conforme au contrat)', () => {
+    it('premier versement = 25% du loyer', () => {
       const entries = computePaymentSchedule(baseParams);
       const premier = entries.find((e) => e.type === 'ARRHES');
       expect(premier).toBeDefined();
-      expect(premier!.montant_eur).toBe(300);
+      expect(premier!.montant_eur).toBe(250);
     });
 
-    it('solde = 70% du loyer', () => {
+    it('solde = 75% du loyer', () => {
       const entries = computePaymentSchedule(baseParams);
       const solde = entries.find((e) => e.type === 'SOLDE');
       expect(solde).toBeDefined();
-      expect(solde!.montant_eur).toBe(700);
+      expect(solde!.montant_eur).toBe(750);
     });
 
     it('premier + solde = loyer total', () => {
@@ -38,8 +38,8 @@ describe('computePaymentSchedule — calcul échéancier', () => {
       const entries = computePaymentSchedule({ ...baseParams, loyer_total: 999 });
       const premier = entries.find((e) => e.type === 'ARRHES');
       const solde = entries.find((e) => e.type === 'SOLDE');
-      expect(premier!.montant_eur).toBe(299.7);
-      expect(solde!.montant_eur).toBe(699.3);
+      expect(premier!.montant_eur).toBe(249.75);
+      expect(solde!.montant_eur).toBe(749.25);
       expect(premier!.montant_eur + solde!.montant_eur).toBeCloseTo(999, 2);
     });
   });

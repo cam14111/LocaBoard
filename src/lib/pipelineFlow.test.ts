@@ -10,10 +10,9 @@ import { hasPermission } from './permissions';
 import type { PipelineStatut } from '@/types/database.types';
 
 describe('Pipeline flow — parcours complet E2E', () => {
-  describe('Parcours admin complet DEMANDE_RECUE → CLOTURE', () => {
-    // Le parcours linéaire principal
+  describe('Parcours admin complet OPTION_POSEE → CLOTURE', () => {
+    // Le parcours linéaire principal (DEMANDE_RECUE est un statut legacy, non utilisé)
     const adminPath: PipelineStatut[] = [
-      'DEMANDE_RECUE',
       'OPTION_POSEE',
       'CONTRAT_ENVOYE',
       'CONTRAT_SIGNE',
@@ -44,8 +43,8 @@ describe('Pipeline flow — parcours complet E2E', () => {
   });
 
   describe('Parcours co-hôte — étapes opérationnelles uniquement', () => {
-    it('co-hôte peut faire DEMANDE_RECUE → OPTION_POSEE', () => {
-      expect(canAdvance('DEMANDE_RECUE', 'OPTION_POSEE', 'COHOTE')).toBe(true);
+    it('co-hôte peut faire SOLDE_RECU → CHECKIN_FAIT (étape terrain)', () => {
+      expect(canAdvance('SOLDE_RECU', 'CHECKIN_FAIT', 'COHOTE')).toBe(true);
     });
 
     it('co-hôte est bloqué aux étapes admin contractuelles/financières', () => {
@@ -173,10 +172,6 @@ describe('Pipeline flow — parcours complet E2E', () => {
   });
 
   describe('Sauts autorisés', () => {
-    it('DEMANDE_RECUE peut sauter OPTION_POSEE vers CONTRAT_ENVOYE (admin)', () => {
-      expect(canAdvance('DEMANDE_RECUE', 'CONTRAT_ENVOYE', 'ADMIN')).toBe(true);
-    });
-
     it('SOLDE_DEMANDE peut sauter SOLDE_RECU vers CHECKIN_FAIT (admin)', () => {
       expect(canAdvance('SOLDE_DEMANDE', 'CHECKIN_FAIT', 'ADMIN')).toBe(true);
     });
