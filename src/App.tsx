@@ -4,6 +4,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { LogementProvider } from '@/contexts/LogementContext';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import AppLayout from '@/components/layout/AppLayout';
+import ErrorBoundary from '@/components/layout/ErrorBoundary';
 import { Loader2 } from 'lucide-react';
 
 // Pages chargées en lazy pour code-splitting
@@ -37,9 +38,10 @@ function PageLoader() {
 export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <AuthProvider>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+      <ErrorBoundary>
+        <AuthProvider>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             <Route path="/login" element={<Login />} />
 
             <Route element={<ProtectedRoute />}>
@@ -67,10 +69,11 @@ export default function App() {
               </Route>
             </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </AuthProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </AuthProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

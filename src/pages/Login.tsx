@@ -1,12 +1,13 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -47,8 +48,8 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <CalendarDays className="mx-auto h-12 w-12 text-primary-600" aria-hidden="true" />
-          <h1 className="mt-4 text-2xl font-bold text-slate-900">Calendrier Location</h1>
-          <p className="mt-1 text-sm text-slate-500">Connectez-vous pour accéder à l'application</p>
+          <h1 className="mt-4 text-2xl font-bold text-slate-900">LocaBoard</h1>
+          <p className="mt-1 text-sm text-slate-500">Connectez-vous pour accéder à votre tableau de bord</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" aria-label="Formulaire de connexion">
@@ -60,6 +61,8 @@ export default function Login() {
               id="email"
               type="email"
               required
+              autoComplete="email"
+              autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
@@ -71,14 +74,26 @@ export default function Login() {
             <label htmlFor="password" className="block text-sm font-medium text-slate-700">
               Mot de passe
             </label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-            />
+            <div className="relative mt-1">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none focus-visible:text-primary-600"
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           {searchParams.get('expired') === 'true' && !error && (
@@ -94,6 +109,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
           >
             {loading ? 'Connexion...' : 'Se connecter'}
