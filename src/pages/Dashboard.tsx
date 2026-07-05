@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -98,6 +98,14 @@ function formatTimeRemaining(expirationAt: string): string {
   }
   if (hours > 0) return `${hours}h ${minutes}min`;
   return `${minutes}min`;
+}
+
+/** Active un « clic » de carte au clavier (Entrée / Espace) pour les div role="button". */
+function cardKeyDown(e: KeyboardEvent, action: () => void) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    action();
+  }
 }
 
 export default function Dashboard() {
@@ -483,9 +491,12 @@ export default function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4">
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => navigate('/taches')}
-          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm text-left hover:border-primary-300 transition-colors"
+          onKeyDown={(e) => cardKeyDown(e, () => navigate('/taches'))}
+          className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm text-left hover:border-primary-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -496,10 +507,13 @@ export default function Dashboard() {
             <ArrowRight className="h-4 w-4 text-slate-400" />
           </div>
           <p className="mt-1 text-2xl font-bold">{data?.tachesCount ?? 0}</p>
-        </button>
-        <button
+        </div>
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => navigate('/paiements')}
-          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm text-left hover:border-primary-300 transition-colors"
+          onKeyDown={(e) => cardKeyDown(e, () => navigate('/paiements'))}
+          className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm text-left hover:border-primary-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -516,7 +530,7 @@ export default function Dashboard() {
               {data!.paiementsEnRetard} en retard
             </p>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Card Options expirant sous 48h (E09-04) — visible uniquement s'il y en a */}
