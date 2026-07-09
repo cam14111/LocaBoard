@@ -67,6 +67,12 @@ Interface mobile optimisée pour les inspections sur site :
 - Bloquer des périodes pour travaux, usage personnel ou indisponibilité
 - Visibles sur le calendrier et pris en compte dans la détection de conflits
 
+### Synchronisation calendrier (iCal)
+- URL iCal secrète par logement (Paramètres → Logements → fiche du logement)
+- Abonnez Airbnb, Booking.com ou Google Agenda pour bloquer automatiquement
+  les dates réservées dans LocaBoard (réservations confirmées, options actives et blocages)
+- Lien révocable : régénérez le jeton pour invalider l'ancienne URL
+
 ### Notifications
 - Notifications en temps réel dans l'application
 - Notifications push sur mobile et desktop (même navigateur fermé)

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Save, Plus, Trash2, ChevronUp, ChevronDown, RotateCcw, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Plus, Trash2, ChevronUp, ChevronDown, RotateCcw, Info, Copy, Check, CalendarSync } from 'lucide-react';
 import { createLogement, getLogementById, updateLogement } from '@/lib/api/logements';
+import { supabaseUrl } from '@/lib/supabase';
 import { getLogementPieces, upsertLogementPieces, generateDefaultPieces, adjustPiecesForCount } from '@/lib/api/logementPieces';
 import { getLogementSaisons, upsertLogementSaisons } from '@/lib/api/logementSaisons';
 import { getActiveUtilisateurs, getLogementAccess, setLogementAccess } from '@/lib/api/utilisateurs';
@@ -160,6 +161,9 @@ export default function LogementForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [icalToken, setIcalToken] = useState<string | null>(null);
+  const [icalCopied, setIcalCopied] = useState(false);
+  const [icalRegenerating, setIcalRegenerating] = useState(false);
 
   // ─── Chargement initial ──────────────────────────────────
 
@@ -193,6 +197,7 @@ export default function LogementForm() {
           loyer_nuit_defaut: logement.loyer_nuit_defaut?.toString() ?? '',
           loyer_semaine_defaut: logement.loyer_semaine_defaut?.toString() ?? '',
         });
+        setIcalToken(logement.ical_token ?? null);
       })
       .catch(() => setError('Impossible de charger le logement.'))
       .finally(() => setLoading(false));
@@ -679,6 +684,70 @@ export default function LogementForm() {
                 </div>
               )}
             </div>
+
+            {/* Synchronisation calendrier (iCal) — édition uniquement */}
+            {isEdit && icalToken && (
+              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
+                <h3 className="flex items-center gap-2 font-medium text-slate-900">
+                  <CalendarSync className="h-4 w-4 text-primary-600" />
+                  Synchronisation calendrier (iCal)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Abonnez Airbnb, Booking.com ou Google Agenda à cette URL pour bloquer
+                  automatiquement les dates réservées dans LocaBoard (réservations, options et blocages).
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${supabaseUrl}/functions/v1/ical-export?token=${icalToken}`}
+                    onFocus={(e) => e.target.select()}
+                    aria-label="URL du calendrier iCal"
+                    className={INPUT_CLASS + ' mt-0 font-mono text-xs text-slate-600'}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(
+                          `${supabaseUrl}/functions/v1/ical-export?token=${icalToken}`,
+                        );
+                        setIcalCopied(true);
+                        setTimeout(() => setIcalCopied(false), 2000);
+                      } catch {
+                        /* clipboard indisponible : l'utilisateur peut sélectionner le champ */
+                      }
+                    }}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {icalCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                    {icalCopied ? 'Copié' : 'Copier'}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  disabled={icalRegenerating}
+                  onClick={async () => {
+                    if (!window.confirm(
+                      'Régénérer le lien iCal ? L\'ancienne URL cessera de fonctionner et devra être remplacée partout où elle est utilisée.',
+                    )) return;
+                    setIcalRegenerating(true);
+                    try {
+                      const updated = await updateLogement(id!, { ical_token: crypto.randomUUID() });
+                      setIcalToken(updated.ical_token);
+                    } catch {
+                      setError('Impossible de régénérer le lien iCal.');
+                    } finally {
+                      setIcalRegenerating(false);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                >
+                  <RotateCcw className={`h-3.5 w-3.5 ${icalRegenerating ? 'animate-spin' : ''}`} />
+                  Régénérer le lien (invalide l'ancien)
+                </button>
+              </div>
+            )}
           </>
         )}
 

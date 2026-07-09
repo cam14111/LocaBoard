@@ -100,6 +100,7 @@ export interface Logement {
   animaux_taille_max: string | null;
   loyer_nuit_defaut: number | null;
   loyer_semaine_defaut: number | null;
+  ical_token: string;
   created_at: string;
   archived_at: string | null;
 }

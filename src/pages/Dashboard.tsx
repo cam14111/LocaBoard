@@ -124,96 +124,37 @@ export default function Dashboard() {
         const in7days = toDateString(new Date(Date.now() + 7 * 86400000));
         const in48h = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
 
-        // Arrivées aujourd'hui
+        // ── Vague 1 : requêtes indépendantes, exécutées en parallèle ──
         let arrivQuery = supabase
           .from('reservations')
-          .select('id, locataire_nom, locataire_prenom, date_debut, nb_personnes, logement_id')
+          .select('id, locataire_nom, locataire_prenom, date_debut, nb_personnes, logement_id, logements(nom)')
           .eq('date_debut', today)
           .in('statut', ['CONFIRMEE', 'OPTION_ACTIVE'])
           .is('archived_at', null);
         if (selectedLogementId) arrivQuery = arrivQuery.eq('logement_id', selectedLogementId);
-        const { data: arrivees } = await arrivQuery;
 
-        if (cancelled) return;
-
-        // Départs aujourd'hui
         let depQuery = supabase
           .from('reservations')
-          .select('id, locataire_nom, locataire_prenom, date_fin, logement_id')
+          .select('id, locataire_nom, locataire_prenom, date_fin, logement_id, logements(nom)')
           .eq('date_fin', today)
           .in('statut', ['CONFIRMEE', 'OPTION_ACTIVE'])
           .is('archived_at', null);
         if (selectedLogementId) depQuery = depQuery.eq('logement_id', selectedLogementId);
-        const { data: departs } = await depQuery;
 
-        if (cancelled) return;
-
-        // Noms des logements pour arrivées/départs (uniquement si tous les logements)
-        const logementIdsJour = [
-          ...new Set([
-            ...(arrivees ?? []).map((r) => (r as { logement_id?: string }).logement_id).filter(Boolean),
-            ...(departs ?? []).map((r) => (r as { logement_id?: string }).logement_id).filter(Boolean),
-          ]),
-        ] as string[];
-        const logementNomJourMap = new Map<string, string>();
-        if (logementIdsJour.length > 0) {
-          const { data: logementsJour } = await supabase
-            .from('logements')
-            .select('id, nom')
-            .in('id', logementIdsJour);
-          (logementsJour ?? []).forEach((l) => logementNomJourMap.set(l.id, l.nom));
-        }
-
-        if (cancelled) return;
-
-        // Tâches à faire
         let tachesQuery = supabase
           .from('taches')
           .select('id', { count: 'exact', head: true })
           .in('statut', ['A_FAIRE', 'EN_COURS']);
         if (selectedLogementId) tachesQuery = tachesQuery.eq('logement_id', selectedLogementId);
-        const { count: tachesCount } = await tachesQuery;
 
-        if (cancelled) return;
-
-        // Paiements & incidents : filtrer via les dossiers du logement
+        // Dossiers actifs avec noms locataire + logement embarqués
+        // (évite les requêtes d'enrichissement séparées plus bas)
         let dossierQuery = supabase
           .from('dossiers')
-          .select('id, reservation_id, logement_id')
+          .select('id, reservation_id, logement_id, reservations(locataire_nom, locataire_prenom), logements(nom)')
           .is('archived_at', null);
         if (selectedLogementId) dossierQuery = dossierQuery.eq('logement_id', selectedLogementId);
-        const { data: dossierIds } = await dossierQuery;
 
-        if (cancelled) return;
-
-        const dossierIdSet = new Set((dossierIds ?? []).map((d) => d.id));
-        const dossierReservationMap = new Map(
-          (dossierIds ?? []).map((d) => [d.id, d.reservation_id as string]),
-        );
-        const dossierLogementMap = new Map(
-          (dossierIds ?? []).map((d) => [d.id, d.logement_id as string]),
-        );
-
-        const { data: paiementsDu } = await supabase
-          .from('paiements')
-          .select('id, dossier_id')
-          .eq('statut', 'DU');
-
-        const { data: paiementsRetard } = await supabase
-          .from('paiements')
-          .select('id, dossier_id')
-          .eq('statut', 'EN_RETARD');
-
-        if (cancelled) return;
-
-        const paiementsEnAttente = (paiementsDu ?? []).filter((p) =>
-          dossierIdSet.has(p.dossier_id),
-        ).length;
-        const paiementsEnRetard = (paiementsRetard ?? []).filter((p) =>
-          dossierIdSet.has(p.dossier_id),
-        ).length;
-
-        // Options expirant sous 48h
         let optQuery = supabase
           .from('reservations')
           .select('id, locataire_nom, locataire_prenom, date_debut, date_fin, expiration_at')
@@ -223,26 +164,74 @@ export default function Dashboard() {
           .is('archived_at', null)
           .order('expiration_at');
         if (selectedLogementId) optQuery = optQuery.eq('logement_id', selectedLogementId);
-        const { data: optionsExpirantes } = await optQuery;
+
+        // Prochaines arrivées avec dossier embarqué (évite un N+1)
+        let prochQuery = supabase
+          .from('reservations')
+          .select('id, locataire_nom, locataire_prenom, date_debut, date_fin, statut, dossiers(id, pipeline_statut)')
+          .gt('date_debut', today)
+          .lte('date_debut', in7days)
+          .in('statut', ['CONFIRMEE', 'OPTION_ACTIVE'])
+          .is('archived_at', null)
+          .order('date_debut')
+          .limit(5);
+        if (selectedLogementId) prochQuery = prochQuery.eq('logement_id', selectedLogementId);
+
+        const [
+          { data: arrivees },
+          { data: departs },
+          { count: tachesCount },
+          { data: dossierIds },
+          { data: paiementsDu },
+          { data: paiementsRetard },
+          { data: optionsExpirantes },
+          { data: prochaines },
+        ] = await Promise.all([
+          arrivQuery,
+          depQuery,
+          tachesQuery,
+          dossierQuery,
+          supabase.from('paiements').select('id, dossier_id').eq('statut', 'DU'),
+          supabase.from('paiements').select('id, dossier_id').eq('statut', 'EN_RETARD'),
+          optQuery,
+          prochQuery,
+        ]);
 
         if (cancelled) return;
 
-        // Incidents EDL — tous les dossiers non-archivés, groupés ensuite par dossier
-        let rawIncidents: Array<{
-          dossier_id: string;
-          severite: string;
-          created_at: string;
-        }> = [];
+        const dossierIdSet = new Set((dossierIds ?? []).map((d) => d.id));
+        type DossierEmbed = {
+          id: string;
+          reservation_id: string;
+          logement_id: string;
+          reservations: { locataire_nom: string; locataire_prenom: string } | null;
+          logements: { nom: string } | null;
+        };
+        const dossierMap = new Map(
+          ((dossierIds ?? []) as unknown as DossierEmbed[]).map((d) => [d.id, d]),
+        );
+
+        const paiementsEnAttente = (paiementsDu ?? []).filter((p) =>
+          dossierIdSet.has(p.dossier_id),
+        ).length;
+        const paiementsEnRetard = (paiementsRetard ?? []).filter((p) =>
+          dossierIdSet.has(p.dossier_id),
+        ).length;
+
+        // ── Vague 2 : incidents + EDLs des dossiers actifs, en parallèle ──
         const dossierIdArray = [...dossierIdSet];
-        if (dossierIdArray.length > 0) {
-          const { data: incData } = await supabase
-            .from('incidents')
-            .select('dossier_id, severite, created_at')
-            .in('dossier_id', dossierIdArray)
-            .eq('statut', 'OUVERT')
-            .order('created_at', { ascending: false });
-          rawIncidents = incData ?? [];
-        }
+        const [{ data: incData }, { data: edlsData }] = dossierIdArray.length
+          ? await Promise.all([
+              supabase
+                .from('incidents')
+                .select('dossier_id, severite, created_at')
+                .in('dossier_id', dossierIdArray)
+                .eq('statut', 'OUVERT')
+                .order('created_at', { ascending: false }),
+              supabase.from('edls').select('id, dossier_id, type').in('dossier_id', dossierIdArray),
+            ])
+          : [{ data: [] }, { data: [] }];
+        const rawIncidents = incData ?? [];
 
         if (cancelled) return;
 
@@ -266,51 +255,16 @@ export default function Dashboard() {
           }
         }
 
-        // Enrichir avec les noms des locataires
-        const incidentReservationIds = [
-          ...new Set(
-            [...incGroupMap.keys()]
-              .map((did) => dossierReservationMap.get(did))
-              .filter((rid): rid is string => !!rid),
-          ),
-        ];
-        const incResMap = new Map<string, { locataire_nom: string; locataire_prenom: string }>();
-        if (incidentReservationIds.length > 0) {
-          const { data: incResData } = await supabase
-            .from('reservations')
-            .select('id, locataire_nom, locataire_prenom')
-            .in('id', incidentReservationIds);
-          (incResData ?? []).forEach((r) => incResMap.set(r.id, r));
-        }
-
-        // Récupérer les noms des logements concernés
-        const incidentLogementIds = [
-          ...new Set(
-            [...incGroupMap.keys()]
-              .map((did) => dossierLogementMap.get(did))
-              .filter((lid): lid is string => !!lid),
-          ),
-        ];
-        const logementNomMap = new Map<string, string>();
-        if (incidentLogementIds.length > 0) {
-          const { data: logData } = await supabase
-            .from('logements')
-            .select('id, nom')
-            .in('id', incidentLogementIds);
-          (logData ?? []).forEach((l) => logementNomMap.set(l.id, l.nom));
-        }
-
         // Construire le tableau final, trié : MAJEUR > 0 en premier, puis par date desc
+        // (noms locataire/logement lus depuis les dossiers embarqués de la vague 1)
         const incidents: IncidentGroupe[] = [...incGroupMap.entries()]
           .map(([dossier_id, g]) => {
-            const rid = dossierReservationMap.get(dossier_id);
-            const lid = dossierLogementMap.get(dossier_id);
-            const res = rid ? incResMap.get(rid) : undefined;
+            const dossier = dossierMap.get(dossier_id);
             return {
               dossier_id,
-              locataire_nom: res?.locataire_nom ?? '',
-              locataire_prenom: res?.locataire_prenom ?? '',
-              logement_nom: lid ? (logementNomMap.get(lid) ?? '') : '',
+              locataire_nom: dossier?.reservations?.locataire_nom ?? '',
+              locataire_prenom: dossier?.reservations?.locataire_prenom ?? '',
+              logement_nom: dossier?.logements?.nom ?? '',
               mineurs: g.mineurs,
               majeurs: g.majeurs,
               dernierIncident: g.dernierIncident,
@@ -326,11 +280,6 @@ export default function Dashboard() {
         // Anomalies EDL — items marqués ANOMALIE dans les EDLs des dossiers actifs
         let anomaliesEdl: AnomalieEdlGroupe[] = [];
         if (dossierIdArray.length > 0) {
-          const { data: edlsData } = await supabase
-            .from('edls')
-            .select('id, dossier_id, type')
-            .in('dossier_id', dossierIdArray);
-
           const edlIds = (edlsData ?? []).map((e) => e.id);
           if (edlIds.length > 0) {
             const { data: anomalyItems } = await supabase
@@ -366,42 +315,15 @@ export default function Dashboard() {
                 }
               }
 
-              // Charger noms locataires + logements pour les dossiers concernés
-              const anomalyDossierIds = [...anomalyGroupMap.keys()];
-              const anomalyResIds = anomalyDossierIds
-                .map((did) => dossierReservationMap.get(did))
-                .filter((rid): rid is string => !!rid);
-              const anomalyResMap = new Map<string, { locataire_nom: string; locataire_prenom: string }>();
-              if (anomalyResIds.length > 0) {
-                const { data: resData } = await supabase
-                  .from('reservations')
-                  .select('id, locataire_nom, locataire_prenom')
-                  .in('id', anomalyResIds);
-                (resData ?? []).forEach((r) => anomalyResMap.set(r.id, r));
-              }
-
-              const anomalyLogIds = anomalyDossierIds
-                .map((did) => dossierLogementMap.get(did))
-                .filter((lid): lid is string => !!lid);
-              const anomalyLogNomMap = new Map<string, string>();
-              if (anomalyLogIds.length > 0) {
-                const { data: logData } = await supabase
-                  .from('logements')
-                  .select('id, nom')
-                  .in('id', anomalyLogIds);
-                (logData ?? []).forEach((l) => anomalyLogNomMap.set(l.id, l.nom));
-              }
-
-              anomaliesEdl = anomalyDossierIds.map((dossier_id) => {
+              // Noms locataire/logement lus depuis les dossiers embarqués de la vague 1
+              anomaliesEdl = [...anomalyGroupMap.keys()].map((dossier_id) => {
                 const g = anomalyGroupMap.get(dossier_id)!;
-                const rid = dossierReservationMap.get(dossier_id);
-                const lid = dossierLogementMap.get(dossier_id);
-                const res = rid ? anomalyResMap.get(rid) : undefined;
+                const dossier = dossierMap.get(dossier_id);
                 return {
                   dossier_id,
-                  locataire_nom: res?.locataire_nom ?? '',
-                  locataire_prenom: res?.locataire_prenom ?? '',
-                  logement_nom: lid ? (anomalyLogNomMap.get(lid) ?? '') : '',
+                  locataire_nom: dossier?.reservations?.locataire_nom ?? '',
+                  locataire_prenom: dossier?.reservations?.locataire_prenom ?? '',
+                  logement_nom: dossier?.logements?.nom ?? '',
                   edl_type: g.edl_type,
                   anomalies: g.anomalies,
                 };
@@ -412,47 +334,45 @@ export default function Dashboard() {
 
         if (cancelled) return;
 
-        // Prochaines arrivées (7 jours)
-        let prochQuery = supabase
-          .from('reservations')
-          .select('id, locataire_nom, locataire_prenom, date_debut, date_fin, statut')
-          .gt('date_debut', today)
-          .lte('date_debut', in7days)
-          .in('statut', ['CONFIRMEE', 'OPTION_ACTIVE'])
-          .is('archived_at', null)
-          .order('date_debut')
-          .limit(5);
-        if (selectedLogementId) prochQuery = prochQuery.eq('logement_id', selectedLogementId);
-        const { data: prochaines } = await prochQuery;
-
-        if (cancelled) return;
-
-        // Récupérer les dossiers associés
-        const prochainesWithDossier = await Promise.all(
-          (prochaines ?? []).map(async (r) => {
-            const { data: dossier } = await supabase
-              .from('dossiers')
-              .select('id, pipeline_statut')
-              .eq('reservation_id', r.id)
-              .maybeSingle();
+        // Prochaines arrivées : dossier embarqué dans la requête de la vague 1.
+        // dossiers.reservation_id est UNIQUE → PostgREST renvoie un objet (one-to-one),
+        // mais on tolère aussi un tableau par robustesse.
+        type DossierPipeline = { id: string; pipeline_statut: PipelineStatut };
+        type ProchaineRow = {
+          id: string;
+          locataire_nom: string;
+          locataire_prenom: string;
+          date_debut: string;
+          date_fin: string;
+          dossiers: DossierPipeline | DossierPipeline[] | null;
+        };
+        const prochainesWithDossier = ((prochaines ?? []) as unknown as ProchaineRow[]).map(
+          (r) => {
+            const dossier = Array.isArray(r.dossiers) ? r.dossiers[0] : (r.dossiers ?? undefined);
             return {
-              ...r,
-              pipeline_statut: (dossier?.pipeline_statut ?? 'DEMANDE_RECUE') as PipelineStatut,
+              id: r.id,
+              locataire_nom: r.locataire_nom,
+              locataire_prenom: r.locataire_prenom,
+              date_debut: r.date_debut,
+              date_fin: r.date_fin,
+              pipeline_statut: dossier?.pipeline_statut ?? ('DEMANDE_RECUE' as PipelineStatut),
               dossier_id: dossier?.id ?? null,
             };
-          }),
+          },
         );
 
-        if (cancelled) return;
+        type ReservationJourRow = { logements: { nom: string } | null } & Record<string, unknown>;
+        const logementNom = (r: unknown) =>
+          (r as ReservationJourRow).logements?.nom ?? undefined;
 
         setData({
           arrivees: (arrivees ?? []).map((r) => ({
             ...r,
-            logement_nom: logementNomJourMap.get((r as { logement_id?: string }).logement_id ?? '') ?? undefined,
+            logement_nom: logementNom(r),
           })),
           departs: (departs ?? []).map((r) => ({
             ...r,
-            logement_nom: logementNomJourMap.get((r as { logement_id?: string }).logement_id ?? '') ?? undefined,
+            logement_nom: logementNom(r),
           })),
           tachesCount: tachesCount ?? 0,
           paiementsEnAttente,

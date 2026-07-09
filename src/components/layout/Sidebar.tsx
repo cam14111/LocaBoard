@@ -1,21 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  CalendarDays,
-  FolderOpen,
-  CheckSquare,
-  Settings,
-} from 'lucide-react';
-
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/calendrier', icon: CalendarDays, label: 'Calendrier' },
-  { to: '/dossiers', icon: FolderOpen, label: 'Dossiers' },
-  { to: '/taches', icon: CheckSquare, label: 'Tâches' },
-  { to: '/parametres', icon: Settings, label: 'Paramètres' },
-];
+import { useAuth } from '@/hooks/useAuth';
+import { getNavItems } from './navItems';
 
 export default function Sidebar() {
+  const { role } = useAuth();
+  const navItems = getNavItems(role);
+
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-(--spacing-sidebar) flex-col border-r border-slate-200 bg-white lg:flex">
       {/* Logo */}
