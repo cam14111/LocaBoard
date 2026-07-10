@@ -686,7 +686,9 @@ export default function LogementForm() {
             </div>
 
             {/* Synchronisation calendrier (iCal) — édition uniquement */}
-            {isEdit && icalToken && (
+            {isEdit && icalToken && (() => {
+              const icalUrl = `${supabaseUrl}/functions/v1/ical-export?token=${icalToken}`;
+              return (
               <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
                 <h3 className="flex items-center gap-2 font-medium text-slate-900">
                   <CalendarSync className="h-4 w-4 text-primary-600" />
@@ -700,7 +702,7 @@ export default function LogementForm() {
                   <input
                     type="text"
                     readOnly
-                    value={`${supabaseUrl}/functions/v1/ical-export?token=${icalToken}`}
+                    value={icalUrl}
                     onFocus={(e) => e.target.select()}
                     aria-label="URL du calendrier iCal"
                     className={INPUT_CLASS + ' mt-0 font-mono text-xs text-slate-600'}
@@ -709,9 +711,7 @@ export default function LogementForm() {
                     type="button"
                     onClick={async () => {
                       try {
-                        await navigator.clipboard.writeText(
-                          `${supabaseUrl}/functions/v1/ical-export?token=${icalToken}`,
-                        );
+                        await navigator.clipboard.writeText(icalUrl);
                         setIcalCopied(true);
                         setTimeout(() => setIcalCopied(false), 2000);
                       } catch {
@@ -747,7 +747,8 @@ export default function LogementForm() {
                   Régénérer le lien (invalide l'ancien)
                 </button>
               </div>
-            )}
+              );
+            })()}
           </>
         )}
 
