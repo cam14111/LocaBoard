@@ -1,7 +1,9 @@
 # Maintient le projet Supabase actif : l'offre gratuite met un projet en pause
-# après 7 jours sans requête API. Deux pings par semaine laissent une marge
-# confortable même si une exécution planifiée saute (les crons GitHub peuvent
-# être retardés ou ignorés en période de charge).
+# après 7 jours d'activité jugée trop faible. La doc Supabase indique que
+# « quelques requêtes par jour » suffisent typiquement : un ping quotidien
+# se place dans cette zone et rend négligeable le risque qu'une exécution
+# planifiée saute (les crons GitHub peuvent être retardés ou ignorés en
+# période de charge).
 #
 # ⚠️ GitHub désactive les workflows planifiés après 60 jours sans activité
 # (commit) sur le dépôt : un e-mail « scheduled workflow disabled » est envoyé,
@@ -10,9 +12,9 @@ name: Supabase keepalive
 
 on:
   schedule:
-    # Lundi et jeudi à 06:47 UTC (minute décalée : les crons à l'heure pile
+    # Tous les jours à 06:47 UTC (minute décalée : les crons à l'heure pile
     # sont les plus retardés par GitHub).
-    - cron: '47 6 * * 1,4'
+    - cron: '47 6 * * *'
   workflow_dispatch: # déclenchement manuel possible depuis l'onglet Actions
 
 permissions: {}
