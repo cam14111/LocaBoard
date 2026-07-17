@@ -22,13 +22,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping de l'API REST Supabase
-        # Requête anodine : SELECT id sur logements avec la clé anon.
+        # Requête anodine : SELECT id sur notifications avec la clé anon.
         # La RLS réserve la lecture aux utilisateurs authentifiés : la réponse
         # est un tableau vide (200), aucune donnée n'est exposée — mais la
         # requête compte comme de l'activité API et empêche la mise en pause.
+        # ⚠️ Ne pas cibler une table dont la policy RLS appelle une fonction du
+        # schéma public (logements, reservations…) : la migration 076 retire à
+        # anon le droit EXECUTE sur ces fonctions, et la requête échoue en 401.
+        # La policy de notifications n'utilise que auth.uid()/auth.role().
         run: |
           code=$(curl --silent --show-error --output /tmp/body --write-out '%{http_code}' \
-            "${SUPABASE_URL}/rest/v1/logements?select=id&limit=1" \
+            "${SUPABASE_URL}/rest/v1/notifications?select=id&limit=1" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
           echo "Réponse HTTP : ${code}"
