@@ -1,0 +1,42 @@
+# Maintient le projet Supabase actif : l'offre gratuite met un projet en pause
+# après 7 jours sans requête API. Deux pings par semaine laissent une marge
+# confortable même si une exécution planifiée saute (les crons GitHub peuvent
+# être retardés ou ignorés en période de charge).
+#
+# ⚠️ GitHub désactive les workflows planifiés après 60 jours sans activité
+# (commit) sur le dépôt : un e-mail « scheduled workflow disabled » est envoyé,
+# et il suffit de cliquer « Enable workflow » dans l'onglet Actions.
+name: Supabase keepalive
+
+on:
+  schedule:
+    # Lundi et jeudi à 06:47 UTC (minute décalée : les crons à l'heure pile
+    # sont les plus retardés par GitHub).
+    - cron: '47 6 * * 1,4'
+  workflow_dispatch: # déclenchement manuel possible depuis l'onglet Actions
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping de l'API REST Supabase
+        # Requête anodine : SELECT id sur logements avec la clé anon.
+        # La RLS réserve la lecture aux utilisateurs authentifiés : la réponse
+        # est un tableau vide (200), aucune donnée n'est exposée — mais la
+        # requête compte comme de l'activité API et empêche la mise en pause.
+        run: |
+          code=$(curl --silent --show-error --output /tmp/body --write-out '%{http_code}' \
+            "${SUPABASE_URL}/rest/v1/logements?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          echo "Réponse HTTP : ${code}"
+          if [ "${code}" != "200" ]; then
+            echo "::error::Ping Supabase en échec (HTTP ${code}) — le projet est peut-être en pause."
+            cat /tmp/body
+            exit 1
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
