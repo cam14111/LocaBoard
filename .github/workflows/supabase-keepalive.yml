@@ -17,7 +17,8 @@ on:
     - cron: '47 6 * * *'
   workflow_dispatch: # déclenchement manuel possible depuis l'onglet Actions
 
-permissions: {}
+permissions:
+  actions: write # nécessaire pour l'étape de réactivation du workflow
 
 jobs:
   ping:
@@ -46,3 +47,12 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Réactiver le workflow (anti-désactivation GitHub 60 j)
+        # GitHub désactive les workflows planifiés après 60 jours sans commit.
+        # Réactiver le workflow par l'API remet a priori ce délai à zéro
+        # (méthode de gautamkrishnar/keepalive-workflow v2, non documentée par GitHub).
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable supabase-keepalive.yml --repo "${{ github.repository }}"
