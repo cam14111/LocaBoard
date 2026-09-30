@@ -144,6 +144,12 @@ npm run test
 
 ---
 
+## Migrations Supabase
+
+Pour chaque nouvelle table du schéma `public`, ajouter dans la même migration les `GRANT` nécessaires aux seuls rôles qui utilisent la Data API, puis activer RLS et définir ses policies. Vérifier le résultat avec `supabase db reset` avant de fusionner une migration. Ne pas accorder automatiquement tous les droits à `anon`.
+
+---
+
 ## Déploiement
 
 Le projet est configuré pour un déploiement automatique sur **GitHub Pages** via GitHub Actions. Chaque push sur la branche `main` déclenche un build et un déploiement automatique.

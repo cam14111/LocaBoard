@@ -20,3 +20,7 @@ CREATE POLICY "Public read document_shares"
 CREATE POLICY "Auth insert document_shares"
   ON public.document_shares FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Accès Data API explicites : les politiques RLS ci-dessus restent applicables.
+GRANT SELECT, INSERT, DELETE ON TABLE public.document_shares TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.document_shares TO service_role;
