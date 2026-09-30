@@ -35,3 +35,7 @@ CREATE TRIGGER set_logement_saisons_updated_at
   BEFORE UPDATE ON logement_saisons
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at();
+
+-- Accès Data API explicites : les politiques RLS ci-dessus restent applicables.
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.logement_saisons
+TO authenticated, service_role;

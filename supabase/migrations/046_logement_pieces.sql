@@ -28,3 +28,7 @@ CREATE POLICY "Pieces: lecture authentifié" ON logement_pieces
 
 CREATE POLICY "Pieces: admin write" ON logement_pieces
   FOR ALL USING (get_user_role() = 'ADMIN');
+
+-- Accès Data API explicites : les politiques RLS ci-dessus restent applicables.
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.logement_pieces
+TO authenticated, service_role;

@@ -680,3 +680,11 @@ CREATE TRIGGER trg_paiements_updated_at
 CREATE TRIGGER trg_checklist_modeles_updated_at
   BEFORE UPDATE ON checklist_modeles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Accès Data API explicites : les politiques RLS ci-dessus restent applicables.
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
+  public.utilisateurs, public.logements, public.reservations, public.blocages,
+  public.dossiers, public.paiements, public.documents, public.edl,
+  public.edl_items, public.incidents, public.incident_photos, public.taches,
+  public.notes, public.notifications, public.audit_log, public.checklist_modeles
+TO authenticated, service_role;

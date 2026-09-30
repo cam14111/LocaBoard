@@ -21,3 +21,7 @@ CREATE POLICY "users_manage_own_push_subscriptions"
   FOR ALL
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
+
+-- Accès Data API explicites : les politiques RLS ci-dessus restent applicables.
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.push_subscriptions
+TO authenticated, service_role;
